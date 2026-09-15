@@ -1,0 +1,71 @@
+import type { PrismaClient } from "@/generated/prisma/client";
+import type { MasteryLevel, MistakeCategory } from "@/generated/prisma/enums";
+import { normalizePatternKey } from "@/server/domain/mistakes/patternKey";
+
+export type UpsertPatternInput = {
+  userId: string;
+  category: MistakeCategory;
+  rawPatternKey: string;
+  exampleOriginal: string;
+  exampleCorrection: string;
+};
+
+export function createMistakePatternRepository(prisma: PrismaClient) {
+  return {
+    // Collapses repeated occurrences of the same concept into one growing
+    // pattern instead of one row per occurrence (SPEC.md §6).
+    async upsertPattern(input: UpsertPatternInput) {
+      const patternKey = normalizePatternKey(input.rawPatternKey);
+      const now = new Date();
+
+      return prisma.mistakePattern.upsert({
+        where: {
+          userId_category_patternKey: {
+            userId: input.userId,
+            category: input.category,
+            patternKey,
+          },
+        },
+        create: {
+          userId: input.userId,
+          category: input.category,
+          patternKey,
+          exampleOriginal: input.exampleOriginal,
+          exampleCorrection: input.exampleCorrection,
+          occurrenceCount: 1,
+          firstSeenAt: now,
+          lastSeenAt: now,
+        },
+        update: {
+          occurrenceCount: { increment: 1 },
+          lastSeenAt: now,
+          exampleOriginal: input.exampleOriginal,
+          exampleCorrection: input.exampleCorrection,
+        },
+      });
+    },
+
+    async listByUser(userId: string) {
+      return prisma.mistakePattern.findMany({
+        where: { userId },
+        orderBy: [{ occurrenceCount: "desc" }, { lastSeenAt: "desc" }],
+      });
+    },
+
+    async findById(id: string) {
+      return prisma.mistakePattern.findUnique({ where: { id } });
+    },
+
+    async updateMastery(
+      id: string,
+      data: { masteryLevel: MasteryLevel; consecutiveCorrectCount: number },
+    ) {
+      return prisma.mistakePattern.update({
+        where: { id },
+        data,
+      });
+    },
+  };
+}
+
+export type MistakePatternRepository = ReturnType<typeof createMistakePatternRepository>;

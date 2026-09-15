@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 
+import "dotenv/config";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -11,5 +12,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Integration tests share one real Postgres database; running files in
+    // parallel races truncate/seed steps against each other.
+    fileParallelism: false,
   },
 });

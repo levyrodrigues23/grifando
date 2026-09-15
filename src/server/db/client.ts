@@ -6,8 +6,8 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+export function createPrismaClient(connectionString: string | undefined = process.env.DATABASE_URL) {
+  const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({ adapter });
 }
 
