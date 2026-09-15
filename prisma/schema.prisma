@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,228 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum PromptType {
+  FREE
+  DAILY_CHALLENGE
+  TECHNICAL
+  EXPLAIN_CODE
+  INTERVIEW
+}
+
+enum TechnicalCategory {
+  BACKEND
+  FRONTEND
+  DEVOPS
+  DATABASES
+  CLOUD
+  ARCHITECTURE
+  ALGORITHMS
+  TESTING
+  GIT
+  GITHUB
+  CODE_REVIEW
+  SECURITY
+  AI
+  SYSTEM_DESIGN
+}
+
+enum SessionStatus {
+  PENDING
+  ANALYZED
+  FAILED
+}
+
+enum MistakeCategory {
+  ARTICLES
+  PREPOSITIONS
+  VERB_TENSE
+  SUBJECT_VERB_AGREEMENT
+  VOCABULARY
+  WORD_ORDER
+  SPELLING
+  PUNCTUATION
+  UNNATURAL_PHRASING
+  LITERAL_TRANSLATION
+  COLLOCATION
+  PRONOUNS
+  COUNTABLE_UNCOUNTABLE
+}
+
+enum MistakeSeverity {
+  ERROR
+  UNNATURAL
+}
+
+enum MasteryLevel {
+  ACTIVE
+  IMPROVING
+  MASTERED
+}
+
+enum ExerciseType {
+  MULTIPLE_CHOICE
+  FILL_BLANK
+  REWRITE
+  TRANSLATION
+}
+
+enum InterviewStatus {
+  ACTIVE
+  ENDED
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  displayName    String
+  nativeLanguage String   @default("pt-BR")
+  createdAt      DateTime @default(now())
+
+  writingSessions   WritingSession[]
+  mistakePatterns   MistakePattern[]
+  exercises         Exercise[]
+  interviewSessions InterviewSession[]
+  vocabularyItems   VocabularyItem[]
+}
+
+model WritingSession {
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promptType        PromptType
+  promptText        String?
+  technicalCategory TechnicalCategory?
+  originalText      String
+  status            SessionStatus      @default(PENDING)
+  createdAt         DateTime           @default(now())
+
+  analysis        WritingAnalysis?
+  vocabularyItems VocabularyItem[]
+
+  @@index([userId, createdAt])
+}
+
+model WritingAnalysis {
+  id               String         @id @default(cuid())
+  sessionId        String         @unique
+  session          WritingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  correctedText    String
+  naturalText      String
+  overallFeedback  String
+  grammarScore     Int
+  vocabularyScore  Int
+  clarityScore     Int
+  naturalnessScore Int
+  modelId          String
+  createdAt        DateTime       @default(now())
+
+  occurrences   MistakeOccurrence[]
+  interviewTurn InterviewTurn?
+}
+
+model MistakeOccurrence {
+  id            String          @id @default(cuid())
+  analysisId    String
+  analysis      WritingAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  patternId     String
+  pattern       MistakePattern  @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  originalSpan  String
+  correctedSpan String
+  category      MistakeCategory
+  severity      MistakeSeverity
+  explanation   String
+  example       String
+  createdAt     DateTime        @default(now())
+
+  @@index([analysisId])
+  @@index([patternId])
+}
+
+model MistakePattern {
+  id                      String          @id @default(cuid())
+  userId                  String
+  user                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category                MistakeCategory
+  patternKey              String
+  exampleOriginal         String
+  exampleCorrection       String
+  occurrenceCount         Int             @default(1)
+  masteryLevel            MasteryLevel    @default(ACTIVE)
+  consecutiveCorrectCount Int             @default(0)
+  firstSeenAt             DateTime        @default(now())
+  lastSeenAt              DateTime        @default(now())
+
+  occurrences MistakeOccurrence[]
+  exercises   Exercise[]
+
+  @@unique([userId, category, patternKey])
+  @@index([userId, masteryLevel])
+}
+
+model Exercise {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            ExerciseType
+  sourcePatternId String?
+  sourcePattern   MistakePattern? @relation(fields: [sourcePatternId], references: [id], onDelete: SetNull)
+  promptData      Json
+  createdAt       DateTime        @default(now())
+
+  attempts ExerciseAttempt[]
+
+  @@index([userId, createdAt])
+}
+
+model ExerciseAttempt {
+  id          String   @id @default(cuid())
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  userAnswer  String
+  isCorrect   Boolean
+  feedback    String
+  attemptedAt DateTime @default(now())
+
+  @@index([exerciseId])
+}
+
+model InterviewSession {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    InterviewStatus @default(ACTIVE)
+  createdAt DateTime        @default(now())
+
+  turns InterviewTurn[]
+
+  @@index([userId, createdAt])
+}
+
+model InterviewTurn {
+  id                 String           @id @default(cuid())
+  interviewSessionId String
+  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  question           String
+  userAnswer         String?
+  writingAnalysisId  String?          @unique
+  writingAnalysis    WritingAnalysis? @relation(fields: [writingAnalysisId], references: [id], onDelete: SetNull)
+  order              Int
+
+  @@index([interviewSessionId, order])
+}
+
+model VocabularyItem {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  term            String
+  meaningPt       String
+  exampleSentence String
+  sourceSessionId String?
+  sourceSession   WritingSession? @relation(fields: [sourceSessionId], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+
+  @@index([userId])
 }

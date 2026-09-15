@@ -81,8 +81,13 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
 - Never assert exact LLM output text. Mock `AIProvider` at the boundary; test service
   behavior (persistence, pattern updates, error handling) and pure logic (schema validation,
   mastery transitions, exercise selection) directly.
-- Integration tests that touch Postgres use the Docker Compose instance against a separate
-  test database — do not point tests at data you care about.
+- Integration tests that touch Postgres use `english_coach_test` (via
+  `createTestPrismaClient()` / `resetDatabase()` in `src/server/db/test-utils.ts`), never the
+  dev database. Postgres must be running (`docker compose up -d`) before `pnpm test`.
+- `vitest.config.mts` sets `fileParallelism: false`. Integration test files share one real
+  database and race each other's truncate/seed steps if run in parallel — don't remove this
+  to "speed things up" without giving each test file its own isolated data (e.g. per-file user
+  ids) first.
 
 ## Workflow
 
