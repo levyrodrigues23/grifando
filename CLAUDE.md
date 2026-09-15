@@ -84,6 +84,14 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   shape it uses), not the full `Anthropic` class, specifically so tests can pass a plain
   `{ messages: { create: vi.fn() } }` fake instead of mocking the SDK.
 
+## Lint gotcha: impure calls in Server Components
+
+`eslint-plugin-react-hooks`'s purity rule flags `Date.now()`/`Math.random()`/etc. called
+directly in a component's body — even an `async` Server Component just computing a filter
+date for a DB query, which is completely legitimate there. Fix: pull the impure call into a
+plain (non-component, non-PascalCase-as-the-export) helper function and call that from the
+component, rather than disabling the rule. See `resolveSinceDate` in `src/app/mistakes/page.tsx`.
+
 ## Testing conventions
 
 - Never assert exact LLM output text. Mock `AIProvider` at the boundary; test service

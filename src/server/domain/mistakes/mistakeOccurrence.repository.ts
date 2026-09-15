@@ -24,6 +24,19 @@ export function createMistakeOccurrenceRepository(prisma: PrismaClient) {
         orderBy: { createdAt: "asc" },
       });
     },
+
+    async countByCategory(userId: string, options: { since?: Date } = {}) {
+      const grouped = await prisma.mistakeOccurrence.groupBy({
+        by: ["category"],
+        where: {
+          pattern: { userId },
+          ...(options.since ? { createdAt: { gte: options.since } } : {}),
+        },
+        _count: { _all: true },
+      });
+
+      return grouped.map((row) => ({ category: row.category, count: row._count._all }));
+    },
   };
 }
 
