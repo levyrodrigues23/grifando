@@ -73,8 +73,16 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   taken from client-supplied input. Every domain table still carries `userId`; keep it that
   way so real auth can be added later by replacing this constant lookup, not by migrating data.
 - Mistake dedup relies on the AI-proposed `patternKey` per mistake, normalized in
-  `mistakePatternService`. Don't build separate fuzzy-matching/embedding-based clustering for
-  this — see SPEC.md §6 for why that tradeoff was chosen.
+  `mistakePatternRepository.upsertPattern` (`src/server/domain/mistakes/patternKey.ts`). Don't
+  build separate fuzzy-matching/embedding-based clustering for this — see SPEC.md §6.
+- `getAIProvider()` in `src/server/ai/client.ts` is the one place that reads
+  `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` and constructs the real Anthropic client — it throws
+  lazily on first use, not at import time, so importing AI modules never breaks tests that
+  don't need a real key. `AIProvider` methods are added one at a time, only when a feature
+  phase needs them (currently just `analyzeWriting`) — don't pre-add stub methods.
+- `createAnthropicProvider` takes a minimal `AnthropicMessagesClient` (just the `messages.create`
+  shape it uses), not the full `Anthropic` class, specifically so tests can pass a plain
+  `{ messages: { create: vi.fn() } }` fake instead of mocking the SDK.
 
 ## Testing conventions
 
