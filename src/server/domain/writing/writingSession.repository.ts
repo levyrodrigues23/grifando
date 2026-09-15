@@ -40,3 +40,4 @@ export function createWritingSessionRepository(prisma: PrismaClient) {
 }
 
 export type WritingSessionRepository = ReturnType<typeof createWritingSessionRepository>;
+export type WritingSessionWithAnalysis = Awaited<ReturnType<WritingSessionRepository["findById"]>>;

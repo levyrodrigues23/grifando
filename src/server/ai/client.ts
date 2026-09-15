@@ -7,6 +7,10 @@ const DEFAULT_MODEL = "claude-sonnet-5";
 
 let cachedProvider: AIProvider | undefined;
 
+export function getAIModelId(): string {
+  return process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL;
+}
+
 // Lazy so importing this module never throws when ANTHROPIC_API_KEY is unset
 // (e.g. running unrelated tests) — it only throws once the provider is used.
 export function getAIProvider(): AIProvider {
@@ -17,8 +21,7 @@ export function getAIProvider(): AIProvider {
     }
 
     const client = new Anthropic({ apiKey });
-    const model = process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL;
-    cachedProvider = createAnthropicProvider(client, model);
+    cachedProvider = createAnthropicProvider(client, getAIModelId());
   }
 
   return cachedProvider;
