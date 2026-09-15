@@ -1,0 +1,99 @@
+import { describe, expect, it, vi } from "vitest";
+
+import { PromptType } from "@/generated/prisma/enums";
+import { AIResponseValidationError } from "@/server/ai/errors";
+import type { AnthropicMessagesClient } from "@/server/ai/providers/anthropic";
+import { createAnthropicProvider } from "@/server/ai/providers/anthropic";
+
+function fakeMessage(content: unknown[]) {
+  return {
+    id: "msg_1",
+    type: "message",
+    role: "assistant",
+    content,
+    model: "test-model",
+    stop_reason: "tool_use",
+    stop_sequence: null,
+    usage: { input_tokens: 1, output_tokens: 1 },
+  } as never;
+}
+
+function validAnalysisInput() {
+  return {
+    correctedText: "I have difficulty understanding concurrency.",
+    naturalText: "Concurrency is something I struggle with.",
+    overallFeedback: "Good attempt overall.",
+    scores: { grammar: 80, vocabulary: 85, clarity: 90, naturalness: 70 },
+    mistakes: [],
+  };
+}
+
+describe("createAnthropicProvider.analyzeWriting", () => {
+  it("returns the validated result when the model returns a well-formed tool_use block", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([{ type: "tool_use", id: "tool_1", name: "submit_writing_analysis", input: validAnalysisInput() }]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    const result = await provider.analyzeWriting({
+      text: "I have difficulty to understand concurrency.",
+      promptType: PromptType.FREE,
+    });
+
+    expect(result.correctedText).toBe("I have difficulty understanding concurrency.");
+    expect(create).toHaveBeenCalledOnce();
+  });
+
+  it("forces the tool_choice to the writing-analysis tool", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([{ type: "tool_use", id: "tool_1", name: "submit_writing_analysis", input: validAnalysisInput() }]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await provider.analyzeWriting({ text: "some text", promptType: PromptType.FREE });
+
+    const callArgs = create.mock.calls[0][0];
+    expect(callArgs.tool_choice).toEqual({ type: "tool", name: "submit_writing_analysis" });
+  });
+
+  it("throws AIResponseValidationError when no tool_use block is returned", async () => {
+    const create = vi.fn().mockResolvedValue(fakeMessage([{ type: "text", text: "I refuse to use the tool." }]));
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(
+      provider.analyzeWriting({ text: "some text", promptType: PromptType.FREE }),
+    ).rejects.toBeInstanceOf(AIResponseValidationError);
+  });
+
+  it("throws AIResponseValidationError when the tool input fails schema validation", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        {
+          type: "tool_use",
+          id: "tool_1",
+          name: "submit_writing_analysis",
+          input: { correctedText: "missing everything else" },
+        },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(
+      provider.analyzeWriting({ text: "some text", promptType: PromptType.FREE }),
+    ).rejects.toBeInstanceOf(AIResponseValidationError);
+  });
+
+  it("never touches the network — a broken client rejects instead of hanging", async () => {
+    const create = vi.fn().mockRejectedValue(new Error("network down"));
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(
+      provider.analyzeWriting({ text: "some text", promptType: PromptType.FREE }),
+    ).rejects.toThrow("network down");
+  });
+});

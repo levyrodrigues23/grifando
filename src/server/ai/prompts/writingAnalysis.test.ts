@@ -1,0 +1,66 @@
+import { describe, expect, it } from "vitest";
+
+import { PromptType, TechnicalCategory } from "@/generated/prisma/enums";
+import {
+  buildWritingAnalysisUserMessage,
+  buildWritingAnalysisSystemPrompt,
+} from "@/server/ai/prompts/writingAnalysis";
+
+describe("buildWritingAnalysisUserMessage", () => {
+  it("includes the writing text verbatim", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "I depend of this library.",
+      promptType: PromptType.FREE,
+    });
+    expect(message).toContain("I depend of this library.");
+  });
+
+  it("includes the technical category when present", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "some text",
+      promptType: PromptType.TECHNICAL,
+      technicalCategory: TechnicalCategory.BACKEND,
+    });
+    expect(message).toContain("BACKEND");
+  });
+
+  it("omits the technical category line when absent", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "some text",
+      promptType: PromptType.FREE,
+    });
+    expect(message).not.toContain("Technical category");
+  });
+
+  it("includes the prompt text when present", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "some text",
+      promptType: PromptType.DAILY_CHALLENGE,
+      promptText: "Explain what Docker is.",
+    });
+    expect(message).toContain("Explain what Docker is.");
+  });
+});
+
+describe("buildWritingAnalysisSystemPrompt", () => {
+  it("lists every mistake category so the model can't invent new ones", () => {
+    const prompt = buildWritingAnalysisSystemPrompt();
+    for (const category of [
+      "ARTICLES",
+      "PREPOSITIONS",
+      "VERB_TENSE",
+      "SUBJECT_VERB_AGREEMENT",
+      "VOCABULARY",
+      "WORD_ORDER",
+      "SPELLING",
+      "PUNCTUATION",
+      "UNNATURAL_PHRASING",
+      "LITERAL_TRANSLATION",
+      "COLLOCATION",
+      "PRONOUNS",
+      "COUNTABLE_UNCOUNTABLE",
+    ]) {
+      expect(prompt).toContain(category);
+    }
+  });
+});
