@@ -12,12 +12,17 @@ const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
   "We couldn't analyze this writing right now. Your text has not been lost.";
 
+export type InitialChallenge = {
+  promptType: "DAILY_CHALLENGE";
+  promptText: string;
+};
+
 type ViewState =
   | { kind: "editing"; errorMessage?: string }
   | { kind: "submitting" }
   | { kind: "result"; session: WritingSessionDTO };
 
-export function WritingCoach() {
+export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialChallenge }) {
   const [text, setText] = useState("");
   const [view, setView] = useState<ViewState>({ kind: "editing" });
 
@@ -28,7 +33,11 @@ export function WritingCoach() {
       const response = await fetch("/api/writing-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptType: "FREE", originalText: text }),
+        body: JSON.stringify({
+          promptType: initialChallenge?.promptType ?? "FREE",
+          promptText: initialChallenge?.promptText,
+          originalText: text,
+        }),
       });
 
       if (!response.ok) {
@@ -63,15 +72,24 @@ export function WritingCoach() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Write something in English</CardTitle>
+        <CardTitle>
+          {initialChallenge ? "Today's writing challenge" : "Write something in English"}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
+        {initialChallenge ? (
+          <p className="rounded-md bg-muted px-3 py-2 text-sm">{initialChallenge.promptText}</p>
+        ) : null}
         <Textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
           maxLength={MAX_LENGTH}
           rows={10}
-          placeholder="Free writing, a GitHub issue, a PR description, an explanation of something you built today..."
+          placeholder={
+            initialChallenge
+              ? "Write your answer here..."
+              : "Free writing, a GitHub issue, a PR description, an explanation of something you built today..."
+          }
           disabled={isSubmitting}
         />
         <div className="text-right text-xs text-muted-foreground">
