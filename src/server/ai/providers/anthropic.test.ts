@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { PromptType } from "@/generated/prisma/enums";
+import { ExerciseType, MistakeCategory, PromptType } from "@/generated/prisma/enums";
 import { AIResponseValidationError } from "@/server/ai/errors";
 import type { AnthropicMessagesClient } from "@/server/ai/providers/anthropic";
 import { createAnthropicProvider } from "@/server/ai/providers/anthropic";
@@ -95,5 +95,91 @@ describe("createAnthropicProvider.analyzeWriting", () => {
     await expect(
       provider.analyzeWriting({ text: "some text", promptType: PromptType.FREE }),
     ).rejects.toThrow("network down");
+  });
+});
+
+function fakeMultipleChoiceExercise() {
+  return {
+    type: "MULTIPLE_CHOICE",
+    instruction: "Choose the correct sentence.",
+    explanation: "Use 'depend on', not 'depend of'.",
+    options: ["I depend of this library.", "I depend on this library."],
+    correctOptionIndex: 1,
+  };
+}
+
+const oneTarget = [
+  {
+    type: ExerciseType.MULTIPLE_CHOICE,
+    category: MistakeCategory.PREPOSITIONS,
+    exampleOriginal: "I depend of this library.",
+    exampleCorrection: "I depend on this library.",
+  },
+];
+
+describe("createAnthropicProvider.generateExercises", () => {
+  it("returns the validated exercises when the model returns a well-formed tool_use block", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        {
+          type: "tool_use",
+          id: "tool_1",
+          name: "submit_exercises",
+          input: { exercises: [fakeMultipleChoiceExercise()] },
+        },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    const result = await provider.generateExercises(oneTarget);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe("MULTIPLE_CHOICE");
+  });
+
+  it("throws AIResponseValidationError when the exercise count doesn't match the target count", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        { type: "tool_use", id: "tool_1", name: "submit_exercises", input: { exercises: [] } },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(provider.generateExercises(oneTarget)).rejects.toBeInstanceOf(
+      AIResponseValidationError,
+    );
+  });
+
+  it("throws AIResponseValidationError when a multiple-choice correctOptionIndex is out of range", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        {
+          type: "tool_use",
+          id: "tool_1",
+          name: "submit_exercises",
+          input: {
+            exercises: [{ ...fakeMultipleChoiceExercise(), correctOptionIndex: 5 }],
+          },
+        },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(provider.generateExercises(oneTarget)).rejects.toBeInstanceOf(
+      AIResponseValidationError,
+    );
+  });
+
+  it("throws AIResponseValidationError when no tool_use block is returned", async () => {
+    const create = vi.fn().mockResolvedValue(fakeMessage([{ type: "text", text: "no." }]));
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(provider.generateExercises(oneTarget)).rejects.toBeInstanceOf(
+      AIResponseValidationError,
+    );
   });
 });
