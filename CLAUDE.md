@@ -83,6 +83,24 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
 - `createAnthropicProvider` takes a minimal `AnthropicMessagesClient` (just the `messages.create`
   shape it uses), not the full `Anthropic` class, specifically so tests can pass a plain
   `{ messages: { create: vi.fn() } }` fake instead of mocking the SDK.
+- Exercise generation and exercise grading are two separate services
+  (`createExerciseGenerationService` / `createExerciseAttemptService` in
+  `src/server/domain/exercises/exerciseService.ts`), not one. Grading is fully deterministic
+  (`answerChecking.ts` — exact match after case/whitespace/trailing-punctuation normalization
+  against the generator's `acceptableAnswers`; no second AI call) and must never require
+  `ANTHROPIC_API_KEY`. Don't merge them back into one service with an `aiProvider` dependency.
+- Known tradeoff in `answerChecking.ts`: REWRITE/TRANSLATION grading is a normalized string
+  match against 1-3 model-provided acceptable answers, not an AI judgment call. A valid
+  rephrasing the generator didn't anticipate will read as incorrect. Accepted for MVP simplicity
+  and cost; revisit with an AI-graded path only if this proves too strict in practice.
+- `toPublicExercise` (`src/server/domain/exercises/publicView.ts`) is the only thing that should
+  ever shape an exercise for the client before an attempt — it strips `correctOptionIndex`/
+  `acceptableAnswers`/`explanation`. Never send a raw `Exercise.promptData` to the client.
+- Every client component's `fetch` call must check `response.ok` before touching the JSON body
+  — an error response here is still valid JSON (`{ error: "..." }`), so skipping the check
+  silently misreads a failure as empty/successful data instead of showing the error state. Hit
+  this as a real bug in `ExercisePractice.tsx`'s initial load; fixed, but re-check any new
+  `fetch` call added to a client component.
 
 ## Lint gotcha: impure calls in Server Components
 

@@ -51,7 +51,10 @@ function fakeAnalysisResult() {
 
 describe("writingCoachService.submitWriting", () => {
   it("persists the analysis and folds repeated mistakes into one pattern", async () => {
-    const aiProvider: AIProvider = { analyzeWriting: vi.fn().mockResolvedValue(fakeAnalysisResult()) };
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn().mockResolvedValue(fakeAnalysisResult()),
+      generateExercises: vi.fn(),
+    };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
     const result = await service.submitWriting({
@@ -75,6 +78,7 @@ describe("writingCoachService.submitWriting", () => {
   it("marks the session FAILED and preserves the original text when the AI call fails", async () => {
     const aiProvider: AIProvider = {
       analyzeWriting: vi.fn().mockRejectedValue(new AIResponseValidationError("bad response", [])),
+      generateExercises: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 

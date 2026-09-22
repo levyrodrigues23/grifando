@@ -49,7 +49,12 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const repository = createWritingSessionRepository(prisma);
-  const sessions = await repository.listByUser(DEFAULT_USER_ID, { limit: 20 });
-  return NextResponse.json(sessions);
+  try {
+    const repository = createWritingSessionRepository(prisma);
+    const sessions = await repository.listByUser(DEFAULT_USER_ID, { limit: 20 });
+    return NextResponse.json(sessions);
+  } catch (error) {
+    console.error("Failed to list writing sessions", error);
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+  }
 }
