@@ -101,6 +101,14 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   silently misreads a failure as empty/successful data instead of showing the error state. Hit
   this as a real bug in `ExercisePractice.tsx`'s initial load; fixed, but re-check any new
   `fetch` call added to a client component.
+- Explain Code's pasted `codeSnippet` is intentionally never persisted — `writingCoachService.
+  submitWriting` destructures it out of the input before `sessions.create()` and only forwards
+  it to `aiProvider.analyzeWriting()` for context. `WritingSession` has no `codeSnippet` column;
+  don't add one without deciding to actually store the code (would need a migration, which
+  needs a live DB to create). Technical/Daily Writing prompts are plain static data
+  (`src/server/domain/writing/{dailyPrompt,technicalPrompts}.ts`) resolved server-side in
+  `/write`'s page component from a `?promptId=`/`?mode=daily` query param — never trust a
+  client-supplied prompt string for what gets analyzed or stored.
 
 ## Lint gotcha: impure calls in Server Components
 

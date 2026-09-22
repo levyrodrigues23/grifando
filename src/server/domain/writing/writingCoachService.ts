@@ -9,7 +9,11 @@ import {
   type WritingSessionWithAnalysis,
 } from "@/server/domain/writing/writingSession.repository";
 
-export type SubmitWritingInput = CreateWritingSessionInput;
+export type SubmitWritingInput = CreateWritingSessionInput & {
+  // EXPLAIN_CODE only — passed to the AI for context, never persisted (see
+  // AnalyzeWritingInput.codeSnippet and SPEC.md §5.6).
+  codeSnippet?: string;
+};
 
 export type SubmitWritingResult =
   | { status: "analyzed"; session: NonNullable<WritingSessionWithAnalysis> }
@@ -35,7 +39,8 @@ export function createWritingCoachService(deps: {
     // analysis + mistake breakdown. An AI failure leaves the session FAILED
     // with the original text intact instead of a partial/corrupt record.
     async submitWriting(input: SubmitWritingInput): Promise<SubmitWritingResult> {
-      const session = await sessions.create(input);
+      const { codeSnippet, ...sessionInput } = input;
+      const session = await sessions.create(sessionInput);
 
       let result;
       try {
@@ -44,6 +49,7 @@ export function createWritingCoachService(deps: {
           promptType: input.promptType,
           promptText: input.promptText,
           technicalCategory: input.technicalCategory,
+          codeSnippet,
         });
       } catch {
         await sessions.markFailed(session.id);

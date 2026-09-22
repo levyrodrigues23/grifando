@@ -5,6 +5,10 @@ export type AnalyzeWritingInput = {
   promptType: PromptType;
   promptText?: string | null;
   technicalCategory?: TechnicalCategory | null;
+  // EXPLAIN_CODE only — context for the model, never graded itself and never
+  // persisted (SPEC.md §5.6): "this is a language-learning feature, not a
+  // code review tool."
+  codeSnippet?: string | null;
 };
 
 export function buildWritingAnalysisSystemPrompt(): string {
@@ -29,7 +33,9 @@ Analyze the user's English writing and call the provided tool with your structur
 
 7. "overallFeedback" is 2-4 sentences, honest but encouraging.
 
-8. Never invent mistakes to pad the response. If the writing is already correct and natural, return an empty mistakes array.`;
+8. Never invent mistakes to pad the response. If the writing is already correct and natural, return an empty mistakes array.
+
+9. When a code snippet is given as context (writing mode EXPLAIN_CODE), it is there only so you understand what the user is describing. Evaluate the English of their explanation exactly as you would any other text — never comment on whether the code itself is correct, well-written, or could be improved.`;
 }
 
 export function buildWritingAnalysisUserMessage(input: AnalyzeWritingInput): string {
@@ -41,6 +47,10 @@ export function buildWritingAnalysisUserMessage(input: AnalyzeWritingInput): str
 
   if (input.promptText) {
     contextLines.push(`Prompt given to the user: ${input.promptText}`);
+  }
+
+  if (input.codeSnippet) {
+    contextLines.push(`Code the user is explaining (context only — do not evaluate it):\n\`\`\`\n${input.codeSnippet}\n\`\`\``);
   }
 
   return `${contextLines.join("\n")}

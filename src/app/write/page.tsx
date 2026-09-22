@@ -7,6 +7,7 @@ import {
   getTodaysDate,
   selectDailyPrompt,
 } from "@/server/domain/writing/dailyPrompt";
+import { findTechnicalPromptById } from "@/server/domain/writing/technicalPrompts";
 import { WritingCoach, type InitialChallenge } from "@/components/writing/WritingCoach";
 
 async function resolveDailyChallenge(): Promise<InitialChallenge> {
@@ -19,9 +20,20 @@ async function resolveDailyChallenge(): Promise<InitialChallenge> {
 
 export default async function WritePage(props: PageProps<"/write">) {
   const searchParams = await props.searchParams;
-  const isDaily = searchParams.mode === "daily";
+  const promptId = typeof searchParams.promptId === "string" ? searchParams.promptId : undefined;
+  const technicalPrompt = promptId ? findTechnicalPromptById(promptId) : undefined;
 
-  const initialChallenge = isDaily ? await resolveDailyChallenge() : undefined;
+  let initialChallenge: InitialChallenge | undefined;
+
+  if (technicalPrompt) {
+    initialChallenge = {
+      promptType: "TECHNICAL",
+      promptText: technicalPrompt.text,
+      technicalCategory: technicalPrompt.category,
+    };
+  } else if (searchParams.mode === "daily") {
+    initialChallenge = await resolveDailyChallenge();
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
