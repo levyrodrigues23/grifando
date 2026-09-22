@@ -38,7 +38,7 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Mistake Notebook</h1>
+        <h1 className="text-2xl font-medium tracking-normal uppercase">Mistake Notebook</h1>
         <p className="text-sm text-muted-foreground">
           Patterns from your writing sessions. The same underlying mistake, however many times
           you make it, shows up here once.
@@ -79,7 +79,7 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-primary"
+                      className="h-full rounded-full bg-ember"
                       style={{ width: `${entry.percentage}%` }}
                     />
                   </div>
@@ -109,7 +109,7 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
                   <Badge variant="outline">
                     {MISTAKE_CATEGORY_LABELS[pattern.category] ?? pattern.category}
                   </Badge>
-                  <Badge variant={pattern.masteryLevel === "MASTERED" ? "secondary" : "default"}>
+                  <Badge variant={pattern.masteryLevel === "MASTERED" ? "success" : "default"}>
                     {MASTERY_LABELS[pattern.masteryLevel]}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
@@ -122,7 +122,7 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
                     {pattern.exampleOriginal}
                   </span>
                   {" → "}
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="font-medium text-success">
                     {pattern.exampleCorrection}
                   </span>
                 </p>

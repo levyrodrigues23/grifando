@@ -9,7 +9,7 @@ export default function TechnicalPage() {
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Technical English</h1>
+        <h1 className="text-2xl font-medium tracking-normal uppercase">Technical English</h1>
         <p className="text-sm text-muted-foreground">
           Practice writing about the kind of topics developers actually explain — pick a prompt
           to get started.

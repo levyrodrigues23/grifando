@@ -77,7 +77,7 @@ export function ExplainCodeCoach() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium">Paste a small code snippet</label>
+          <label className="text-sm font-medium uppercase tracking-normal">Paste a small code snippet</label>
           <Textarea
             value={code}
             onChange={(event) => setCode(event.target.value)}
@@ -93,7 +93,7 @@ export function ExplainCodeCoach() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">Explain what it does, in English</label>
+          <label className="text-sm font-medium uppercase tracking-normal">Explain what it does, in English</label>
           <Textarea
             value={text}
             onChange={(event) => setText(event.target.value)}

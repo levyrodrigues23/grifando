@@ -25,8 +25,10 @@ export default async function HomePage() {
   return (
     <main className="mx-auto flex max-w-3xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">AI English Coach</h1>
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+        <h1 className="text-4xl leading-[0.9] font-medium tracking-normal uppercase sm:text-5xl">
+          AI English Coach
+        </h1>
+        <p className="mt-4 max-w-md text-base text-muted-foreground">
           Write something in English and get structured feedback built from your own mistakes.
         </p>
       </div>
