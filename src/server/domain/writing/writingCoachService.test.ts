@@ -96,4 +96,25 @@ describe("writingCoachService.submitWriting", () => {
     expect(session.status).toBe("FAILED");
     expect(session.originalText).toBe("some original text");
   });
+
+  it("passes codeSnippet to the AI but never persists it on the session", async () => {
+    const analyzeWriting = vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] });
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn() };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    await service.submitWriting({
+      userId,
+      promptType: PromptType.EXPLAIN_CODE,
+      promptText: "Explain what this code does.",
+      originalText: "This function checks whether the user already exists.",
+      codeSnippet: "export async function registerUser() {}",
+    });
+
+    expect(analyzeWriting).toHaveBeenCalledWith(
+      expect.objectContaining({ codeSnippet: "export async function registerUser() {}" }),
+    );
+
+    const session = await prisma.writingSession.findFirstOrThrow({ where: { userId } });
+    expect(session).not.toHaveProperty("codeSnippet");
+  });
 });

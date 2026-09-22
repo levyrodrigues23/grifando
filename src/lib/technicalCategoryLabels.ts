@@ -1,0 +1,16 @@
+export const TECHNICAL_CATEGORY_LABELS: Record<string, string> = {
+  BACKEND: "Backend",
+  FRONTEND: "Frontend",
+  DEVOPS: "DevOps",
+  DATABASES: "Databases",
+  CLOUD: "Cloud",
+  ARCHITECTURE: "Architecture",
+  ALGORITHMS: "Algorithms",
+  TESTING: "Testing",
+  GIT: "Git",
+  GITHUB: "GitHub",
+  CODE_REVIEW: "Code Review",
+  SECURITY: "Security",
+  AI: "AI",
+  SYSTEM_DESIGN: "System Design",
+};

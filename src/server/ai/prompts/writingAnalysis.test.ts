@@ -40,6 +40,23 @@ describe("buildWritingAnalysisUserMessage", () => {
     });
     expect(message).toContain("Explain what Docker is.");
   });
+
+  it("includes the code snippet when present", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "This function checks whether the user already exists.",
+      promptType: PromptType.EXPLAIN_CODE,
+      codeSnippet: "export async function registerUser() {}",
+    });
+    expect(message).toContain("export async function registerUser() {}");
+  });
+
+  it("omits the code snippet line when absent", () => {
+    const message = buildWritingAnalysisUserMessage({
+      text: "some text",
+      promptType: PromptType.FREE,
+    });
+    expect(message).not.toContain("Code the user is explaining");
+  });
 });
 
 describe("buildWritingAnalysisSystemPrompt", () => {
@@ -62,5 +79,11 @@ describe("buildWritingAnalysisSystemPrompt", () => {
     ]) {
       expect(prompt).toContain(category);
     }
+  });
+
+  it("instructs the model not to evaluate code correctness for EXPLAIN_CODE", () => {
+    const prompt = buildWritingAnalysisSystemPrompt();
+    expect(prompt).toContain("EXPLAIN_CODE");
+    expect(prompt.toLowerCase()).toContain("never comment on whether the code itself");
   });
 });

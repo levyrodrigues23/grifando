@@ -10,12 +10,14 @@ import { createWritingSessionRepository } from "@/server/domain/writing/writingS
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_PROMPT_TEXT_LENGTH = 1000;
+const MAX_CODE_SNIPPET_LENGTH = 2000;
 
 const createWritingSessionSchema = z.object({
   promptType: z.nativeEnum(PromptType),
   originalText: z.string().trim().min(1).max(MAX_TEXT_LENGTH),
   promptText: z.string().min(1).max(MAX_PROMPT_TEXT_LENGTH).optional(),
   technicalCategory: z.nativeEnum(TechnicalCategory).optional(),
+  codeSnippet: z.string().trim().min(1).max(MAX_CODE_SNIPPET_LENGTH).optional(),
 });
 
 export async function POST(request: Request) {

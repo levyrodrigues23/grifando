@@ -12,10 +12,9 @@ const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
   "We couldn't analyze this writing right now. Your text has not been lost.";
 
-export type InitialChallenge = {
-  promptType: "DAILY_CHALLENGE";
-  promptText: string;
-};
+export type InitialChallenge =
+  | { promptType: "DAILY_CHALLENGE"; promptText: string }
+  | { promptType: "TECHNICAL"; promptText: string; technicalCategory: string };
 
 type ViewState =
   | { kind: "editing"; errorMessage?: string }
@@ -36,6 +35,10 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
         body: JSON.stringify({
           promptType: initialChallenge?.promptType ?? "FREE",
           promptText: initialChallenge?.promptText,
+          technicalCategory:
+            initialChallenge?.promptType === "TECHNICAL"
+              ? initialChallenge.technicalCategory
+              : undefined,
           originalText: text,
         }),
       });
@@ -68,13 +71,17 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
   }
 
   const isSubmitting = view.kind === "submitting";
+  const title =
+    initialChallenge?.promptType === "DAILY_CHALLENGE"
+      ? "Today's writing challenge"
+      : initialChallenge?.promptType === "TECHNICAL"
+        ? "Technical English"
+        : "Write something in English";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {initialChallenge ? "Today's writing challenge" : "Write something in English"}
-        </CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {initialChallenge ? (
