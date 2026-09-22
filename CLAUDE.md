@@ -110,6 +110,16 @@ date for a DB query, which is completely legitimate there. Fix: pull the impure 
 plain (non-component, non-PascalCase-as-the-export) helper function and call that from the
 component, rather than disabling the rule. See `resolveSinceDate` in `src/app/mistakes/page.tsx`.
 
+## Build gotcha: static prerendering of DB-backed pages
+
+A Server Component page with no `searchParams`/`cookies()`/other dynamic-API usage gets
+statically prerendered at **build time** by default — including any Prisma queries in its
+body. `pnpm build` will try to hit the database while building, which both fails when Postgres
+isn't up and is semantically wrong for a page that should show fresh per-request data anyway.
+Fix: `export const dynamic = "force-dynamic";` on any page that queries the DB but has no other
+dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` (`/write`,
+`/mistakes`) are dynamic automatically and don't need this.
+
 ## Testing conventions
 
 - Never assert exact LLM output text. Mock `AIProvider` at the boundary; test service
