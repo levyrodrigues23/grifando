@@ -21,6 +21,13 @@ obvious from the code.
 - Docker Desktop does not start automatically on this machine — if `docker compose` fails
   with a pipe/connection error, launch `Docker Desktop.exe` and wait for the engine before
   retrying.
+- **Pending migration, unapplied:** `20260922120000_add_technical_communication_score` was
+  hand-written (not generated via `prisma migrate dev`) while Postgres was unreachable this
+  session — `schema.prisma` already has the field, `prisma generate` was re-run so the client
+  matches, but the SQL has never actually run against any database. Run `pnpm db:migrate`
+  (needs `docker compose up -d` first) to apply it before trusting `technicalCommunicationScore`
+  against real data. If you hand-write another migration the same way: match the existing
+  `migration.sql` conventions exactly, re-run `prisma generate`, and leave a note like this one.
 
 ## Commands
 

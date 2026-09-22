@@ -9,6 +9,7 @@ export type CreateAnalysisInput = {
   vocabularyScore: number;
   clarityScore: number;
   naturalnessScore: number;
+  technicalCommunicationScore?: number;
   modelId: string;
 };
 

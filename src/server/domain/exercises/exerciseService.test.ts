@@ -50,7 +50,7 @@ function fakeGeneratedExercise() {
 
 describe("exerciseGenerationService.generatePracticeSet", () => {
   it("returns nothing when the user has no mistake patterns yet", async () => {
-    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn(), continueInterview: vi.fn() };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 
     const result = await service.generatePracticeSet(userId);
@@ -64,6 +64,7 @@ describe("exerciseGenerationService.generatePracticeSet", () => {
     const aiProvider: AIProvider = {
       analyzeWriting: vi.fn(),
       generateExercises: vi.fn().mockResolvedValue([fakeGeneratedExercise()]),
+      continueInterview: vi.fn(),
     };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 

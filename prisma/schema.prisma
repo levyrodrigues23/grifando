@@ -109,18 +109,21 @@ model WritingSession {
 }
 
 model WritingAnalysis {
-  id               String         @id @default(cuid())
-  sessionId        String         @unique
-  session          WritingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  correctedText    String
-  naturalText      String
-  overallFeedback  String
-  grammarScore     Int
-  vocabularyScore  Int
-  clarityScore     Int
-  naturalnessScore Int
-  modelId          String
-  createdAt        DateTime       @default(now())
+  id                          String         @id @default(cuid())
+  sessionId                   String         @unique
+  session                     WritingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  correctedText               String
+  naturalText                 String
+  overallFeedback             String
+  grammarScore                Int
+  vocabularyScore             Int
+  clarityScore                Int
+  naturalnessScore            Int
+  // Fifth scoring dimension, INTERVIEW mode only (SPEC.md §5.8) — null for
+  // every other writing mode.
+  technicalCommunicationScore Int?
+  modelId                     String
+  createdAt                   DateTime       @default(now())
 
   occurrences   MistakeOccurrence[]
   interviewTurn InterviewTurn?

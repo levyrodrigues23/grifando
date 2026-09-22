@@ -72,6 +72,12 @@ export function WritingResults({
             <ScoreBar label="Vocabulary" value={analysis.vocabularyScore} />
             <ScoreBar label="Clarity" value={analysis.clarityScore} />
             <ScoreBar label="Naturalness" value={analysis.naturalnessScore} />
+            {analysis.technicalCommunicationScore !== null ? (
+              <ScoreBar
+                label="Technical communication"
+                value={analysis.technicalCommunicationScore}
+              />
+            ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
             Scores are AI-generated heuristics to guide practice, not a validated English

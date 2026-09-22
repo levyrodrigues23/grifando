@@ -9,18 +9,26 @@ import {
   type ExerciseTarget,
 } from "@/server/ai/prompts/exerciseGeneration";
 import {
+  buildInterviewSystemPrompt,
+  buildInterviewUserMessage,
+  type InterviewHistoryItem,
+} from "@/server/ai/prompts/interview";
+import {
   buildWritingAnalysisSystemPrompt,
   buildWritingAnalysisUserMessage,
   type AnalyzeWritingInput,
 } from "@/server/ai/prompts/writingAnalysis";
 import type { AIProvider } from "@/server/ai/provider";
 import { exerciseGenerationResultSchema } from "@/server/ai/schemas/exerciseGeneration";
+import { interviewQuestionResultSchema } from "@/server/ai/schemas/interview";
 import { writingAnalysisResultSchema } from "@/server/ai/schemas/writingAnalysis";
 
 const WRITING_ANALYSIS_TOOL_NAME = "submit_writing_analysis";
 const WRITING_ANALYSIS_MAX_TOKENS = 4096;
 const EXERCISE_GENERATION_TOOL_NAME = "submit_exercises";
 const EXERCISE_GENERATION_MAX_TOKENS = 4096;
+const INTERVIEW_QUESTION_TOOL_NAME = "submit_interview_question";
+const INTERVIEW_QUESTION_MAX_TOKENS = 1024;
 
 // The only part of the Anthropic SDK this module depends on — keeps the
 // provider trivially mockable in tests without a real API client.
@@ -37,85 +45,91 @@ function findToolUseBlock(message: Message) {
   );
 }
 
-function buildWritingAnalysisTool(): Tool {
+function toTool(name: string, description: string, schema: z.ZodType): Tool {
   return {
-    name: WRITING_ANALYSIS_TOOL_NAME,
-    description: "Submit the structured analysis of the user's English writing.",
-    input_schema: z.toJSONSchema(writingAnalysisResultSchema) as Tool["input_schema"],
+    name,
+    description,
+    input_schema: z.toJSONSchema(schema) as Tool["input_schema"],
   };
 }
 
-function buildExerciseGenerationTool(): Tool {
-  return {
-    name: EXERCISE_GENERATION_TOOL_NAME,
-    description: "Submit the generated practice exercises, one per requested target.",
-    input_schema: z.toJSONSchema(exerciseGenerationResultSchema) as Tool["input_schema"],
-  };
+// Shared "force a tool call, validate its input" flow behind every provider
+// capability — the only difference between them is the prompt, the tool, and
+// which schema validates the response.
+async function callToolAndValidate<T>(
+  client: AnthropicMessagesClient,
+  args: { model: string; maxTokens: number; system: string; userMessage: string; tool: Tool },
+  schema: z.ZodType<T>,
+): Promise<T> {
+  const response = await client.messages.create({
+    model: args.model,
+    max_tokens: args.maxTokens,
+    system: args.system,
+    messages: [{ role: "user", content: args.userMessage }],
+    tools: [args.tool],
+    tool_choice: { type: "tool", name: args.tool.name },
+  });
+
+  const toolUseBlock = findToolUseBlock(response);
+
+  if (!toolUseBlock) {
+    throw new AIResponseValidationError("Model did not return a tool_use block", []);
+  }
+
+  const result = schema.safeParse(toolUseBlock.input);
+
+  if (!result.success) {
+    throw new AIResponseValidationError("Response failed schema validation", result.error.issues);
+  }
+
+  return result.data;
 }
 
 export function createAnthropicProvider(client: AnthropicMessagesClient, model: string): AIProvider {
   return {
     async analyzeWriting(input: AnalyzeWritingInput) {
-      const response = await client.messages.create({
-        model,
-        max_tokens: WRITING_ANALYSIS_MAX_TOKENS,
-        system: buildWritingAnalysisSystemPrompt(),
-        messages: [{ role: "user", content: buildWritingAnalysisUserMessage(input) }],
-        tools: [buildWritingAnalysisTool()],
-        tool_choice: { type: "tool", name: WRITING_ANALYSIS_TOOL_NAME },
-      });
-
-      const toolUseBlock = findToolUseBlock(response);
-
-      if (!toolUseBlock) {
-        throw new AIResponseValidationError("Model did not return a tool_use block", []);
-      }
-
-      const result = writingAnalysisResultSchema.safeParse(toolUseBlock.input);
-
-      if (!result.success) {
-        throw new AIResponseValidationError(
-          "Writing analysis response failed schema validation",
-          result.error.issues,
-        );
-      }
-
-      return result.data;
+      return callToolAndValidate(
+        client,
+        {
+          model,
+          maxTokens: WRITING_ANALYSIS_MAX_TOKENS,
+          system: buildWritingAnalysisSystemPrompt(),
+          userMessage: buildWritingAnalysisUserMessage(input),
+          tool: toTool(
+            WRITING_ANALYSIS_TOOL_NAME,
+            "Submit the structured analysis of the user's English writing.",
+            writingAnalysisResultSchema,
+          ),
+        },
+        writingAnalysisResultSchema,
+      );
     },
 
     async generateExercises(targets: ExerciseTarget[]) {
-      const response = await client.messages.create({
-        model,
-        max_tokens: EXERCISE_GENERATION_MAX_TOKENS,
-        system: buildExerciseGenerationSystemPrompt(),
-        messages: [{ role: "user", content: buildExerciseGenerationUserMessage(targets) }],
-        tools: [buildExerciseGenerationTool()],
-        tool_choice: { type: "tool", name: EXERCISE_GENERATION_TOOL_NAME },
-      });
+      const result = await callToolAndValidate(
+        client,
+        {
+          model,
+          maxTokens: EXERCISE_GENERATION_MAX_TOKENS,
+          system: buildExerciseGenerationSystemPrompt(),
+          userMessage: buildExerciseGenerationUserMessage(targets),
+          tool: toTool(
+            EXERCISE_GENERATION_TOOL_NAME,
+            "Submit the generated practice exercises, one per requested target.",
+            exerciseGenerationResultSchema,
+          ),
+        },
+        exerciseGenerationResultSchema,
+      );
 
-      const toolUseBlock = findToolUseBlock(response);
-
-      if (!toolUseBlock) {
-        throw new AIResponseValidationError("Model did not return a tool_use block", []);
-      }
-
-      const result = exerciseGenerationResultSchema.safeParse(toolUseBlock.input);
-
-      if (!result.success) {
+      if (result.exercises.length !== targets.length) {
         throw new AIResponseValidationError(
-          "Exercise generation response failed schema validation",
-          result.error.issues,
-        );
-      }
-
-      if (result.data.exercises.length !== targets.length) {
-        throw new AIResponseValidationError(
-          `Expected ${targets.length} exercises, got ${result.data.exercises.length}`,
+          `Expected ${targets.length} exercises, got ${result.exercises.length}`,
           [],
         );
       }
 
-      const invalidMultipleChoice = result.data.exercises.find(
+      const invalidMultipleChoice = result.exercises.find(
         (exercise) =>
           exercise.type === "MULTIPLE_CHOICE" &&
           exercise.correctOptionIndex >= exercise.options.length,
@@ -128,7 +142,25 @@ export function createAnthropicProvider(client: AnthropicMessagesClient, model: 
         );
       }
 
-      return result.data.exercises;
+      return result.exercises;
+    },
+
+    async continueInterview(history: InterviewHistoryItem[]) {
+      return callToolAndValidate(
+        client,
+        {
+          model,
+          maxTokens: INTERVIEW_QUESTION_MAX_TOKENS,
+          system: buildInterviewSystemPrompt(),
+          userMessage: buildInterviewUserMessage(history),
+          tool: toTool(
+            INTERVIEW_QUESTION_TOOL_NAME,
+            "Submit the next interview question.",
+            interviewQuestionResultSchema,
+          ),
+        },
+        interviewQuestionResultSchema,
+      );
     },
   };
 }
