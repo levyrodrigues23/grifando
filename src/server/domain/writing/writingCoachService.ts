@@ -65,6 +65,7 @@ export function createWritingCoachService(deps: {
         vocabularyScore: result.scores.vocabulary,
         clarityScore: result.scores.clarity,
         naturalnessScore: result.scores.naturalness,
+        technicalCommunicationScore: result.scores.technicalCommunication,
         modelId,
       });
 

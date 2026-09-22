@@ -61,4 +61,17 @@ describe("writingAnalysisResultSchema", () => {
     const result = writingAnalysisResultSchema.safeParse("not even an object");
     expect(result.success).toBe(false);
   });
+
+  it("accepts an optional technicalCommunication score for INTERVIEW mode", () => {
+    const result = writingAnalysisResultSchema.safeParse({
+      ...validResult(),
+      scores: { ...validResult().scores, technicalCommunication: 75 },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("omitting technicalCommunication is fine for every other mode", () => {
+    const result = writingAnalysisResultSchema.safeParse(validResult());
+    expect(result.success && result.data.scores.technicalCommunication).toBeUndefined();
+  });
 });

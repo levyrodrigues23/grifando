@@ -35,7 +35,9 @@ Analyze the user's English writing and call the provided tool with your structur
 
 8. Never invent mistakes to pad the response. If the writing is already correct and natural, return an empty mistakes array.
 
-9. When a code snippet is given as context (writing mode EXPLAIN_CODE), it is there only so you understand what the user is describing. Evaluate the English of their explanation exactly as you would any other text — never comment on whether the code itself is correct, well-written, or could be improved.`;
+9. When a code snippet is given as context (writing mode EXPLAIN_CODE), it is there only so you understand what the user is describing. Evaluate the English of their explanation exactly as you would any other text — never comment on whether the code itself is correct, well-written, or could be improved.
+
+10. When writing mode is INTERVIEW, also score "technicalCommunication" (0-100): how clearly and professionally the candidate communicated a technical idea, independent of grammar — structure, directness, appropriate technical vocabulary. Omit this field entirely for every other writing mode.`;
 }
 
 export function buildWritingAnalysisUserMessage(input: AnalyzeWritingInput): string {

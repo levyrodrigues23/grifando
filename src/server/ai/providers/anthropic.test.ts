@@ -183,3 +183,38 @@ describe("createAnthropicProvider.generateExercises", () => {
     );
   });
 });
+
+describe("createAnthropicProvider.continueInterview", () => {
+  it("returns the validated next question", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        {
+          type: "tool_use",
+          id: "tool_1",
+          name: "submit_interview_question",
+          input: { question: "Tell me about a project you're proud of." },
+        },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    const result = await provider.continueInterview([]);
+
+    expect(result.question).toBe("Tell me about a project you're proud of.");
+  });
+
+  it("throws AIResponseValidationError when the tool input fails schema validation", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        { type: "tool_use", id: "tool_1", name: "submit_interview_question", input: {} },
+      ]),
+    );
+    const client: AnthropicMessagesClient = { messages: { create } };
+    const provider = createAnthropicProvider(client, "test-model");
+
+    await expect(provider.continueInterview([])).rejects.toBeInstanceOf(
+      AIResponseValidationError,
+    );
+  });
+});

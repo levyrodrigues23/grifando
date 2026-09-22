@@ -86,4 +86,10 @@ describe("buildWritingAnalysisSystemPrompt", () => {
     expect(prompt).toContain("EXPLAIN_CODE");
     expect(prompt.toLowerCase()).toContain("never comment on whether the code itself");
   });
+
+  it("instructs the model to score technicalCommunication for INTERVIEW mode", () => {
+    const prompt = buildWritingAnalysisSystemPrompt();
+    expect(prompt).toContain("INTERVIEW");
+    expect(prompt).toContain("technicalCommunication");
+  });
 });

@@ -1,0 +1,198 @@
+"use client";
+
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { TurnFeedback } from "@/components/interview/TurnFeedback";
+import type {
+  AnswerTurnResponse,
+  CompletedTurn,
+  InterviewTurnRef,
+  StartInterviewResponse,
+} from "@/components/interview/types";
+
+const MAX_LENGTH = 5000;
+const GENERIC_ERROR = "Something went wrong. Please try again.";
+
+type State =
+  | { kind: "idle"; errorMessage?: string }
+  | { kind: "starting" }
+  | {
+      kind: "active";
+      sessionId: string;
+      currentTurn: InterviewTurnRef;
+      history: CompletedTurn[];
+      errorMessage?: string;
+    }
+  | { kind: "submitting"; sessionId: string; currentTurn: InterviewTurnRef; history: CompletedTurn[] }
+  | { kind: "ended"; history: CompletedTurn[] };
+
+export function InterviewPractice() {
+  const [state, setState] = useState<State>({ kind: "idle" });
+  const [answer, setAnswer] = useState("");
+
+  async function handleStart() {
+    setState({ kind: "starting" });
+
+    try {
+      const response = await fetch("/api/interview", { method: "POST" });
+      if (!response.ok) {
+        setState({ kind: "idle", errorMessage: GENERIC_ERROR });
+        return;
+      }
+
+      const data = (await response.json()) as StartInterviewResponse;
+      setState({ kind: "active", sessionId: data.sessionId, currentTurn: data.turn, history: [] });
+    } catch {
+      setState({ kind: "idle", errorMessage: GENERIC_ERROR });
+    }
+  }
+
+  async function handleSubmit() {
+    if (state.kind !== "active") return;
+    const { sessionId, currentTurn, history } = state;
+
+    setState({ kind: "submitting", sessionId, currentTurn, history });
+
+    try {
+      const response = await fetch(
+        `/api/interview/${sessionId}/turns/${currentTurn.id}/answer`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answer }),
+        },
+      );
+
+      if (!response.ok) {
+        setState({ kind: "active", sessionId, currentTurn, history, errorMessage: GENERIC_ERROR });
+        return;
+      }
+
+      const result = (await response.json()) as AnswerTurnResponse;
+
+      if (result.status === "failed") {
+        setState({ kind: "active", sessionId, currentTurn, history, errorMessage: result.message });
+        return;
+      }
+
+      const completedTurn: CompletedTurn = {
+        question: currentTurn.question,
+        answer,
+        analysis: result.analysis,
+      };
+      const nextHistory = [...history, completedTurn];
+      setAnswer("");
+
+      if (result.status === "ended") {
+        setState({ kind: "ended", history: nextHistory });
+        return;
+      }
+
+      setState({ kind: "active", sessionId, currentTurn: result.nextTurn, history: nextHistory });
+    } catch {
+      setState({ kind: "active", sessionId, currentTurn, history, errorMessage: GENERIC_ERROR });
+    }
+  }
+
+  async function handleEnd() {
+    if (state.kind !== "active") return;
+    try {
+      await fetch(`/api/interview/${state.sessionId}/end`, { method: "POST" });
+    } catch {
+      // Ending is best-effort — show the wrap-up regardless.
+    }
+    setState({ kind: "ended", history: state.history });
+  }
+
+  function handleRestart() {
+    setAnswer("");
+    setState({ kind: "idle" });
+  }
+
+  if (state.kind === "idle" || state.kind === "starting") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Interview Practice</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            A text-based software engineering interview. The interviewer asks a question, you
+            answer in English, and each answer is scored — including how clearly you communicate
+            technical ideas.
+          </p>
+          {state.kind === "idle" && state.errorMessage ? (
+            <p className="text-sm text-destructive">{state.errorMessage}</p>
+          ) : null}
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleStart} disabled={state.kind === "starting"}>
+            {state.kind === "starting" ? "Starting..." : "Start interview"}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  if (state.kind === "ended") {
+    return (
+      <div className="space-y-6">
+        {state.history.map((turn, index) => (
+          <TurnFeedback key={index} turn={turn} />
+        ))}
+        <Card>
+          <CardContent className="flex items-center justify-between pt-4">
+            <p className="text-sm">Interview complete.</p>
+            <Button onClick={handleRestart} variant="outline">
+              Start a new interview
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isSubmitting = state.kind === "submitting";
+
+  return (
+    <div className="space-y-6">
+      {state.history.map((turn, index) => (
+        <TurnFeedback key={index} turn={turn} />
+      ))}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Interviewer</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="rounded-md bg-muted px-3 py-2 text-sm">{state.currentTurn.question}</p>
+          <Textarea
+            value={answer}
+            onChange={(event) => setAnswer(event.target.value)}
+            maxLength={MAX_LENGTH}
+            rows={6}
+            placeholder="Answer in English..."
+            disabled={isSubmitting}
+          />
+          <div className="text-right text-xs text-muted-foreground">
+            {answer.length} / {MAX_LENGTH}
+          </div>
+          {state.kind === "active" && state.errorMessage ? (
+            <p className="text-sm text-destructive">{state.errorMessage}</p>
+          ) : null}
+        </CardContent>
+        <CardFooter className="justify-between">
+          <Button variant="outline" onClick={handleEnd} disabled={isSubmitting}>
+            End interview
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || answer.trim().length === 0}>
+            {isSubmitting ? "Submitting..." : "Submit answer"}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

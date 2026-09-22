@@ -19,6 +19,7 @@ export type WritingAnalysisDTO = {
   vocabularyScore: number;
   clarityScore: number;
   naturalnessScore: number;
+  technicalCommunicationScore: number | null;
   occurrences: MistakeOccurrenceDTO[];
 };
 

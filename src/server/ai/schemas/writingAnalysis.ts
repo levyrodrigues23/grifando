@@ -25,6 +25,10 @@ export const writingAnalysisResultSchema = z.object({
     vocabulary: scoreSchema,
     clarity: scoreSchema,
     naturalness: scoreSchema,
+    // INTERVIEW mode only — a fifth dimension for how clearly the candidate
+    // communicated technical ideas (SPEC.md §5.8). Omitted for every other
+    // writing mode.
+    technicalCommunication: scoreSchema.optional(),
   }),
   mistakes: z.array(mistakeResultSchema).max(50),
 });
