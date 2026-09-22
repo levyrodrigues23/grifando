@@ -19,10 +19,10 @@ export function HighlightedText({
           <a
             key={index}
             href={`#mistake-${segment.mistakeIndex}`}
-            className="rounded bg-amber-200/60 px-0.5 underline decoration-amber-500 decoration-2 underline-offset-2 dark:bg-amber-900/40"
+            className="rounded bg-ember/15 px-0.5 underline decoration-ember decoration-2 underline-offset-2"
           >
             {segment.text}
-            <sup className="ml-0.5 font-semibold text-amber-700 dark:text-amber-400">
+            <sup className="ml-0.5 font-semibold text-ember">
               {segment.mistakeIndex + 1}
             </sup>
           </a>

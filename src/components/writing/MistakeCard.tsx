@@ -18,7 +18,7 @@ export function MistakeCard({ mistake, index }: { mistake: MistakeOccurrenceDTO;
         <p className="text-sm">
           <span className="text-destructive line-through">{mistake.originalSpan}</span>
           {" → "}
-          <span className="font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="font-medium text-success">
             {mistake.correctedSpan}
           </span>
         </p>

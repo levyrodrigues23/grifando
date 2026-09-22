@@ -4,6 +4,48 @@ Personal AI English Coach. Full product spec: `SPEC.md`. Read it before working 
 feature-level change — this file only covers things a future session needs that aren't
 obvious from the code.
 
+## Design system — "Darkroom product editorial"
+
+Single dark theme (no light mode, no toggle) adapted from a user-supplied reference built for
+a product-showcase landing page. Tokens live in `src/app/globals.css`'s `:root` (mirrored in
+`.dark` in case that class is ever applied). Fidelity to these tokens matters — don't
+reintroduce Tailwind's stock colors (`amber-*`, `emerald-*`, etc.) or a light theme.
+
+- **Palette**: `--background`/`--card`/`--popover` #100904 (Walnut Shadow) — cards are the same
+  color as the page and rely on a `ring-border` hairline, not a lighter fill, for separation.
+  `--foreground` #ffedd7 (Warm Cream). `--primary` #382416 (Bark Brown, the one filled-button
+  color). `--border`/`--input` #40372e (Cork Border). `--muted-foreground` a lightened
+  Driftwood (#a08e79) for readable secondary text. `--ember` / `--ring` #dc5000 is the *rare*
+  accent — see below.
+- **Ember is rare on purpose**: reserved for focus rings, the progress/score-bar fill, and
+  highlighted mistake spans in `HighlightedText.tsx` — deliberately *not* wired into generic
+  nav-link hovers or the Button/Badge `link` variant (those use underline + cream text
+  instead). Don't add `hover:text-ember` or similar to everyday chrome; it breaks the "rarity"
+  the reference explicitly calls for.
+- **`--destructive` (#c1442e) and `--success` (#7c8f5a) are not in the source reference** — a
+  product-showcase page never needed error/positive states. They're a warm red and a muted
+  warm green mixed to fit the existing palette family. Reuse them for anything error/positive
+  (form validation, "Incorrect"/"Correct" badges, mastery states); don't invent a third
+  ad-hoc semantic color.
+- **Uppercase is for chrome, not content**: nav, `CardTitle`, buttons, and badges are
+  `uppercase tracking-normal` (baked into those components, not applied per-page). Body text —
+  AI feedback, mistake explanations, exercise instructions/options, textarea/input content —
+  stays normal case. This is a deliberate adaptation of the reference (which uppercases nearly
+  everything on a low-density marketing page); a dense app with paragraphs of feedback needs
+  the mixed-case readability. Don't uppercase real sentence content to chase literal fidelity.
+- **Inputs are underline-only** (`border-0 border-b`, `rounded-none`), not boxed — see
+  `input.tsx`/`textarea.tsx`. Buttons are full pill (`rounded-full`) — see `button.tsx`. Cards
+  keep the default `rounded-xl` (~12-17px depending on `--radius`), never below that.
+- **Dividers are dashed** (`border-dashed`): `SiteHeader`'s bottom border, `CardFooter`'s top
+  border, and the `Separator` component all use dashed hairlines, not solid lines — matches
+  the reference's "Section Divider (Dashed Hairline)" component.
+- Font is Inter (`--font-sans`) + JetBrains Mono (`--font-mono`), the reference's suggested
+  substitutes for its licensed display typeface — set in `src/app/layout.tsx`. (This also
+  fixed a pre-existing bug: `globals.css` referenced `--font-sans`/`--font-geist-mono` but
+  `layout.tsx` only ever set `--font-geist-sans`/`--font-geist-mono`, so `--font-sans` was
+  never actually defined and the app silently fell back to a serif system font the whole time
+  before this pass.)
+
 ## Stack & versions (pinned deliberately — do not "helpfully" bump)
 
 - TypeScript is pinned to `5.9.3`, **not** the TS 7 line. `typescript-eslint` does not support

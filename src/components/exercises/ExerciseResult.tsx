@@ -27,7 +27,7 @@ export function ExerciseResult({
     <Card>
       <CardHeader>
         <CardTitle>
-          <Badge variant={result.isCorrect ? "secondary" : "destructive"}>
+          <Badge variant={result.isCorrect ? "success" : "destructive"}>
             {result.isCorrect ? "Correct" : "Not quite"}
           </Badge>
         </CardTitle>
