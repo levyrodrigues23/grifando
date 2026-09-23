@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { exerciseGenerationResultSchema } from "@/server/ai/schemas/exerciseGeneration";
+import { AIResponseValidationError } from "@/server/ai/errors";
+import {
+  exerciseGenerationResultSchema,
+  validateExerciseGenerationResult,
+} from "@/server/ai/schemas/exerciseGeneration";
+
+function mcExercise(correctOptionIndex: number) {
+  return {
+    type: "MULTIPLE_CHOICE" as const,
+    instruction: "Choose the correct sentence.",
+    explanation: "Use 'depend on', not 'depend of'.",
+    options: ["I depend of this library.", "I depend on this library."],
+    correctOptionIndex,
+  };
+}
 
 describe("exerciseGenerationResultSchema", () => {
   it("accepts one well-formed exercise of each type", () => {
@@ -80,5 +94,24 @@ describe("exerciseGenerationResultSchema", () => {
       ],
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("validateExerciseGenerationResult", () => {
+  it("returns the exercises when the count matches and every MC index is in range", () => {
+    const result = validateExerciseGenerationResult({ exercises: [mcExercise(1)] }, 1);
+    expect(result).toHaveLength(1);
+  });
+
+  it("throws when the exercise count doesn't match the requested target count", () => {
+    expect(() => validateExerciseGenerationResult({ exercises: [mcExercise(1)] }, 2)).toThrow(
+      AIResponseValidationError,
+    );
+  });
+
+  it("throws when a multiple-choice correctOptionIndex is out of range", () => {
+    expect(() => validateExerciseGenerationResult({ exercises: [mcExercise(5)] }, 1)).toThrow(
+      AIResponseValidationError,
+    );
   });
 });

@@ -124,14 +124,30 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
 - Mistake dedup relies on the AI-proposed `patternKey` per mistake, normalized in
   `mistakePatternRepository.upsertPattern` (`src/server/domain/mistakes/patternKey.ts`). Don't
   build separate fuzzy-matching/embedding-based clustering for this — see SPEC.md §6.
-- `getAIProvider()` in `src/server/ai/client.ts` is the one place that reads
-  `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` and constructs the real Anthropic client — it throws
-  lazily on first use, not at import time, so importing AI modules never breaks tests that
-  don't need a real key. `AIProvider` methods are added one at a time, only when a feature
-  phase needs them (currently just `analyzeWriting`) — don't pre-add stub methods.
-- `createAnthropicProvider` takes a minimal `AnthropicMessagesClient` (just the `messages.create`
-  shape it uses), not the full `Anthropic` class, specifically so tests can pass a plain
-  `{ messages: { create: vi.fn() } }` fake instead of mocking the SDK.
+- `getAIProvider()` in `src/server/ai/client.ts` is the one place that reads `AI_PROVIDER`
+  (`"anthropic"` default, or `"gemini"`) plus that provider's API key/model env vars and
+  constructs the real client — it throws lazily on first use, not at import time, so importing
+  AI modules never breaks tests that don't need a real key. `AIProvider` methods (currently
+  `analyzeWriting`/`generateExercises`/`continueInterview`) are added one at a time, only when
+  a feature phase needs them — don't pre-add stub methods, and implement any new one in *both*
+  `providers/anthropic.ts` and `providers/gemini.ts` (the interface is the contract; letting one
+  provider silently lag breaks the "swap providers freely" premise the whole abstraction exists
+  for).
+- `createAnthropicProvider`/`createGeminiProvider` each take a minimal client shape (just the
+  one method they call — `messages.create` / `models.generateContent`), not the full SDK class,
+  specifically so tests can pass a plain `{ ...: vi.fn() }` fake instead of mocking the SDK.
+- The two providers get structured output two different ways — **don't try to unify them,
+  the mechanisms are genuinely different**: Anthropic forces a `tool_use` block via
+  `tool_choice: { type: "tool", name }` and reads `toolUseBlock.input`; Gemini uses native JSON
+  mode (`responseMimeType: "application/json"` + `responseJsonSchema`) and `JSON.parse`s
+  `response.text`. Both hand the parsed value to the exact same Zod schema afterward, and both
+  funnel exercise-generation's provider-agnostic checks (count matches the request, MC
+  `correctOptionIndex` in range) through the one shared `validateExerciseGenerationResult`
+  (`src/server/ai/schemas/exerciseGeneration.ts`) — extend that function, don't reimplement the
+  checks in a provider file.
+- Gemini model is pinned to `gemini-3.8-flash` (current stable general-purpose Flash model as
+  of this writing, confirmed against Google's own docs — not a `-latest` floating alias, same
+  pin-exact-versions philosophy as the rest of this stack).
 - Exercise generation and exercise grading are two separate services
   (`createExerciseGenerationService` / `createExerciseAttemptService` in
   `src/server/domain/exercises/exerciseService.ts`), not one. Grading is fully deterministic

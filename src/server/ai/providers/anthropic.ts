@@ -19,7 +19,10 @@ import {
   type AnalyzeWritingInput,
 } from "@/server/ai/prompts/writingAnalysis";
 import type { AIProvider } from "@/server/ai/provider";
-import { exerciseGenerationResultSchema } from "@/server/ai/schemas/exerciseGeneration";
+import {
+  exerciseGenerationResultSchema,
+  validateExerciseGenerationResult,
+} from "@/server/ai/schemas/exerciseGeneration";
 import { interviewQuestionResultSchema } from "@/server/ai/schemas/interview";
 import { writingAnalysisResultSchema } from "@/server/ai/schemas/writingAnalysis";
 
@@ -122,27 +125,7 @@ export function createAnthropicProvider(client: AnthropicMessagesClient, model: 
         exerciseGenerationResultSchema,
       );
 
-      if (result.exercises.length !== targets.length) {
-        throw new AIResponseValidationError(
-          `Expected ${targets.length} exercises, got ${result.exercises.length}`,
-          [],
-        );
-      }
-
-      const invalidMultipleChoice = result.exercises.find(
-        (exercise) =>
-          exercise.type === "MULTIPLE_CHOICE" &&
-          exercise.correctOptionIndex >= exercise.options.length,
-      );
-
-      if (invalidMultipleChoice) {
-        throw new AIResponseValidationError(
-          "A multiple-choice exercise's correctOptionIndex is out of range",
-          [],
-        );
-      }
-
-      return result.exercises;
+      return validateExerciseGenerationResult(result, targets.length);
     },
 
     async continueInterview(history: InterviewHistoryItem[]) {

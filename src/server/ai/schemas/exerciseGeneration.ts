@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AIResponseValidationError } from "@/server/ai/errors";
+
 const baseFields = {
   instruction: z.string().min(1).max(300),
   explanation: z.string().min(1).max(1000),
@@ -46,3 +48,31 @@ export const exerciseGenerationResultSchema = z.object({
 
 export type GeneratedExercise = z.infer<typeof generatedExerciseSchema>;
 export type ExerciseGenerationResult = z.infer<typeof exerciseGenerationResultSchema>;
+
+// Provider-agnostic business rules on top of schema validity — shared by
+// every AIProvider implementation so they don't each reimplement these checks.
+export function validateExerciseGenerationResult(
+  result: ExerciseGenerationResult,
+  targetCount: number,
+): GeneratedExercise[] {
+  if (result.exercises.length !== targetCount) {
+    throw new AIResponseValidationError(
+      `Expected ${targetCount} exercises, got ${result.exercises.length}`,
+      [],
+    );
+  }
+
+  const invalidMultipleChoice = result.exercises.find(
+    (exercise) =>
+      exercise.type === "MULTIPLE_CHOICE" && exercise.correctOptionIndex >= exercise.options.length,
+  );
+
+  if (invalidMultipleChoice) {
+    throw new AIResponseValidationError(
+      "A multiple-choice exercise's correctOptionIndex is out of range",
+      [],
+    );
+  }
+
+  return result.exercises;
+}

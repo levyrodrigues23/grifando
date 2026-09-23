@@ -24,14 +24,14 @@ spec in [`SPEC.md`](./SPEC.md); development conventions in [`CLAUDE.md`](./CLAUD
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn/ui · PostgreSQL
-· Prisma 7 · Zod 4 · Vitest · Anthropic Claude API · pnpm
+· Prisma 7 · Zod 4 · Vitest · Anthropic Claude API or Google Gemini (either works) · pnpm
 
 ## Prerequisites
 
 - Node.js 22+
 - pnpm
 - Docker Desktop (for local Postgres)
-- An Anthropic API key
+- An Anthropic Claude or Google Gemini API key (either works — see `AI_PROVIDER` below)
 
 ## Local setup
 
@@ -78,8 +78,9 @@ Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn
 See [`.env.example`](./.env.example):
 
 - `DATABASE_URL` — Postgres connection string.
-- `ANTHROPIC_API_KEY` — your Claude API key.
-- `ANTHROPIC_MODEL` — model id used for writing analysis and exercise generation.
+- `AI_PROVIDER` — `anthropic` (default) or `gemini`. Only that provider's key is required.
+- `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` — used when `AI_PROVIDER=anthropic`.
+- `GEMINI_API_KEY` / `GEMINI_MODEL` — used when `AI_PROVIDER=gemini`.
 
 ## Commands
 
