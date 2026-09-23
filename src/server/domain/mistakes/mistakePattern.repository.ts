@@ -56,6 +56,16 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
       return prisma.mistakePattern.findUnique({ where: { id } });
     },
 
+    // Recency order (vs. listByUser's frequency order) — for a dashboard's
+    // "recent mistakes" glance rather than the Mistake Notebook's full list.
+    async listRecentByUser(userId: string, options: { limit?: number } = {}) {
+      return prisma.mistakePattern.findMany({
+        where: { userId },
+        orderBy: { lastSeenAt: "desc" },
+        take: options.limit,
+      });
+    },
+
     async updateMastery(
       id: string,
       data: { masteryLevel: MasteryLevel; consecutiveCorrectCount: number },
