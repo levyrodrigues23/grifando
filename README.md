@@ -4,6 +4,23 @@ A personal writing coach for English that learns from your own mistakes and turn
 practice — not a generic grammar checker, not a chat window in front of an LLM. Full product
 spec in [`SPEC.md`](./SPEC.md); development conventions in [`CLAUDE.md`](./CLAUDE.md).
 
+## Features
+
+- **Writing Coach** — write freely and get structured feedback: corrected text, a separate
+  "natural" rephrasing, inline mistake highlights linked to explanations, and heuristic scores.
+- **Mistake Notebook** — recurring mistakes collapse into patterns (not one row per typo), with
+  frequency, mastery, and a category breakdown.
+- **Personalized exercises** — multiple choice, fill-in-the-blank, rewrite, and translation
+  exercises generated from your own weak patterns, with an active-recall flow.
+- **Daily Writing** — a rotating challenge prompt, biased toward your current weak categories.
+- **Technical English** — prompts across 14 developer categories (backend, git, system design, …).
+- **Explain Code** — paste a snippet, explain what it does in English; the code is context
+  only, never graded itself.
+- **Interview Practice** — a turn-based text interview that scores each answer, including how
+  clearly you communicate technical ideas.
+- **Dashboard** — today's challenge, progress summary, weak areas, a practice recommendation,
+  and recent activity, all in one glance.
+
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn/ui · PostgreSQL
@@ -42,7 +59,13 @@ Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn
    pnpm db:migrate
    ```
 
-5. Start the dev server:
+5. Seed the default user:
+
+   ```bash
+   pnpm db:seed
+   ```
+
+6. Start the dev server:
 
    ```bash
    pnpm dev
@@ -75,4 +98,8 @@ See [`.env.example`](./.env.example):
 
 ## Project status
 
-In active, incremental development. See `SPEC.md` for the roadmap and current MVP scope.
+MVP feature-complete — all ten roadmap phases in `SPEC.md` are implemented: scaffold, domain
+model, AI layer, Writing Coach, Mistake Notebook, personalized exercises, Daily Writing,
+Technical English/Explain Code, Interview Practice, and this dashboard. See `SPEC.md` for the
+full spec and what's explicitly out of scope for the MVP (voice, multi-user auth, deployment,
+etc.).

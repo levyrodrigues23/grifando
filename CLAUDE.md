@@ -158,6 +158,15 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   (`src/server/domain/writing/{dailyPrompt,technicalPrompts}.ts`) resolved server-side in
   `/write`'s page component from a `?promptId=`/`?mode=daily` query param — never trust a
   client-supplied prompt string for what gets analyzed or stored.
+- The dashboard (`src/app/page.tsx`) is a Server Component that queries repositories directly
+  (`Promise.all` of several parallel reads), the same pattern as `/mistakes` and `/technical` —
+  no API route needed for a read-only page. The dashboard-specific repository methods
+  (`writingSessionRepository.countAnalyzed`/`listRecentAnalyzed`,
+  `exerciseAttemptRepository.countByUser`, `mistakePatternRepository.listRecentByUser`) exist
+  only for this; reuse them rather than adding near-duplicate query methods elsewhere.
+  `computeAverageScores` (`src/server/domain/progress/progress.ts`) is the one place that
+  averages scores across sessions — deliberately simple (a rounded mean), per SPEC.md's
+  "avoid fake precision" warning about heuristic scores.
 
 ## Lint gotcha: impure calls in Server Components
 

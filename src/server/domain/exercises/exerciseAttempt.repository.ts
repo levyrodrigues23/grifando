@@ -12,6 +12,10 @@ export function createExerciseAttemptRepository(prisma: PrismaClient) {
     async create(input: CreateAttemptInput) {
       return prisma.exerciseAttempt.create({ data: input });
     },
+
+    async countByUser(userId: string) {
+      return prisma.exerciseAttempt.count({ where: { exercise: { userId } } });
+    },
   };
 }
 
