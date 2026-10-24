@@ -1,0 +1,40 @@
+name: Funcionalidade
+description: Propor uma funcionalidade nova ou uma melhoria
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / motivação
+      description: Que necessidade de aprendizado (ou de uso) isso resolve? Por que agora?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: O comportamento desejado. Cite os arquivos/camadas envolvidos se já souber (ver a arquitetura no CLAUDE.md).
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      placeholder: |
+        - [ ] ...
+        - [ ] Testes cobrindo a lógica pura / o serviço
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto e fontes
+      description: Links para SPEC.md, docs/research, issues relacionadas, épico.
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impacto
+      options:
+        - label: Precisa de migration no banco
+        - label: Precisa de método novo no AIProvider (implementar em anthropic e gemini)
+        - label: Muda o escopo do SPEC.md (atualizar o SPEC junto)

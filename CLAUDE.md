@@ -63,25 +63,30 @@ reintroduce Tailwind's stock colors (`amber-*`, `emerald-*`, etc.) or a light th
 - Docker Desktop does not start automatically on this machine — if `docker compose` fails
   with a pipe/connection error, launch `Docker Desktop.exe` and wait for the engine before
   retrying.
-- **Pending migration, unapplied:** `20260922120000_add_technical_communication_score` was
-  hand-written (not generated via `prisma migrate dev`) while Postgres was unreachable this
-  session — `schema.prisma` already has the field, `prisma generate` was re-run so the client
-  matches, but the SQL has never actually run against any database. Run `pnpm db:migrate`
-  (needs `docker compose up -d` first) to apply it before trusting `technicalCommunicationScore`
-  against real data. If you hand-write another migration the same way: match the existing
-  `migration.sql` conventions exactly, re-run `prisma generate`, and leave a note like this one.
+- Use `127.0.0.1`, not `localhost`, in `DATABASE_URL`/`TEST_DATABASE_URL`. On this Windows
+  machine Prisma's pg adapter fails with `P1001` against `localhost:5432` even though the
+  container is up and a plain Node TCP connect works; `127.0.0.1` connects fine.
+- Generate migrations with `pnpm db:migrate` against a running Postgres. If one ever has to be
+  hand-written (DB unreachable), match the existing `migration.sql` conventions exactly,
+  re-run `prisma generate`, and leave a note here until it has been applied.
 
 ## Commands
 
 - `pnpm dev` — start the Next.js dev server (Turbopack, default since Next 16).
 - `pnpm test` — run Vitest once. `pnpm test:watch` for watch mode.
-- `pnpm typecheck` — `tsc --noEmit`. Run `pnpm exec next typegen` first if it fails on
-  `LayoutProps`/`PageProps`/etc. not found — those are generated route-type helpers.
+- `pnpm typecheck` — `next typegen && tsc --noEmit`. The typegen step generates the route-type
+  helpers (`LayoutProps`/`PageProps`); without it `tsc` fails on a fresh checkout. If `tsc`
+  reports syntax errors inside `.next/dev/types/`, a dev server was killed mid-write — delete
+  that folder and re-run.
 - `pnpm lint` — ESLint (flat config; `next lint` was removed in Next 16).
+- `pnpm check` — typecheck + lint + test, the same gates CI runs (CI also builds).
 - `pnpm build` — production build.
 - `docker compose up -d` — start local Postgres (must be running before any `db:*` command
   or `pnpm dev` route that touches the database).
-- `pnpm db:migrate` — create/apply a Prisma migration.
+- `pnpm db:migrate` — create/apply a Prisma migration (dev). `pnpm db:deploy` applies existing
+  migrations without creating new ones.
+- `pnpm db:test:prepare` — create `english_coach_test` if missing and apply all migrations to
+  it (`scripts/prepare-test-db.ts`). Run after pulling new migrations, before `pnpm test`.
 - `pnpm db:studio` — inspect the DB.
 - `pnpm db:seed` — run `prisma/seed.ts`.
 - `prisma generate` also runs automatically on `pnpm install` (`postinstall` script).
@@ -209,7 +214,8 @@ dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` 
   mastery transitions, exercise selection) directly.
 - Integration tests that touch Postgres use `english_coach_test` (via
   `createTestPrismaClient()` / `resetDatabase()` in `src/server/db/test-utils.ts`), never the
-  dev database. Postgres must be running (`docker compose up -d`) before `pnpm test`.
+  dev database. Postgres must be running (`docker compose up -d`) and the test DB prepared
+  (`pnpm db:test:prepare`) before `pnpm test`.
 - `vitest.config.mts` sets `fileParallelism: false`. Integration test files share one real
   database and race each other's truncate/seed steps if run in parallel — don't remove this
   to "speed things up" without giving each test file its own isolated data (e.g. per-file user
@@ -220,3 +226,11 @@ dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` 
 - Work in the small phases listed in the roadmap the human approved; after each phase, run
   typecheck + lint + relevant tests before calling it done.
 - Don't add features beyond the current phase's scope without checking in first.
+- Git flow, branch naming, labels, and PR rules live in `CONTRIBUTING.md`. In short: branch
+  from `develop`, PR back to `develop` (CI must be green), `develop` → `main` for releases.
+  The GitHub repo is `levyrodrigues23/inglesando` (renamed from `projeto_ingles`; the local
+  folder kept the old name).
+- Work is tracked as GitHub issues written in Portuguese. The current roadmap is the
+  retention epic (#8), planned from `docs/research/duolingo.md` — read its Part A before
+  touching mastery, exercise selection, or scheduling.
+- Don't add the "Generated with Claude Code" footer to PR descriptions.

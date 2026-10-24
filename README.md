@@ -1,8 +1,20 @@
-# AI English Coach
+# Inglesando
 
-A personal writing coach for English that learns from your own mistakes and turns them into
-practice — not a generic grammar checker, not a chat window in front of an LLM. Full product
-spec in [`SPEC.md`](./SPEC.md); development conventions in [`CLAUDE.md`](./CLAUDE.md).
+A personal AI English coach for a Brazilian developer: it learns from your own mistakes and
+turns them into practice — not a generic grammar checker, not a chat window in front of an
+LLM.
+
+[![CI](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml)
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [`SPEC.md`](./SPEC.md) | Product spec: purpose, features, domain model, what is out of scope |
+| [`CLAUDE.md`](./CLAUDE.md) | Development conventions: architecture rules, design system, pinned versions, gotchas |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Git flow, branches, issues, PRs, labels, CI |
+| [`docs/research/duolingo.md`](./docs/research/duolingo.md) | How Duolingo drives retention, and how it maps onto this app (roadmap source) |
+| [`AGENTS.md`](./AGENTS.md) | Next.js 16 notes for coding agents |
 
 ## Features
 
@@ -19,88 +31,86 @@ spec in [`SPEC.md`](./SPEC.md); development conventions in [`CLAUDE.md`](./CLAUD
 - **Interview Practice** — a turn-based text interview that scores each answer, including how
   clearly you communicate technical ideas.
 - **Dashboard** — today's challenge, progress summary, weak areas, a practice recommendation,
-  and recent activity, all in one glance.
+  and recent activity.
+- **Focus Music** — a header player: paste a Spotify or YouTube playlist link and keep it
+  playing while you study.
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn/ui · PostgreSQL
-· Prisma 7 · Zod 4 · Vitest · Anthropic Claude API or Google Gemini (either works) · pnpm
+Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4 + shadcn/ui · PostgreSQL 17
+· Prisma 7 · Zod 4 · Vitest · Anthropic Claude or Google Gemini (either works) · pnpm
 
 ## Prerequisites
 
-- Node.js 22+
-- pnpm
-- Docker Desktop (for local Postgres)
-- An Anthropic Claude or Google Gemini API key (either works — see `AI_PROVIDER` below)
+- Node.js 22+ (`.nvmrc` pins the version CI uses)
+- pnpm (version pinned in `package.json` → `packageManager`; `corepack enable` picks it up)
+- Docker Desktop (local Postgres)
+- An Anthropic or Google Gemini API key
 
 ## Local setup
 
-1. Install dependencies:
+```bash
+pnpm install                 # also runs `prisma generate`
+cp .env.example .env         # then set AI_PROVIDER and that provider's API key
+docker compose up -d         # Postgres on 127.0.0.1:5432
+pnpm db:deploy               # apply migrations to the dev database
+pnpm db:seed                 # create the single default user
+pnpm dev                     # http://localhost:3000
+```
 
-   ```bash
-   pnpm install
-   ```
+To run the test suite, prepare the separate test database once (and again after pulling new
+migrations):
 
-2. Copy the environment template and fill in your Anthropic API key:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Start Postgres:
-
-   ```bash
-   docker compose up -d
-   ```
-
-4. Apply database migrations:
-
-   ```bash
-   pnpm db:migrate
-   ```
-
-5. Seed the default user:
-
-   ```bash
-   pnpm db:seed
-   ```
-
-6. Start the dev server:
-
-   ```bash
-   pnpm dev
-   ```
-
-   The app runs at [http://localhost:3000](http://localhost:3000).
+```bash
+pnpm db:test:prepare         # creates english_coach_test and migrates it
+pnpm test
+```
 
 ## Environment variables
 
 See [`.env.example`](./.env.example):
 
-- `DATABASE_URL` — Postgres connection string.
-- `AI_PROVIDER` — `anthropic` (default) or `gemini`. Only that provider's key is required.
-- `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` — used when `AI_PROVIDER=anthropic`.
-- `GEMINI_API_KEY` / `GEMINI_MODEL` — used when `AI_PROVIDER=gemini`.
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Dev database. Use `127.0.0.1`, not `localhost` (see Troubleshooting). |
+| `TEST_DATABASE_URL` | Separate database for integration tests — they wipe it. |
+| `AI_PROVIDER` | `anthropic` (default) or `gemini`. Only that provider's key is required. |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | Used when `AI_PROVIDER=anthropic`. |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Used when `AI_PROVIDER=gemini`. |
+
+Tests never need an AI key: the AI provider is mocked.
 
 ## Commands
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start the dev server |
-| `pnpm build` | Production build |
-| `pnpm start` | Run the production build |
+| `pnpm dev` | Dev server (Turbopack) |
+| `pnpm build` / `pnpm start` | Production build / run it |
+| `pnpm check` | Typecheck + lint + tests (what CI runs, minus the build) |
+| `pnpm typecheck` | Generate route types, then `tsc --noEmit` |
 | `pnpm lint` | ESLint |
-| `pnpm typecheck` | TypeScript, no emit |
-| `pnpm test` | Run tests once |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm db:migrate` | Create/apply a Prisma migration |
-| `pnpm db:studio` | Open Prisma Studio |
-| `pnpm db:seed` | Seed the database |
+| `pnpm test` / `pnpm test:watch` | Vitest once / in watch mode |
+| `pnpm db:migrate` | Create and apply a new migration (dev) |
+| `pnpm db:deploy` | Apply existing migrations |
+| `pnpm db:test:prepare` | Create and migrate the test database |
+| `pnpm db:seed` | Seed the default user |
+| `pnpm db:studio` | Prisma Studio |
+
+## Troubleshooting
+
+- **`P1001: Can't reach database server at localhost:5432`** while the container is healthy:
+  use `127.0.0.1` in `DATABASE_URL`/`TEST_DATABASE_URL` (the template already does).
+- **`docker compose` fails with a pipe/connection error** (Windows): Docker Desktop isn't
+  running. Start it and wait for the engine.
+- **`tsc` errors inside `.next/dev/types/`**: a dev server was killed while writing route
+  types. Delete `.next/dev/types` and run `pnpm typecheck` again.
+- **A package's postinstall script is blocked by pnpm**: add it to `allowBuilds` in
+  `pnpm-workspace.yaml` and re-run `pnpm install` (`pnpm approve-builds` is interactive).
 
 ## Project status
 
-MVP feature-complete — all ten roadmap phases in `SPEC.md` are implemented: scaffold, domain
-model, AI layer, Writing Coach, Mistake Notebook, personalized exercises, Daily Writing,
-Technical English/Explain Code, Interview Practice, and this dashboard. See `SPEC.md` for the
-full spec and what's explicitly out of scope for the MVP (voice, multi-user auth, deployment,
-etc.).
+The MVP from `SPEC.md` is complete. The next phase turns the corrector into a coach that
+makes you *retain* what you learn — spaced repetition on mistake patterns, review queue,
+mixed daily session, difficulty targeting, a light streak. It is tracked in the
+[retention epic (#8)](https://github.com/levyrodrigues23/inglesando/issues/8); the reasoning is
+in [`docs/research/duolingo.md`](./docs/research/duolingo.md).

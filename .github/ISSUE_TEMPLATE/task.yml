@@ -1,0 +1,31 @@
+name: Tarefa técnica
+description: Refatoração, dívida técnica, infra, documentação
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo
+      options:
+        - Dívida técnica / refatoração
+        - Infra / CI / tooling
+        - Documentação
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: O estado atual e por que ele é um problema.
+    validations:
+      required: true
+  - type: textarea
+    id: todo
+    attributes:
+      label: O que fazer
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      placeholder: "- [ ] ..."
