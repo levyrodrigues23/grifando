@@ -63,7 +63,13 @@ is red.
 3. CI must be green. It runs on every PR and on pushes to `develop`/`main`:
    install (frozen lockfile) → typecheck → lint → prepare test DB → tests (real Postgres 17
    service) → production build. No AI keys are available in CI by design.
-4. Prefer squash or a clean merge; delete the branch after merging.
+4. Merge method:
+   - **Feature/fix/chore → `develop`: squash.** One commit per PR keeps `develop` readable.
+     The squash commit's title is the PR title, so write PR titles like commit subjects.
+   - **`develop` → `main` (release): merge commit.** Never squash a release: `main` would
+     get a commit `develop` doesn't have, and every later release PR would re-show old
+     changes or conflict.
+   - Branches are deleted automatically after merging.
 
 ## Database changes
 
