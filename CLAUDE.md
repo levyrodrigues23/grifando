@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Personal AI English Coach. Full product spec: `SPEC.md`. Read it before working on any
+Inglesando — a personal AI English coach. Full product spec: `SPEC.md`. Read it before working on any
 feature-level change — this file only covers things a future session needs that aren't
 obvious from the code.
 

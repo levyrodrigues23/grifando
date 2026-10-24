@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI English Coach",
+  title: "Inglesando",
   description: "Personal writing coach for English, built from your own mistakes.",
 };
 
