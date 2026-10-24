@@ -1,4 +1,4 @@
-# Duolingo research — context for scaling the English Coach
+# Duolingo research — context for scaling Inglesando
 
 > **Purpose of this file.** Durable context for future sessions (human or agent) planning the
 > next phase of this app: going from "AI writing corrector" to a coach that makes the learner
