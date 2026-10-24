@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      # Same image and credentials as docker-compose.yml.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: english_coach
+          POSTGRES_PASSWORD: english_coach
+          POSTGRES_DB: english_coach
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U english_coach"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://english_coach:english_coach@127.0.0.1:5432/english_coach?schema=public
+      TEST_DATABASE_URL: postgresql://english_coach:english_coach@127.0.0.1:5432/english_coach_test?schema=public
+      # No AI keys on purpose: tests mock AIProvider and must never need a real key.
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Prepare test database
+        run: pnpm db:test:prepare
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
