@@ -16,7 +16,7 @@ export function SiteHeader() {
     <header className="border-b border-dashed">
       <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
         <Link href="/" className="text-sm font-medium tracking-normal uppercase">
-          AI English Coach
+          Inglesando
         </Link>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <nav className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium tracking-normal text-muted-foreground uppercase">

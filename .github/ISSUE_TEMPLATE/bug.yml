@@ -1,0 +1,55 @@
+name: Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Writing Coach / Daily Writing
+        - Technical English / Explain Code
+        - Interview Practice
+        - Mistake Notebook
+        - Exercícios
+        - Dashboard
+        - Focus Music
+        - Camada de IA (providers, prompts, schemas)
+        - Banco / migrations
+        - Infra / CI / tooling
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu
+      description: O comportamento observado. Inclua a mensagem de erro exata, se houver.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abrir /write
+        2. Enviar um texto com ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider de IA (se envolver IA)
+      placeholder: anthropic | gemini
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Saída do terminal do `pnpm dev`, console do navegador, prints.
+      render: shell

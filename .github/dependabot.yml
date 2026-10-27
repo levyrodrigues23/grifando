@@ -1,0 +1,9 @@
+# Only GitHub Actions are auto-updated. npm dependencies are pinned on purpose
+# (TypeScript 5.9, Prisma 7.10, ESLint 9 — see CLAUDE.md) and bumped by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [infra]
