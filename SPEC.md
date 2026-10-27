@@ -1,4 +1,4 @@
-# SPEC — Personal AI English Coach
+# SPEC — Inglesando (personal AI English coach)
 
 ## 1. Purpose
 

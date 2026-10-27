@@ -64,7 +64,7 @@ export default async function HomePage() {
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <div>
         <h1 className="text-4xl leading-[0.9] font-medium tracking-normal uppercase sm:text-5xl">
-          AI English Coach
+          Inglesando
         </h1>
         <p className="mt-4 max-w-md text-base text-muted-foreground">
           Write something in English and get structured feedback built from your own mistakes.
