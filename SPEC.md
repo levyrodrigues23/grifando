@@ -199,6 +199,31 @@ ten times" must not become ten disconnected rows.
   correction. Two consecutive correct attempts move `active → improving`; a further two move
   `improving → mastered`; any incorrect attempt on an `improving` pattern drops it back to
   `active`. `mastered` patterns are deprioritized (not deleted) in future exercise selection.
+- **Decay (retention phase, §6.1)**: `mastered` is not terminal. A mastered pattern drops back
+  to `improving` when its estimated recall probability falls below a threshold, or when the
+  same mistake reappears in a new piece of writing.
+
+### 6.1 Retention engine (post-MVP phase — epic #8)
+
+Planned from `docs/research/duolingo.md` (Part A has the full mapping to this codebase). The
+memory model is borrowed from Duolingo's published research; the habit mechanics are kept
+deliberately light. Success is measured as patterns mastered *and kept* mastered, never XP.
+
+- **Half-life per pattern** (Half-Life Regression, simplified): recall probability
+  `p = 2^(-Δ/h)`, Δ = days since the pattern was last practiced, `h` estimated from the
+  pattern's seen/correct/incorrect counters only — no per-pattern difficulty weights (they
+  overfit in Duolingo's own experiments, and one user has no data to fit them).
+- **Review queue**: practice selection orders patterns by lowest recall probability first.
+- **Mixed daily session**: one writing prompt interleaved with review exercises for due
+  patterns.
+- **Target difficulty**: an Elo-style ability estimate per mistake category and a difficulty
+  per exercise, aiming generated exercises at ~70% expected success.
+- **Feedback on attempts**: a deterministic diff against the closest acceptable answer, plus
+  an optional AI "explain my answer" call that never affects grading.
+- **Mastery check**: reaching `mastered` requires an unscaffolded exercise (free rewrite or
+  translation), not only multiple choice.
+- **Habit**: a low-bar daily streak (any one activity counts) with limited rest days; no
+  punishment mechanics, no leaderboards.
 
 ## 7. Data model (Prisma, conceptual)
 
@@ -254,10 +279,14 @@ the durable, queryable unit for analytics/exercise-selection; occurrences are th
 
 ## 8. Non-MVP (explicitly out of scope for now)
 
-Voice/speech recognition, pronunciation scoring, multiplayer/social features, native mobile
-app, complex gamification (streaks/badges beyond the simplest possible), full spaced-repetition
-scheduling, browser extension, multi-user auth/signup, deployment/hosting setup beyond local
-Docker Compose, vocabulary review UI (schema only).
+Voice/speech recognition, pronunciation scoring, multiplayer/social features (leaderboards,
+friend streaks), native mobile app, complex gamification (XP economies, badges, currencies —
+the simple streak in §6.1 is in scope), browser extension, multi-user auth/signup,
+deployment/hosting setup beyond local Docker Compose.
+
+Moved into scope after the MVP (tracked in the retention epic, #8): spaced repetition on
+mistake patterns and the rest of §6.1. Vocabulary review (§5.10, #7) is still pending and
+will reuse the same half-life and review queue rather than a scheduler of its own.
 
 ## 9. AI architecture
 
