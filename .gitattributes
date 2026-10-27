@@ -1,0 +1,8 @@
+# Normalize line endings: LF in the repo and in every working tree, so Windows
+# checkouts don't churn diffs or trip "LF will be replaced by CRLF" warnings.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

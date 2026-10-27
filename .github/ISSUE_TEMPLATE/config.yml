@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Spec do produto
+    url: https://github.com/levyrodrigues23/inglesando/blob/develop/SPEC.md
+    about: Leia o SPEC.md antes de propor uma funcionalidade — ele define o escopo e o que está fora dele.
