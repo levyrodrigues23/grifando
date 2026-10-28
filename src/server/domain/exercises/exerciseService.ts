@@ -90,7 +90,7 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
             },
             isCorrect,
           );
-          await patterns.updateMastery(pattern.id, nextState);
+          await patterns.recordAttempt(pattern.id, { ...nextState, isCorrect });
         }
       }
 
