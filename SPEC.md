@@ -254,6 +254,7 @@ MistakePattern
   exampleOriginal, exampleCorrection, occurrenceCount
   masteryLevel (ACTIVE | IMPROVING | MASTERED)
   firstSeenAt, lastSeenAt
+  correctCount, incorrectCount, lastPracticedAt   (recall history for the half-life, §6.1)
 
 Exercise
   id, userId, type (MULTIPLE_CHOICE | FILL_BLANK | REWRITE | TRANSLATION)

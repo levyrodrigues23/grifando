@@ -160,6 +160,13 @@ model MistakePattern {
   consecutiveCorrectCount Int             @default(0)
   firstSeenAt             DateTime        @default(now())
   lastSeenAt              DateTime        @default(now())
+  // Recall history for the half-life model (SPEC.md §6.1, recall.ts). Every
+  // recall event counts: a correct/incorrect exercise attempt, and each new
+  // occurrence of the mistake in writing (a failed recall). lastPracticedAt is
+  // the time of the latest such event.
+  correctCount            Int             @default(0)
+  incorrectCount          Int             @default(0)
+  lastPracticedAt         DateTime        @default(now())
 
   occurrences MistakeOccurrence[]
   exercises   Exercise[]
