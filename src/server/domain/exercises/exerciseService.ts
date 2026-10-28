@@ -7,7 +7,7 @@ import { evaluateExerciseAnswer } from "@/server/domain/exercises/answerChecking
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { assignExerciseType } from "@/server/domain/exercises/exerciseType";
-import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
+import { selectPatternsForPractice, selectReviewSet } from "@/server/domain/exercises/selection";
 
 const DEFAULT_PRACTICE_SET_SIZE = 4;
 
@@ -28,9 +28,23 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
   return {
     // Builds a practice set from the user's actual weak patterns — never
     // generic, random English exercises (SPEC.md §5.4).
-    async generatePracticeSet(userId: string, count = DEFAULT_PRACTICE_SET_SIZE) {
+    // With afterSessionId (the daily session), the mistakes from that writing
+    // session are interleaved with the most-due older patterns.
+    async generatePracticeSet(
+      userId: string,
+      count = DEFAULT_PRACTICE_SET_SIZE,
+      options: { afterSessionId?: string } = {},
+    ) {
       const allPatterns = await patterns.listByUser(userId);
-      const selected = selectPatternsForPractice(allPatterns, count, new Date());
+      const now = new Date();
+      const selected = options.afterSessionId
+        ? selectReviewSet(
+            allPatterns,
+            count,
+            now,
+            await patterns.listIdsForSession(options.afterSessionId, userId),
+          )
+        : selectPatternsForPractice(allPatterns, count, now);
 
       if (selected.length === 0) {
         return [];

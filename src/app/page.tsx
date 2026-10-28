@@ -83,7 +83,7 @@ export default async function HomePage() {
         </CardContent>
         <CardFooter className="justify-between">
           <Button variant="outline" render={<Link href="/write">Write freely instead</Link>} />
-          <Button render={<Link href="/write?mode=daily">Write your answer</Link>} />
+          <Button render={<Link href="/today">Start today&apos;s session</Link>} />
         </CardFooter>
       </Card>
 
