@@ -5,6 +5,8 @@ import { createMistakePatternRepository } from "@/server/domain/mistakes/mistake
 import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
 import { evaluateExerciseAnswer } from "@/server/domain/exercises/answerChecking";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
+import { createCategoryAbilityRepository } from "@/server/domain/exercises/categoryAbility.repository";
+import { DEFAULT_ABILITY, targetLevel, updateAbility } from "@/server/domain/exercises/difficulty";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { assignExerciseType } from "@/server/domain/exercises/exerciseType";
 import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
@@ -24,6 +26,7 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
   const { prisma, aiProvider } = deps;
   const patterns = createMistakePatternRepository(prisma);
   const exercises = createExerciseRepository(prisma);
+  const abilities = createCategoryAbilityRepository(prisma);
 
   return {
     // Builds a practice set from the user's actual weak patterns — never
@@ -36,7 +39,9 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
         return [];
       }
 
+      const ratings = await abilities.getRatings(userId);
       const targets = selected.map((pattern, index) => ({
+        difficulty: targetLevel(ratings.get(pattern.category) ?? DEFAULT_ABILITY),
         type: assignExerciseType(index),
         category: pattern.category,
         exampleOriginal: pattern.exampleOriginal,
@@ -51,6 +56,7 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
           type: item.type,
           sourcePatternId: selected[index].id,
           promptData: item,
+          difficulty: targets[index].difficulty,
         })),
       );
     },
@@ -61,6 +67,7 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
   const { prisma } = deps;
   const patterns = createMistakePatternRepository(prisma);
   const exercises = createExerciseRepository(prisma);
+  const abilities = createCategoryAbilityRepository(prisma);
   const attempts = createExerciseAttemptRepository(prisma);
 
   return {
@@ -91,6 +98,16 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
             isCorrect,
           );
           await patterns.recordAttempt(pattern.id, { ...nextState, isCorrect });
+
+          if (exercise.difficulty !== null) {
+            const ratings = await abilities.getRatings(exercise.userId);
+            const ability = ratings.get(pattern.category) ?? DEFAULT_ABILITY;
+            await abilities.setRating(
+              exercise.userId,
+              pattern.category,
+              updateAbility(ability, exercise.difficulty, isCorrect),
+            );
+          }
         }
       }
 
