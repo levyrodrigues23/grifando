@@ -141,6 +141,9 @@ model MistakeOccurrence {
   severity      MistakeSeverity
   explanation   String
   example       String
+  // The mistake comes from Portuguese interference (false friend, literal
+  // structure, preposition/article carried over) — flagged by the AI.
+  l1Transfer    Boolean         @default(false)
   createdAt     DateTime        @default(now())
 
   @@index([analysisId])

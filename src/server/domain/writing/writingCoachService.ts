@@ -95,6 +95,7 @@ export function createWritingCoachService(deps: {
           severity: mistake.severity,
           explanation: mistake.explanation,
           example: mistake.example,
+          l1Transfer: mistake.l1Transfer ?? false,
         });
       }
 
