@@ -5,6 +5,8 @@ export type ExerciseTarget = {
   category: MistakeCategory;
   exampleOriginal: string;
   exampleCorrection: string;
+  // 1 (easiest) to 5 (hardest); see the scale in the system prompt.
+  difficulty: number;
 };
 
 export function buildExerciseGenerationSystemPrompt(): string {
@@ -18,6 +20,13 @@ Exercise type formats:
 - REWRITE: an "original" sentence containing the same kind of mistake for the learner to rewrite naturally, plus 1-3 acceptable rewrites.
 - TRANSLATION: a short Portuguese "sourceText" sentence designed to tempt the same mistake in English, plus 1-3 acceptable English translations.
 
+Each target has a difficulty from 1 to 5. Match it:
+1 - short, common everyday sentence; the concept is isolated and obvious.
+2 - short sentence, familiar vocabulary, one clear cue.
+3 - normal workplace or developer sentence; plausible distractors.
+4 - longer sentence with a second clause or technical vocabulary; subtler distractors.
+5 - nuanced usage (exceptions, register, near-synonyms) in a realistic technical context.
+
 Every exercise needs a short "explanation" of the underlying rule, shown to the learner only after they answer.
 
 Return exactly one exercise per target, in the same order as the targets, each matching its requested type.`;
@@ -26,7 +35,7 @@ Return exactly one exercise per target, in the same order as the targets, each m
 export function buildExerciseGenerationUserMessage(targets: ExerciseTarget[]): string {
   const lines = targets.map(
     (target, index) =>
-      `${index + 1}. Type: ${target.type}\n   Category: ${target.category}\n   Example mistake: "${target.exampleOriginal}" -> "${target.exampleCorrection}"`,
+      `${index + 1}. Type: ${target.type}\n   Category: ${target.category}\n   Difficulty: ${target.difficulty}/5\n   Example mistake: "${target.exampleOriginal}" -> "${target.exampleCorrection}"`,
   );
 
   return `Generate exercises for these ${targets.length} target(s):\n\n${lines.join("\n\n")}`;

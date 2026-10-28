@@ -7,6 +7,7 @@ export type CreateExerciseInput = {
   type: ExerciseType;
   sourcePatternId?: string;
   promptData: GeneratedExercise;
+  difficulty: number;
 };
 
 export function createExerciseRepository(prisma: PrismaClient) {
