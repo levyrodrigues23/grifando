@@ -56,6 +56,10 @@ describe("mistakePatternRepository.upsertPattern", () => {
     expect(patterns).toHaveLength(1);
     expect(second.occurrenceCount).toBe(2);
     expect(second.exampleOriginal).toBe("This depends of the config.");
+    // Each occurrence in writing is a failed recall for the half-life model.
+    expect(second.incorrectCount).toBe(2);
+    expect(second.correctCount).toBe(0);
+    expect(second.lastPracticedAt.getTime()).toBe(second.lastSeenAt.getTime());
   });
 
   it("keeps distinct categories as separate patterns even with the same raw key", async () => {

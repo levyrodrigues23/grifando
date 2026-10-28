@@ -101,6 +101,9 @@ describe("exerciseAttemptService.submitAttempt", () => {
     });
     expect(updatedPattern.masteryLevel).toBe("IMPROVING");
     expect(updatedPattern.consecutiveCorrectCount).toBe(0);
+    expect(updatedPattern.correctCount).toBe(pattern.correctCount + 1);
+    expect(updatedPattern.incorrectCount).toBe(pattern.incorrectCount);
+    expect(updatedPattern.lastPracticedAt.getTime()).toBeGreaterThanOrEqual(pattern.lastPracticedAt.getTime());
   });
 
   it("records an incorrect attempt and resets an IMPROVING pattern to ACTIVE", async () => {
@@ -126,6 +129,8 @@ describe("exerciseAttemptService.submitAttempt", () => {
       where: { id: pattern.id },
     });
     expect(updatedPattern.masteryLevel).toBe("ACTIVE");
+    expect(updatedPattern.incorrectCount).toBe(pattern.incorrectCount + 1);
+    expect(updatedPattern.correctCount).toBe(pattern.correctCount);
   });
 
   it("does not require an AI provider to grade an attempt", async () => {
