@@ -69,7 +69,9 @@ is red.
    - **`develop` → `main` (release): merge commit.** Never squash a release: `main` would
      get a commit `develop` doesn't have, and every later release PR would re-show old
      changes or conflict.
-   - Branches are deleted automatically after merging.
+   - Delete the feature branch after merging ("Delete branch" button on the PR). The repo's
+     automatic deletion is **off** on purpose: it also deletes `develop` when a release PR
+     (`develop` → `main`) is merged.
 
 ## Database changes
 
