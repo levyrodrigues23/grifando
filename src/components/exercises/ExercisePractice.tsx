@@ -109,7 +109,7 @@ export function ExercisePractice() {
   }
 
   if (state.kind === "result") {
-    return <ExerciseResult result={state.result} onNext={handleNext} hasNext={state.queue.length > 0} />;
+    return <ExerciseResult result={state.result} userAnswer={answer} onNext={handleNext} hasNext={state.queue.length > 0} />;
   }
 
   if (state.kind === "empty" || state.kind === "generating") {
