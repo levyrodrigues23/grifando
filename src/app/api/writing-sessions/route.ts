@@ -18,6 +18,7 @@ const createWritingSessionSchema = z.object({
   promptText: z.string().min(1).max(MAX_PROMPT_TEXT_LENGTH).optional(),
   technicalCategory: z.nativeEnum(TechnicalCategory).optional(),
   codeSnippet: z.string().trim().min(1).max(MAX_CODE_SNIPPET_LENGTH).optional(),
+  retrySessionId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(request: Request) {

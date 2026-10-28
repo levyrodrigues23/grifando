@@ -10,6 +10,7 @@ const MAX_ANSWER_LENGTH = 5000;
 
 const answerSchema = z.object({
   answer: z.string().trim().min(1).max(MAX_ANSWER_LENGTH),
+  retrySessionId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(
@@ -39,6 +40,7 @@ export async function POST(
       sessionId: id,
       turnId,
       answer: parsed.data.answer,
+      retrySessionId: parsed.data.retrySessionId,
     });
 
     return NextResponse.json(result);

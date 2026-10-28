@@ -32,6 +32,9 @@ type State =
 export function InterviewPractice() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [answer, setAnswer] = useState("");
+  // Writing session of the last failed attempt at the current turn, so a
+  // resubmit re-analyzes it instead of creating a duplicate.
+  const [failedSessionId, setFailedSessionId] = useState<string>();
 
   async function handleStart() {
     setState({ kind: "starting" });
@@ -62,7 +65,7 @@ export function InterviewPractice() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answer }),
+          body: JSON.stringify({ answer, retrySessionId: failedSessionId }),
         },
       );
 
@@ -74,10 +77,12 @@ export function InterviewPractice() {
       const result = (await response.json()) as AnswerTurnResponse;
 
       if (result.status === "failed") {
+        setFailedSessionId(result.sessionId);
         setState({ kind: "active", sessionId, currentTurn, history, errorMessage: result.message });
         return;
       }
 
+      setFailedSessionId(undefined);
       const completedTurn: CompletedTurn = {
         question: currentTurn.question,
         answer,
