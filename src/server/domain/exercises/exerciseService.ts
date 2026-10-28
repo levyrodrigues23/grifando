@@ -6,7 +6,7 @@ import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
 import { evaluateExerciseAnswer } from "@/server/domain/exercises/answerChecking";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
-import { assignExerciseType } from "@/server/domain/exercises/exerciseType";
+import { assignExerciseTypeFor } from "@/server/domain/exercises/exerciseType";
 import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
 
 const DEFAULT_PRACTICE_SET_SIZE = 4;
@@ -37,7 +37,7 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
       }
 
       const targets = selected.map((pattern, index) => ({
-        type: assignExerciseType(index),
+        type: assignExerciseTypeFor(pattern, index),
         category: pattern.category,
         exampleOriginal: pattern.exampleOriginal,
         exampleCorrection: pattern.exampleCorrection,
@@ -89,6 +89,7 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
               consecutiveCorrectCount: pattern.consecutiveCorrectCount,
             },
             isCorrect,
+            exercise.type,
           );
           await patterns.recordAttempt(pattern.id, { ...nextState, isCorrect });
         }
