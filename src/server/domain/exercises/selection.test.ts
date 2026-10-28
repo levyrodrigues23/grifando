@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
+import { selectPatternsForPractice, selectReviewSet } from "@/server/domain/exercises/selection";
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = new Date("2026-10-27T12:00:00Z");
@@ -67,5 +67,34 @@ describe("selectPatternsForPractice", () => {
     expect(selectPatternsForPractice(patterns, 2, now)).toHaveLength(2);
     expect(patterns).toEqual(original);
     expect(selectPatternsForPractice([], 5, now)).toEqual([]);
+  });
+});
+
+describe("selectReviewSet", () => {
+  const due = [
+    pattern("due-1", 1, { daysSincePractice: 5 }),
+    pattern("due-2", 1, { daysSincePractice: 4 }),
+    pattern("due-3", 1, { daysSincePractice: 3 }),
+  ];
+  const fresh = [pattern("new-1", 1), pattern("new-2", 1), pattern("new-3", 1)];
+
+  it("interleaves today's mistakes with the most due patterns, half each", () => {
+    const result = selectReviewSet([...due, ...fresh], 4, now, ["new-1", "new-2", "new-3"]);
+    expect(result.map((p) => p.id)).toEqual(["new-1", "due-1", "new-2", "due-2"]);
+  });
+
+  it("lets fresh mistakes fill the slots when few patterns are due", () => {
+    const result = selectReviewSet([due[0], ...fresh], 4, now, ["new-1", "new-2", "new-3"]);
+    expect(result.map((p) => p.id)).toEqual(["new-1", "due-1", "new-2", "new-3"]);
+  });
+
+  it("falls back to due patterns when the session had no mistakes", () => {
+    const result = selectReviewSet([...due, ...fresh], 2, now, []);
+    expect(result.map((p) => p.id)).toEqual(["due-1", "due-2"]);
+  });
+
+  it("ignores fresh ids that aren't among the patterns", () => {
+    const result = selectReviewSet(due, 2, now, ["unknown"]);
+    expect(result.map((p) => p.id)).toEqual(["due-1", "due-2"]);
   });
 });

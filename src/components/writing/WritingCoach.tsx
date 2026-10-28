@@ -21,7 +21,14 @@ type ViewState =
   | { kind: "submitting" }
   | { kind: "result"; session: WritingSessionDTO };
 
-export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialChallenge }) {
+export function WritingCoach({
+  initialChallenge,
+  nextStep,
+}: {
+  initialChallenge?: InitialChallenge;
+  // Shown after a successful analysis; receives the analyzed session's id.
+  nextStep?: { label: string; onClick: (sessionId: string) => void };
+}) {
   const [text, setText] = useState("");
   const [view, setView] = useState<ViewState>({ kind: "editing" });
   // Session of the last failed attempt; resubmitting re-analyzes it instead of
@@ -73,7 +80,14 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
   }
 
   if (view.kind === "result") {
-    return <WritingResults session={view.session} onWriteAnother={handleWriteAnother} />;
+    const session = view.session;
+    return (
+      <WritingResults
+        session={session}
+        onWriteAnother={handleWriteAnother}
+        nextStep={nextStep && { label: nextStep.label, onClick: () => nextStep.onClick(session.id) }}
+      />
+    );
   }
 
   const isSubmitting = view.kind === "submitting";
