@@ -10,7 +10,7 @@ type AnalysisSummary = NonNullable<NonNullable<WritingSessionWithAnalysis>["anal
 type NextTurn = { id: string; question: string; order: number };
 
 export type AnswerTurnResult =
-  | { status: "failed"; message: string }
+  | { status: "failed"; message: string; sessionId: string }
   | { status: "answered"; analysis: AnalysisSummary; nextTurn: NextTurn }
   | { status: "ended"; analysis: AnalysisSummary };
 
@@ -50,6 +50,9 @@ export function createInterviewService(deps: {
       sessionId: string;
       turnId: string;
       answer: string;
+      // Writing session of a previous failed attempt at this answer (see
+      // SubmitWritingInput.retrySessionId).
+      retrySessionId?: string;
     }): Promise<AnswerTurnResult> {
       const session = await interviews.findSessionById(input.sessionId);
       if (!session) {
@@ -66,10 +69,11 @@ export function createInterviewService(deps: {
         promptType: "INTERVIEW",
         promptText: turn.question,
         originalText: input.answer,
+        retrySessionId: input.retrySessionId,
       });
 
       if (writingResult.status === "failed") {
-        return { status: "failed", message: writingResult.message };
+        return { status: "failed", message: writingResult.message, sessionId: writingResult.sessionId };
       }
 
       const analysis = writingResult.session.analysis!;

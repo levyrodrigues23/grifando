@@ -19,7 +19,7 @@ export type StartInterviewResponse = {
 };
 
 export type AnswerTurnResponse =
-  | { status: "failed"; message: string }
+  | { status: "failed"; message: string; sessionId: string }
   | { status: "answered"; analysis: InterviewAnalysisDTO; nextTurn: InterviewTurnRef }
   | { status: "ended"; analysis: InterviewAnalysisDTO };
 

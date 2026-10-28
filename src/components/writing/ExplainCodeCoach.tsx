@@ -23,6 +23,9 @@ export function ExplainCodeCoach() {
   const [code, setCode] = useState("");
   const [text, setText] = useState("");
   const [view, setView] = useState<ViewState>({ kind: "editing" });
+  // Session of the last failed attempt; resubmitting re-analyzes it instead of
+  // leaving it orphaned and creating a duplicate.
+  const [failedSessionId, setFailedSessionId] = useState<string>();
 
   async function handleSubmit() {
     setView({ kind: "submitting" });
@@ -36,6 +39,7 @@ export function ExplainCodeCoach() {
           promptText: EXPLAIN_CODE_INSTRUCTION,
           originalText: text,
           codeSnippet: code,
+          retrySessionId: failedSessionId,
         }),
       });
 
@@ -47,10 +51,12 @@ export function ExplainCodeCoach() {
       const result = (await response.json()) as SubmitWritingResponse;
 
       if (result.status === "failed") {
+        setFailedSessionId(result.sessionId);
         setView({ kind: "editing", errorMessage: result.message });
         return;
       }
 
+      setFailedSessionId(undefined);
       setView({ kind: "result", session: result.session });
     } catch {
       setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });

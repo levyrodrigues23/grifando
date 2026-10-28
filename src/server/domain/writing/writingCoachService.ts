@@ -13,6 +13,10 @@ export type SubmitWritingInput = CreateWritingSessionInput & {
   // EXPLAIN_CODE only — passed to the AI for context, never persisted (see
   // AnalyzeWritingInput.codeSnippet and SPEC.md §5.6).
   codeSnippet?: string;
+  // The sessionId from a previous "failed" result. When it still names a FAILED
+  // session of this user, that session is re-analyzed instead of creating a
+  // duplicate (the resubmitted text replaces the old one).
+  retrySessionId?: string;
 };
 
 export type SubmitWritingResult =
@@ -39,8 +43,10 @@ export function createWritingCoachService(deps: {
     // analysis + mistake breakdown. An AI failure leaves the session FAILED
     // with the original text intact instead of a partial/corrupt record.
     async submitWriting(input: SubmitWritingInput): Promise<SubmitWritingResult> {
-      const { codeSnippet, ...sessionInput } = input;
-      const session = await sessions.create(sessionInput);
+      const { codeSnippet, retrySessionId, ...sessionInput } = input;
+      const session =
+        (retrySessionId && (await sessions.reopenFailed(retrySessionId, sessionInput))) ||
+        (await sessions.create(sessionInput));
 
       let result;
       try {

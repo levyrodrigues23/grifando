@@ -99,6 +99,59 @@ describe("writingCoachService.submitWriting", () => {
     expect(session.originalText).toBe("some original text");
   });
 
+  it("re-analyzes the failed session on retry instead of creating a duplicate", async () => {
+    const analyzeWriting = vi
+      .fn()
+      .mockRejectedValueOnce(new AIResponseValidationError("bad response", []))
+      .mockResolvedValueOnce(fakeAnalysisResult());
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    const failed = await service.submitWriting({
+      userId,
+      promptType: PromptType.FREE,
+      originalText: "I depend of this library",
+    });
+    if (failed.status !== "failed") throw new Error("expected failed result");
+
+    const retried = await service.submitWriting({
+      userId,
+      promptType: PromptType.FREE,
+      originalText: "I depend of this library.",
+      retrySessionId: failed.sessionId,
+    });
+    if (retried.status !== "analyzed") throw new Error("expected analyzed result");
+
+    expect(retried.session.id).toBe(failed.sessionId);
+    expect(retried.session.status).toBe("ANALYZED");
+    expect(retried.session.originalText).toBe("I depend of this library.");
+    expect(await prisma.writingSession.count({ where: { userId } })).toBe(1);
+  });
+
+  it("creates a new session when the retry id isn't a FAILED session of this user", async () => {
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] }),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+    };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    const analyzed = await service.submitWriting({ userId, promptType: PromptType.FREE, originalText: "first" });
+    if (analyzed.status !== "analyzed") throw new Error("expected analyzed result");
+
+    const second = await service.submitWriting({
+      userId,
+      promptType: PromptType.FREE,
+      originalText: "second",
+      retrySessionId: analyzed.session.id,
+    });
+    if (second.status !== "analyzed") throw new Error("expected analyzed result");
+
+    expect(second.session.id).not.toBe(analyzed.session.id);
+    const first = await prisma.writingSession.findUniqueOrThrow({ where: { id: analyzed.session.id } });
+    expect(first.originalText).toBe("first");
+  });
+
   it("passes codeSnippet to the AI but never persists it on the session", async () => {
     const analyzeWriting = vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] });
     const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
