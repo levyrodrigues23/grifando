@@ -43,6 +43,7 @@ export type FullExerciseDTO =
     };
 
 export type SubmitAttemptResponse = {
+  attemptId: string;
   isCorrect: boolean;
   explanation: string;
   exercise: FullExerciseDTO;
