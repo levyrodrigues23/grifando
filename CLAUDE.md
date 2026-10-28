@@ -183,7 +183,8 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   (`Promise.all` of several parallel reads), the same pattern as `/mistakes` and `/technical` —
   no API route needed for a read-only page. The dashboard-specific repository methods
   (`writingSessionRepository.countAnalyzed`/`listRecentAnalyzed`,
-  `exerciseAttemptRepository.countByUser`, `mistakePatternRepository.listRecentByUser`) exist
+  `exerciseAttemptRepository.countByUser`, `mistakePatternRepository.listRecentByUser`, and the
+  streak's `listAnalyzedDates`/`listAttemptDates`) exist
   only for this; reuse them rather than adding near-duplicate query methods elsewhere.
   `computeAverageScores` (`src/server/domain/progress/progress.ts`) is the one place that
   averages scores across sessions — deliberately simple (a rounded mean), per SPEC.md's

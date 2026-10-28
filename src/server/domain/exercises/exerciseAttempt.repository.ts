@@ -16,6 +16,15 @@ export function createExerciseAttemptRepository(prisma: PrismaClient) {
     async countByUser(userId: string) {
       return prisma.exerciseAttempt.count({ where: { exercise: { userId } } });
     },
+
+    // Timestamps only — the dashboard streak needs when, not what.
+    async listAttemptDates(userId: string) {
+      const rows = await prisma.exerciseAttempt.findMany({
+        where: { exercise: { userId } },
+        select: { attemptedAt: true },
+      });
+      return rows.map((row) => row.attemptedAt);
+    },
   };
 }
 
