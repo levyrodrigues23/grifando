@@ -13,7 +13,9 @@ export type UpsertPatternInput = {
 export function createMistakePatternRepository(prisma: PrismaClient) {
   return {
     // Collapses repeated occurrences of the same concept into one growing
-    // pattern instead of one row per occurrence (SPEC.md §6).
+    // pattern instead of one row per occurrence (SPEC.md §6). Making the same
+    // mistake again in writing is a failed recall, so it also feeds the
+    // half-life counters (recall.ts).
     async upsertPattern(input: UpsertPatternInput) {
       const patternKey = normalizePatternKey(input.rawPatternKey);
       const now = new Date();
@@ -33,12 +35,16 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
           exampleOriginal: input.exampleOriginal,
           exampleCorrection: input.exampleCorrection,
           occurrenceCount: 1,
+          incorrectCount: 1,
           firstSeenAt: now,
           lastSeenAt: now,
+          lastPracticedAt: now,
         },
         update: {
           occurrenceCount: { increment: 1 },
+          incorrectCount: { increment: 1 },
           lastSeenAt: now,
+          lastPracticedAt: now,
           exampleOriginal: input.exampleOriginal,
           exampleCorrection: input.exampleCorrection,
         },
@@ -66,13 +72,20 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
       });
     },
 
-    async updateMastery(
+    // One exercise attempt on the pattern: the new mastery state plus a recall
+    // event for the half-life counters.
+    async recordAttempt(
       id: string,
-      data: { masteryLevel: MasteryLevel; consecutiveCorrectCount: number },
+      data: { masteryLevel: MasteryLevel; consecutiveCorrectCount: number; isCorrect: boolean },
     ) {
+      const { isCorrect, ...mastery } = data;
       return prisma.mistakePattern.update({
         where: { id },
-        data,
+        data: {
+          ...mastery,
+          ...(isCorrect ? { correctCount: { increment: 1 } } : { incorrectCount: { increment: 1 } }),
+          lastPracticedAt: new Date(),
+        },
       });
     },
   };
