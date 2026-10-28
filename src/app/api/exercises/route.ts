@@ -7,6 +7,7 @@ import { prisma } from "@/server/db/client";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
+import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
 
 function toResponseShape(exercise: { id: string; type: string; promptData: unknown }) {
   return {
@@ -28,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST() {
+  const limited = rateLimitResponse(aiRateLimits.generation, DEFAULT_USER_ID);
+  if (limited) return limited;
+
   try {
     const service = createExerciseGenerationService({ prisma, aiProvider: getAIProvider() });
     const created = await service.generatePracticeSet(DEFAULT_USER_ID);

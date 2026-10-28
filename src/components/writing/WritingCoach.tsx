@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { WritingResults } from "@/components/writing/WritingResults";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { errorMessageFor } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
@@ -48,7 +49,7 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
       });
 
       if (!response.ok) {
-        setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+        setView({ kind: "editing", errorMessage: await errorMessageFor(response, GENERIC_FAILURE_MESSAGE) });
         return;
       }
 
