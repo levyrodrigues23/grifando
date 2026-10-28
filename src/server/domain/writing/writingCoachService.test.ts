@@ -55,6 +55,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockResolvedValue(fakeAnalysisResult()),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -81,6 +82,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockRejectedValue(new AIResponseValidationError("bad response", [])),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -104,7 +106,7 @@ describe("writingCoachService.submitWriting", () => {
       .fn()
       .mockRejectedValueOnce(new AIResponseValidationError("bad response", []))
       .mockResolvedValueOnce(fakeAnalysisResult());
-    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
     const failed = await service.submitWriting({
@@ -133,6 +135,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] }),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -154,7 +157,7 @@ describe("writingCoachService.submitWriting", () => {
 
   it("passes codeSnippet to the AI but never persists it on the session", async () => {
     const analyzeWriting = vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] });
-    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
     await service.submitWriting({

@@ -133,7 +133,7 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   (`"anthropic"` default, or `"gemini"`) plus that provider's API key/model env vars and
   constructs the real client — it throws lazily on first use, not at import time, so importing
   AI modules never breaks tests that don't need a real key. `AIProvider` methods (currently
-  `analyzeWriting`/`generateExercises`/`continueInterview`) are added one at a time, only when
+  `analyzeWriting`/`generateExercises`/`continueInterview`/`explainAttempt`) are added one at a time, only when
   a feature phase needs them — don't pre-add stub methods, and implement any new one in *both*
   `providers/anthropic.ts` and `providers/gemini.ts` (the interface is the contract; letting one
   provider silently lag breaks the "swap providers freely" premise the whole abstraction exists

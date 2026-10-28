@@ -13,7 +13,7 @@ type State =
   | { kind: "empty" }
   | { kind: "generating" }
   | { kind: "practicing"; queue: ExerciseListItemDTO[] }
-  | { kind: "result"; queue: ExerciseListItemDTO[]; result: SubmitAttemptResponse }
+  | { kind: "result"; queue: ExerciseListItemDTO[]; exerciseId: string; result: SubmitAttemptResponse }
   | { kind: "error"; message: string };
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -79,7 +79,7 @@ export function ExercisePractice() {
       }
 
       const result = (await response.json()) as SubmitAttemptResponse;
-      setState({ kind: "result", queue: rest, result });
+      setState({ kind: "result", queue: rest, exerciseId: current.id, result });
     } catch {
       setState({ kind: "error", message: GENERIC_ERROR });
     }
@@ -109,7 +109,7 @@ export function ExercisePractice() {
   }
 
   if (state.kind === "result") {
-    return <ExerciseResult result={state.result} userAnswer={answer} onNext={handleNext} hasNext={state.queue.length > 0} />;
+    return <ExerciseResult exerciseId={state.exerciseId} result={state.result} userAnswer={answer} onNext={handleNext} hasNext={state.queue.length > 0} />;
   }
 
   if (state.kind === "empty" || state.kind === "generating") {
