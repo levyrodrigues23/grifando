@@ -33,7 +33,7 @@ export function WritingResults({
       {analysis.occurrences.length > 0 && (
         <div className="space-y-3">
           {analysis.occurrences.map((mistake, index) => (
-            <MistakeCard key={mistake.id} mistake={mistake} index={index} />
+            <MistakeCard key={mistake.id} mistake={mistake} index={index} sessionId={session.id} />
           ))}
         </div>
       )}
