@@ -5,6 +5,7 @@ import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
+import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
 
 const MAX_ANSWER_LENGTH = 5000;
 
@@ -27,6 +28,9 @@ export async function POST(
       { status: 400 },
     );
   }
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  if (limited) return limited;
 
   try {
     const service = createInterviewService({
