@@ -30,7 +30,7 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
     // generic, random English exercises (SPEC.md §5.4).
     async generatePracticeSet(userId: string, count = DEFAULT_PRACTICE_SET_SIZE) {
       const allPatterns = await patterns.listByUser(userId);
-      const selected = selectPatternsForPractice(allPatterns, count);
+      const selected = selectPatternsForPractice(allPatterns, count, new Date());
 
       if (selected.length === 0) {
         return [];
