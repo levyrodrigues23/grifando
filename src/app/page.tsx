@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ProgressSummary } from "@/components/dashboard/ProgressSummary";
 import { RecentMistakes } from "@/components/dashboard/RecentMistakes";
 import { RecentWriting } from "@/components/dashboard/RecentWriting";
+import { StreakStatus } from "@/components/dashboard/StreakStatus";
 import { WeakAreas } from "@/components/dashboard/WeakAreas";
 import { DEFAULT_USER_ID } from "@/lib/constants";
 import { MISTAKE_CATEGORY_LABELS } from "@/lib/mistakeCategoryLabels";
@@ -16,6 +17,7 @@ import { isDueForReview } from "@/server/domain/mistakes/recall";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
 import { computeAverageScores } from "@/server/domain/progress/progress";
+import { computeStreak } from "@/server/domain/progress/streak";
 import {
   DAILY_PROMPTS,
   extractActiveWeakCategories,
@@ -44,6 +46,8 @@ export default async function HomePage() {
     recentAnalyzedSessions,
     writingSessionsCompleted,
     exercisesCompleted,
+    writingDates,
+    attemptDates,
   ] = await Promise.all([
     patterns.listByUser(DEFAULT_USER_ID),
     occurrences.countByCategory(DEFAULT_USER_ID),
@@ -51,6 +55,8 @@ export default async function HomePage() {
     sessions.listRecentAnalyzed(DEFAULT_USER_ID, { limit: SCORE_TREND_LIMIT }),
     sessions.countAnalyzed(DEFAULT_USER_ID),
     attempts.countByUser(DEFAULT_USER_ID),
+    sessions.listAnalyzedDates(DEFAULT_USER_ID),
+    attempts.listAttemptDates(DEFAULT_USER_ID),
   ]);
 
   const weakCategories = extractActiveWeakCategories(userPatterns);
@@ -59,6 +65,8 @@ export default async function HomePage() {
   const breakdown = computeCategoryBreakdown(categoryCounts);
   const [recommendation] = selectPatternsForPractice(userPatterns, 1, now);
   const dueCount = userPatterns.filter((pattern) => isDueForReview(pattern, now)).length;
+  // Days follow the server's local time zone (the app runs on the learner's machine).
+  const streak = computeStreak([...writingDates, ...attemptDates], now);
   const averageScores = computeAverageScores(
     recentAnalyzedSessions.flatMap((session) => (session.analysis ? [session.analysis] : [])),
   );
@@ -72,6 +80,9 @@ export default async function HomePage() {
         <p className="mt-4 max-w-md text-base text-muted-foreground">
           Write something in English and get structured feedback built from your own mistakes.
         </p>
+        <div className="mt-4">
+          <StreakStatus streak={streak} />
+        </div>
       </div>
 
       <Card>

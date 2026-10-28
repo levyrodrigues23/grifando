@@ -34,6 +34,15 @@ export function createWritingSessionRepository(prisma: PrismaClient) {
       return prisma.writingSession.count({ where: { userId, status: "ANALYZED" } });
     },
 
+    // Timestamps only — the dashboard streak needs when, not what.
+    async listAnalyzedDates(userId: string) {
+      const rows = await prisma.writingSession.findMany({
+        where: { userId, status: "ANALYZED" },
+        select: { createdAt: true },
+      });
+      return rows.map((row) => row.createdAt);
+    },
+
     // Includes the analysis scores directly — used for the dashboard's
     // "recent writing" list and score trend, not just the session metadata.
     async listRecentAnalyzed(userId: string, options: { limit?: number } = {}) {
