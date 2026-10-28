@@ -12,6 +12,7 @@ import { prisma } from "@/server/db/client";
 import { computeCategoryBreakdown } from "@/server/domain/mistakes/analytics";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
+import { isDueForReview } from "@/server/domain/mistakes/recall";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
 import { computeAverageScores } from "@/server/domain/progress/progress";
@@ -53,9 +54,11 @@ export default async function HomePage() {
   ]);
 
   const weakCategories = extractActiveWeakCategories(userPatterns);
-  const dailyPrompt = selectDailyPrompt(DAILY_PROMPTS, getTodaysDate(), weakCategories);
+  const now = getTodaysDate();
+  const dailyPrompt = selectDailyPrompt(DAILY_PROMPTS, now, weakCategories);
   const breakdown = computeCategoryBreakdown(categoryCounts);
-  const [recommendation] = selectPatternsForPractice(userPatterns, 1);
+  const [recommendation] = selectPatternsForPractice(userPatterns, 1, now);
+  const dueCount = userPatterns.filter((pattern) => isDueForReview(pattern, now)).length;
   const averageScores = computeAverageScores(
     recentAnalyzedSessions.flatMap((session) => (session.analysis ? [session.analysis] : [])),
   );
@@ -112,7 +115,13 @@ export default async function HomePage() {
         <CardHeader>
           <CardTitle>Practice recommendation</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
+          {dueCount > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for review — you&apos;re likely
+              to be forgetting {dueCount === 1 ? "it" : "them"}.
+            </p>
+          ) : null}
           {recommendation ? (
             <p className="text-sm">
               You&apos;ve mixed up{" "}
