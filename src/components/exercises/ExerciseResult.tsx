@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,12 +48,58 @@ function AnswerDiff({ userAnswer, acceptableAnswers }: { userAnswer: string; acc
   );
 }
 
+type ExplanationState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "done"; text: string }
+  | { kind: "error"; message: string };
+
+const EXPLANATION_ERROR = "We couldn't explain this answer right now. Your grade is unaffected.";
+
+// "Explain my answer" (docs/research/duolingo.md §1.6): an optional AI call on
+// request; the grade above is already final and never changes.
+function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemptId: string }) {
+  const [state, setState] = useState<ExplanationState>({ kind: "idle" });
+
+  async function handleExplain() {
+    setState({ kind: "loading" });
+    try {
+      const response = await fetch(`/api/exercises/${exerciseId}/attempts/${attemptId}/explanation`, {
+        method: "POST",
+      });
+      const data = (await response.json().catch(() => null)) as { explanation?: string; error?: string } | null;
+      if (!response.ok || !data?.explanation) {
+        setState({ kind: "error", message: data?.error ?? EXPLANATION_ERROR });
+        return;
+      }
+      setState({ kind: "done", text: data.explanation });
+    } catch {
+      setState({ kind: "error", message: EXPLANATION_ERROR });
+    }
+  }
+
+  if (state.kind === "done") {
+    return <p className="text-sm">{state.text}</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button variant="outline" size="sm" onClick={handleExplain} disabled={state.kind === "loading"}>
+        {state.kind === "loading" ? "Explaining..." : "Explain my answer"}
+      </Button>
+      {state.kind === "error" ? <p className="text-sm text-destructive">{state.message}</p> : null}
+    </div>
+  );
+}
+
 export function ExerciseResult({
+  exerciseId,
   result,
   userAnswer,
   onNext,
   hasNext,
 }: {
+  exerciseId: string;
   result: SubmitAttemptResponse;
   userAnswer: string;
   onNext: () => void;
@@ -74,6 +124,7 @@ export function ExerciseResult({
             </p>
           ))}
         <p className="text-sm text-muted-foreground">{result.explanation}</p>
+        {!result.isCorrect && <ExplainMyAnswer exerciseId={exerciseId} attemptId={result.attemptId} />}
       </CardContent>
       <CardFooter>
         <Button onClick={onNext}>{hasNext ? "Next exercise" : "Done for now"}</Button>

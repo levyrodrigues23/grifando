@@ -1,4 +1,4 @@
-import { MasteryLevel } from "@/generated/prisma/enums";
+import { ExerciseType, MasteryLevel } from "@/generated/prisma/enums";
 import { isDueForReview, type RecallState } from "@/server/domain/mistakes/recall";
 
 export type MasteryState = {
@@ -8,11 +8,34 @@ export type MasteryState = {
 
 const REQUIRED_STREAK = 2;
 
+// Exercises that give no scaffolding (no options, no blank to fill): the
+// learner produces the whole sentence. Reaching MASTERED requires one of these
+// ("Legendary"-style check, docs/research/duolingo.md §1.5).
+const UNSCAFFOLDED_TYPES: readonly ExerciseType[] = [ExerciseType.REWRITE, ExerciseType.TRANSLATION];
+
+export function isUnscaffolded(type: ExerciseType): boolean {
+  return UNSCAFFOLDED_TYPES.includes(type);
+}
+
+// One correct answer away from MASTERED: the next exercise for this pattern
+// should be the unscaffolded mastery check.
+export function needsMasteryCheck(state: MasteryState): boolean {
+  return state.masteryLevel === MasteryLevel.IMPROVING && state.consecutiveCorrectCount >= REQUIRED_STREAK - 1;
+}
+
 // Two consecutive correct attempts promote a pattern; one failed recall drops it
 // one level back toward ACTIVE (SPEC.md §6). A failed recall is an incorrect
 // exercise attempt or the same mistake reappearing in writing. MASTERED is not
 // terminal: a failure drops it to IMPROVING, a success keeps it MASTERED.
-export function applyExerciseResult(state: MasteryState, isCorrect: boolean): MasteryState {
+// IMPROVING -> MASTERED additionally needs the final correct answer to come from
+// an unscaffolded exercise; a correct multiple-choice/fill-blank answer at that
+// point keeps the pattern waiting for its mastery check. exerciseType is
+// omitted for recalls that aren't exercises (a mistake reappearing in writing).
+export function applyExerciseResult(
+  state: MasteryState,
+  isCorrect: boolean,
+  exerciseType?: ExerciseType,
+): MasteryState {
   if (state.masteryLevel === MasteryLevel.MASTERED) {
     return isCorrect ? state : { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 0 };
   }
@@ -27,10 +50,15 @@ export function applyExerciseResult(state: MasteryState, isCorrect: boolean): Ma
     return { masteryLevel: state.masteryLevel, consecutiveCorrectCount };
   }
 
-  const masteryLevel =
-    state.masteryLevel === MasteryLevel.ACTIVE ? MasteryLevel.IMPROVING : MasteryLevel.MASTERED;
+  if (state.masteryLevel === MasteryLevel.ACTIVE) {
+    return { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 0 };
+  }
 
-  return { masteryLevel, consecutiveCorrectCount: 0 };
+  if (!exerciseType || !isUnscaffolded(exerciseType)) {
+    return { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: REQUIRED_STREAK - 1 };
+  }
+
+  return { masteryLevel: MasteryLevel.MASTERED, consecutiveCorrectCount: 0 };
 }
 
 // A MASTERED pattern whose estimated recall has dropped below the review
