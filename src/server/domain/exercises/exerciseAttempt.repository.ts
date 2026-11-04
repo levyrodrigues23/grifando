@@ -26,6 +26,15 @@ export function createExerciseAttemptRepository(prisma: PrismaClient) {
       return prisma.exerciseAttempt.count({ where: { exercise: { userId } } });
     },
 
+    // Timestamps only — the dashboard streak needs when, not what.
+    async listAttemptDates(userId: string) {
+      const rows = await prisma.exerciseAttempt.findMany({
+        where: { exercise: { userId } },
+        select: { attemptedAt: true },
+      });
+      return rows.map((row) => row.attemptedAt);
+    },
+
     // Share of the latest attempts answered correctly, for checking that
     // difficulty targeting lands near its ~70% goal. Null with no attempts.
     async recentAccuracy(userId: string, options: { limit: number }) {
