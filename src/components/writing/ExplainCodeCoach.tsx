@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { WritingResults } from "@/components/writing/WritingResults";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { errorMessageFor } from "@/lib/responseError";
 
 const MAX_CODE_LENGTH = 2000;
 const MAX_TEXT_LENGTH = 5000;
@@ -44,7 +45,7 @@ export function ExplainCodeCoach() {
       });
 
       if (!response.ok) {
-        setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+        setView({ kind: "editing", errorMessage: await errorMessageFor(response, GENERIC_FAILURE_MESSAGE) });
         return;
       }
 
