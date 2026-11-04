@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIProvider } from "@/server/ai/client";
@@ -8,6 +9,11 @@ import { createExerciseRepository } from "@/server/domain/exercises/exercise.rep
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+
+// Optional: generate the daily session's review set after a writing session.
+const generateSchema = z
+  .object({ afterSessionId: z.string().min(1).max(64).optional() })
+  .optional();
 
 function toResponseShape(exercise: { id: string; type: string; promptData: unknown }) {
   return {
@@ -28,13 +34,24 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => undefined);
+  const parsed = generateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", issues: parsed.error.issues },
+      { status: 400 },
+    );
+  }
+
   const limited = rateLimitResponse(aiRateLimits.generation, DEFAULT_USER_ID);
   if (limited) return limited;
 
   try {
     const service = createExerciseGenerationService({ prisma, aiProvider: getAIProvider() });
-    const created = await service.generatePracticeSet(DEFAULT_USER_ID);
+    const created = await service.generatePracticeSet(DEFAULT_USER_ID, undefined, {
+      afterSessionId: parsed.data?.afterSessionId,
+    });
 
     if (created.length === 0) {
       return NextResponse.json(
