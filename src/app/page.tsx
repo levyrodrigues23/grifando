@@ -28,6 +28,7 @@ import { createWritingSessionRepository } from "@/server/domain/writing/writingS
 
 const RECENT_LIMIT = 3;
 const SCORE_TREND_LIMIT = 10;
+const ACCURACY_WINDOW = 50;
 
 // Reads live, per-request data (mistake patterns, today's date) — must never
 // be statically prerendered at build time.
@@ -48,6 +49,7 @@ export default async function HomePage() {
     exercisesCompleted,
     writingDates,
     attemptDates,
+    exerciseAccuracy,
   ] = await Promise.all([
     patterns.listByUser(DEFAULT_USER_ID),
     occurrences.countByCategory(DEFAULT_USER_ID),
@@ -57,6 +59,7 @@ export default async function HomePage() {
     attempts.countByUser(DEFAULT_USER_ID),
     sessions.listAnalyzedDates(DEFAULT_USER_ID),
     attempts.listAttemptDates(DEFAULT_USER_ID),
+    attempts.recentAccuracy(DEFAULT_USER_ID, { limit: ACCURACY_WINDOW }),
   ]);
 
   const weakCategories = extractActiveWeakCategories(userPatterns);
@@ -94,7 +97,7 @@ export default async function HomePage() {
         </CardContent>
         <CardFooter className="justify-between">
           <Button variant="outline" render={<Link href="/write">Write freely instead</Link>} />
-          <Button render={<Link href="/write?mode=daily">Write your answer</Link>} />
+          <Button render={<Link href="/today">Start today&apos;s session</Link>} />
         </CardFooter>
       </Card>
 
@@ -107,6 +110,7 @@ export default async function HomePage() {
             <ProgressSummary
               writingSessionsCompleted={writingSessionsCompleted}
               exercisesCompleted={exercisesCompleted}
+              exerciseAccuracy={exerciseAccuracy}
               averageScores={averageScores}
             />
           </CardContent>

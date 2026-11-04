@@ -2,6 +2,11 @@ import { z } from "zod";
 
 import { AIResponseValidationError } from "@/server/ai/errors";
 import {
+  buildAnswerExplanationSystemPrompt,
+  buildAnswerExplanationUserMessage,
+  type ExplainAttemptInput,
+} from "@/server/ai/prompts/answerExplanation";
+import {
   buildExerciseGenerationSystemPrompt,
   buildExerciseGenerationUserMessage,
   type ExerciseTarget,
@@ -17,6 +22,7 @@ import {
   type AnalyzeWritingInput,
 } from "@/server/ai/prompts/writingAnalysis";
 import type { AIProvider } from "@/server/ai/provider";
+import { answerExplanationResultSchema } from "@/server/ai/schemas/answerExplanation";
 import {
   exerciseGenerationResultSchema,
   validateExerciseGenerationResult,
@@ -27,6 +33,7 @@ import { writingAnalysisResultSchema } from "@/server/ai/schemas/writingAnalysis
 const WRITING_ANALYSIS_MAX_TOKENS = 4096;
 const EXERCISE_GENERATION_MAX_TOKENS = 4096;
 const INTERVIEW_QUESTION_MAX_TOKENS = 1024;
+const ANSWER_EXPLANATION_MAX_TOKENS = 1024;
 
 // The only part of the Gemini SDK this module depends on — keeps the
 // provider trivially mockable in tests without a real API client (same
@@ -135,6 +142,20 @@ export function createGeminiProvider(client: GeminiContentClient, model: string)
           jsonSchema: z.toJSONSchema(interviewQuestionResultSchema),
         },
         interviewQuestionResultSchema,
+      );
+    },
+
+    async explainAttempt(input: ExplainAttemptInput) {
+      return generateStructured(
+        client,
+        {
+          model,
+          maxOutputTokens: ANSWER_EXPLANATION_MAX_TOKENS,
+          systemInstruction: buildAnswerExplanationSystemPrompt(),
+          contents: buildAnswerExplanationUserMessage(input),
+          jsonSchema: z.toJSONSchema(answerExplanationResultSchema),
+        },
+        answerExplanationResultSchema,
       );
     },
   };

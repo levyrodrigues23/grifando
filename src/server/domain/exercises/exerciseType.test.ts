@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { ExerciseType } from "@/generated/prisma/enums";
-import { assignExerciseType } from "@/server/domain/exercises/exerciseType";
+import { ExerciseType, MasteryLevel } from "@/generated/prisma/enums";
+import { assignExerciseType, assignExerciseTypeFor } from "@/server/domain/exercises/exerciseType";
 
 describe("assignExerciseType", () => {
   it("cycles through all four types in order", () => {
@@ -16,5 +16,19 @@ describe("assignExerciseType", () => {
   it("wraps around after the fourth index", () => {
     expect(assignExerciseType(4)).toBe(ExerciseType.MULTIPLE_CHOICE);
     expect(assignExerciseType(5)).toBe(ExerciseType.FILL_BLANK);
+  });
+});
+
+describe("assignExerciseTypeFor", () => {
+  it("gives a pattern one step from MASTERED an unscaffolded mastery check", () => {
+    const almostMastered = { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 1 };
+    expect(assignExerciseTypeFor(almostMastered, 0)).toBe(ExerciseType.REWRITE);
+    expect(assignExerciseTypeFor(almostMastered, 1)).toBe(ExerciseType.TRANSLATION);
+  });
+
+  it("follows the normal rotation otherwise", () => {
+    const active = { masteryLevel: MasteryLevel.ACTIVE, consecutiveCorrectCount: 0 };
+    expect(assignExerciseTypeFor(active, 0)).toBe(assignExerciseType(0));
+    expect(assignExerciseTypeFor(active, 1)).toBe(assignExerciseType(1));
   });
 });
