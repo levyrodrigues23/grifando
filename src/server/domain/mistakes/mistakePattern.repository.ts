@@ -51,9 +51,14 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
       });
     },
 
-    async listByUser(userId: string) {
+    // l1TransferOnly: patterns with at least one occurrence flagged as
+    // Portuguese interference.
+    async listByUser(userId: string, options: { l1TransferOnly?: boolean } = {}) {
       return prisma.mistakePattern.findMany({
-        where: { userId },
+        where: {
+          userId,
+          ...(options.l1TransferOnly ? { occurrences: { some: { l1Transfer: true } } } : {}),
+        },
         orderBy: [{ occurrenceCount: "desc" }, { lastSeenAt: "desc" }],
       });
     },
