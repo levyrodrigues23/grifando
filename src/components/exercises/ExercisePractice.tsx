@@ -18,48 +18,61 @@ type State =
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
-export function ExercisePractice() {
-  const [state, setState] = useState<State>({ kind: "loading" });
+// Turns an /api/exercises response into the next view state.
+async function toQueueState(response: Response): Promise<State> {
+  const data = await response.json();
+  if (!response.ok) return { kind: "error", message: data.error ?? GENERIC_ERROR };
+  const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
+  return queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" };
+}
+
+async function fetchPendingExercises(): Promise<State> {
+  try {
+    return await toQueueState(await fetch("/api/exercises"));
+  } catch {
+    return { kind: "error", message: GENERIC_ERROR };
+  }
+}
+
+async function generateExercises(afterSessionId?: string): Promise<State> {
+  try {
+    const response = await fetch("/api/exercises", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ afterSessionId }),
+    });
+    return await toQueueState(response);
+  } catch {
+    return { kind: "error", message: GENERIC_ERROR };
+  }
+}
+
+// afterSessionId: the daily session's review step. Generates a fresh set that
+// mixes that writing session's mistakes with due patterns, instead of resuming
+// pending exercises.
+export function ExercisePractice({ afterSessionId }: { afterSessionId?: string } = {}) {
+  const [state, setState] = useState<State>({ kind: afterSessionId ? "generating" : "loading" });
   const [answer, setAnswer] = useState("");
 
   useEffect(() => {
-    loadExercises();
-  }, []);
+    let cancelled = false;
+    const initial = afterSessionId ? generateExercises(afterSessionId) : fetchPendingExercises();
+    void initial.then((next) => {
+      if (!cancelled) setState(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [afterSessionId]);
 
   async function loadExercises() {
     setState({ kind: "loading" });
-    try {
-      const response = await fetch("/api/exercises");
-      const data = await response.json();
-
-      if (!response.ok) {
-        setState({ kind: "error", message: data.error ?? GENERIC_ERROR });
-        return;
-      }
-
-      const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
-      setState(queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" });
-    } catch {
-      setState({ kind: "error", message: GENERIC_ERROR });
-    }
+    setState(await fetchPendingExercises());
   }
 
   async function handleGenerate() {
     setState({ kind: "generating" });
-    try {
-      const response = await fetch("/api/exercises", { method: "POST" });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setState({ kind: "error", message: data.error ?? GENERIC_ERROR });
-        return;
-      }
-
-      const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
-      setState(queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" });
-    } catch {
-      setState({ kind: "error", message: GENERIC_ERROR });
-    }
+    setState(await generateExercises(afterSessionId));
   }
 
   async function handleSubmit() {
