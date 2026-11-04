@@ -179,6 +179,34 @@ describe("writingCoachService.submitWriting", () => {
     expect(fromPortuguese.map((p) => p.patternKey)).toEqual(["depend-on"]);
   });
 
+  it("drops a MASTERED pattern to IMPROVING when the mistake reappears in writing", async () => {
+    await prisma.mistakePattern.create({
+      data: {
+        userId,
+        category: "PREPOSITIONS",
+        patternKey: "depend-on",
+        exampleOriginal: "depend of",
+        exampleCorrection: "depend on",
+        masteryLevel: "MASTERED",
+      },
+    });
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn().mockResolvedValue({
+        ...fakeAnalysisResult(),
+        mistakes: [fakeAnalysisResult().mistakes[0]],
+      }),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+    };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    await service.submitWriting({ userId, promptType: PromptType.FREE, originalText: "I depend of it." });
+
+    const pattern = await prisma.mistakePattern.findFirstOrThrow({ where: { userId } });
+    expect(pattern.masteryLevel).toBe("IMPROVING");
+    expect(pattern.consecutiveCorrectCount).toBe(0);
+  });
+
   it("passes codeSnippet to the AI but never persists it on the session", async () => {
     const analyzeWriting = vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] });
     const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };

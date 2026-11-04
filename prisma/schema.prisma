@@ -89,6 +89,7 @@ model User {
   exercises         Exercise[]
   interviewSessions InterviewSession[]
   vocabularyItems   VocabularyItem[]
+  categoryAbilities CategoryAbility[]
 }
 
 model WritingSession {
@@ -186,6 +187,9 @@ model Exercise {
   sourcePatternId String?
   sourcePattern   MistakePattern? @relation(fields: [sourcePatternId], references: [id], onDelete: SetNull)
   promptData      Json
+  // Target difficulty level 1-5 requested from the generator (difficulty.ts).
+  // Null for exercises generated before difficulty targeting existed.
+  difficulty      Int?
   createdAt       DateTime        @default(now())
 
   attempts ExerciseAttempt[]
@@ -242,4 +246,19 @@ model VocabularyItem {
   createdAt       DateTime        @default(now())
 
   @@index([userId])
+}
+
+// Elo-style ability per mistake category, updated after every graded exercise
+// attempt and used to target new exercises at ~70% expected success
+// (src/server/domain/exercises/difficulty.ts).
+model CategoryAbility {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     MistakeCategory
+  rating       Float           @default(1000)
+  attemptCount Int             @default(0)
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([userId, category])
 }

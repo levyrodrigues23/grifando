@@ -1,13 +1,16 @@
 import { ScoreBar } from "@/components/writing/ScoreBar";
+import { TARGET_SUCCESS } from "@/server/domain/exercises/difficulty";
 import type { AverageScores } from "@/server/domain/progress/progress";
 
 export function ProgressSummary({
   writingSessionsCompleted,
   exercisesCompleted,
+  exerciseAccuracy,
   averageScores,
 }: {
   writingSessionsCompleted: number;
   exercisesCompleted: number;
+  exerciseAccuracy: { correct: number; total: number } | null;
   averageScores: AverageScores | null;
 }) {
   return (
@@ -39,6 +42,19 @@ export function ProgressSummary({
           Average scores will show up after your first analyzed writing session.
         </p>
       )}
+
+      {exerciseAccuracy ? (
+        <p className="text-sm">
+          Exercise accuracy:{" "}
+          <span className="font-medium">
+            {Math.round((exerciseAccuracy.correct / exerciseAccuracy.total) * 100)}%
+          </span>
+          <span className="text-muted-foreground">
+            {" "}
+            over your last {exerciseAccuracy.total} · exercises aim for about {Math.round(TARGET_SUCCESS * 100)}%
+          </span>
+        </p>
+      ) : null}
 
       <p className="text-xs text-muted-foreground">
         Scores are AI-generated heuristics, not a validated English proficiency test.
