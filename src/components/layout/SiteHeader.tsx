@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/interview", label: "Interview" },
   { href: "/mistakes", label: "Mistakes" },
   { href: "/exercises", label: "Exercises" },
+  { href: "/vocabulary", label: "Vocabulary" },
 ];
 
 export function SiteHeader() {
