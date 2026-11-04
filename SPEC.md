@@ -270,6 +270,7 @@ MistakePattern
 Exercise
   id, userId, type (MULTIPLE_CHOICE | FILL_BLANK | REWRITE | TRANSLATION)
   sourcePatternId (nullable), promptData (JSON: shape depends on type, Zod-validated)
+  difficulty (nullable Int 1-5 — target level requested from the generator, §6.1)
   createdAt
 
 ExerciseAttempt
@@ -280,6 +281,9 @@ InterviewSession
 InterviewTurn
   id, interviewSessionId, question, userAnswer (nullable until answered)
   writingAnalysisId (nullable — reuses WritingAnalysis for scoring), order
+
+CategoryAbility   (Elo-style ability per mistake category, §6.1)
+  id, userId, category (unique per userId+category), rating, attemptCount, updatedAt
 
 VocabularyItem   (schema only in MVP, feature post-MVP)
   id, userId, term, meaningPt, exampleSentence, sourceSessionId (nullable), createdAt

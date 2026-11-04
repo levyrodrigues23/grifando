@@ -1,29 +1,22 @@
-import { MasteryLevel } from "@/generated/prisma/enums";
-import type { MasteryLevel as MasteryLevelType } from "@/generated/prisma/enums";
+import { recallProbability, type RecallState } from "@/server/domain/mistakes/recall";
 
-export type SelectablePattern = {
+export type SelectablePattern = RecallState & {
   id: string;
   occurrenceCount: number;
-  masteryLevel: MasteryLevelType;
 };
 
-const MASTERY_WEIGHT: Record<MasteryLevelType, number> = {
-  [MasteryLevel.ACTIVE]: 2,
-  [MasteryLevel.IMPROVING]: 1,
-  [MasteryLevel.MASTERED]: 0,
-};
-
-// Prioritizes high-frequency, low-mastery patterns for practice; MASTERED
-// patterns are deprioritized, not excluded (SPEC.md §5.4/§6).
+// Review queue: the patterns the user is most likely to have forgotten come
+// first (lowest estimated recall, see recall.ts), with the most frequent
+// mistake first on ties. Freshly practiced and MASTERED patterns have high
+// recall, so they sink — deprioritized, never excluded (SPEC.md §5.4/§6.1).
 export function selectPatternsForPractice<T extends SelectablePattern>(
   patterns: T[],
   count: number,
+  now: Date,
 ): T[] {
-  return [...patterns]
-    .sort((a, b) => {
-      const weightDiff = MASTERY_WEIGHT[b.masteryLevel] - MASTERY_WEIGHT[a.masteryLevel];
-      if (weightDiff !== 0) return weightDiff;
-      return b.occurrenceCount - a.occurrenceCount;
-    })
-    .slice(0, count);
+  return patterns
+    .map((pattern) => ({ pattern, recall: recallProbability(pattern, now) }))
+    .sort((a, b) => a.recall - b.recall || b.pattern.occurrenceCount - a.pattern.occurrenceCount)
+    .slice(0, count)
+    .map(({ pattern }) => pattern);
 }

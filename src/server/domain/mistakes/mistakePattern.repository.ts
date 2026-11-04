@@ -72,6 +72,13 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
       });
     },
 
+    async updateMastery(
+      id: string,
+      data: { masteryLevel: MasteryLevel; consecutiveCorrectCount: number },
+    ) {
+      return prisma.mistakePattern.update({ where: { id }, data });
+    },
+
     // One exercise attempt on the pattern: the new mastery state plus a recall
     // event for the half-life counters.
     async recordAttempt(
