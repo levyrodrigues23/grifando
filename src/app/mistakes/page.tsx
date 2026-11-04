@@ -1,13 +1,16 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEFAULT_USER_ID } from "@/lib/constants";
 import { MISTAKE_CATEGORY_LABELS } from "@/lib/mistakeCategoryLabels";
 import { prisma } from "@/server/db/client";
 import { computeCategoryBreakdown } from "@/server/domain/mistakes/analytics";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
+import { isFading } from "@/server/domain/mistakes/mastery";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
+import { isDueForReview } from "@/server/domain/mistakes/recall";
 
 const MASTERY_LABELS: Record<string, string> = {
   ACTIVE: "Active",
@@ -19,6 +22,10 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 function resolveSinceDate(isLast30Days: boolean): Date | undefined {
   return isLast30Days ? new Date(Date.now() - THIRTY_DAYS_MS) : undefined;
+}
+
+function getNow(): Date {
+  return new Date();
 }
 
 export default async function MistakesPage(props: PageProps<"/mistakes">) {
@@ -34,6 +41,8 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
   ]);
 
   const breakdown = computeCategoryBreakdown(categoryCounts);
+  const now = getNow();
+  const dueCount = patternList.filter((pattern) => isDueForReview(pattern, now)).length;
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
@@ -44,6 +53,19 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
           you make it, shows up here once.
         </p>
       </div>
+
+      {dueCount > 0 ? (
+        <Card size="sm">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm">
+              {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for review.
+            </p>
+            {/* Practice sets are built from the most-forgotten patterns first
+                (selectPatternsForPractice), so generating one there reviews these. */}
+            <Button render={<Link href="/exercises">Practice due patterns</Link>} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
@@ -109,9 +131,13 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
                   <Badge variant="outline">
                     {MISTAKE_CATEGORY_LABELS[pattern.category] ?? pattern.category}
                   </Badge>
-                  <Badge variant={pattern.masteryLevel === "MASTERED" ? "success" : "default"}>
-                    {MASTERY_LABELS[pattern.masteryLevel]}
-                  </Badge>
+                  {isFading(pattern, now) ? (
+                    <Badge variant="destructive">Fading</Badge>
+                  ) : (
+                    <Badge variant={pattern.masteryLevel === "MASTERED" ? "success" : "default"}>
+                      {MASTERY_LABELS[pattern.masteryLevel]}
+                    </Badge>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {pattern.occurrenceCount}x · last seen{" "}
                     {pattern.lastSeenAt.toLocaleDateString()}
