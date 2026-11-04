@@ -14,6 +14,7 @@ import { selectPatternsForPractice, selectReviewSet } from "@/server/domain/exer
 const DEFAULT_PRACTICE_SET_SIZE = 4;
 
 export type SubmitAttemptResult = {
+  attemptId: string;
   isCorrect: boolean;
   explanation: string;
   exercise: GeneratedExercise;
@@ -94,7 +95,7 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
       const promptData = exercise.promptData as GeneratedExercise;
       const isCorrect = evaluateExerciseAnswer(promptData, userAnswer);
 
-      await attempts.create({
+      const attempt = await attempts.create({
         exerciseId,
         userAnswer,
         isCorrect,
@@ -125,7 +126,30 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
         }
       }
 
-      return { isCorrect, explanation: promptData.explanation, exercise: promptData };
+      return { attemptId: attempt.id, isCorrect, explanation: promptData.explanation, exercise: promptData };
+    },
+  };
+}
+
+// "Explain my answer": an optional AI explanation of one graded attempt. It
+// never changes the grade (grading stays deterministic in
+// createExerciseAttemptService) and is not persisted — ExerciseAttempt.feedback
+// keeps the answer key's explanation; this is shown once, on request.
+export function createAttemptExplanationService(deps: { prisma: PrismaClient; aiProvider: AIProvider }) {
+  const { prisma, aiProvider } = deps;
+  const attempts = createExerciseAttemptRepository(prisma);
+
+  return {
+    // Returns null when the attempt doesn't exist for this user and exercise.
+    async explainAttempt(input: { userId: string; exerciseId: string; attemptId: string }) {
+      const attempt = await attempts.findForUser(input);
+      if (!attempt) return null;
+
+      const { explanation } = await aiProvider.explainAttempt({
+        exercise: attempt.exercise.promptData as GeneratedExercise,
+        userAnswer: attempt.userAnswer,
+      });
+      return explanation;
     },
   };
 }

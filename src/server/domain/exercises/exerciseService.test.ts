@@ -4,6 +4,7 @@ import { MasteryLevel, MistakeCategory } from "@/generated/prisma/enums";
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
 import {
+  createAttemptExplanationService,
   createExerciseAttemptService,
   createExerciseGenerationService,
 } from "@/server/domain/exercises/exerciseService";
@@ -50,7 +51,7 @@ function fakeGeneratedExercise() {
 
 describe("exerciseGenerationService.generatePracticeSet", () => {
   it("returns nothing when the user has no mistake patterns yet", async () => {
-    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 
     const result = await service.generatePracticeSet(userId);
@@ -65,6 +66,7 @@ describe("exerciseGenerationService.generatePracticeSet", () => {
       analyzeWriting: vi.fn(),
       generateExercises: vi.fn().mockResolvedValue([fakeGeneratedExercise()]),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 
@@ -150,6 +152,44 @@ describe("exerciseAttemptService.submitAttempt", () => {
     const result = await service.submitAttempt(exercise.id, "1");
 
     expect(result.isCorrect).toBe(true);
+  });
+});
+
+describe("attemptExplanationService.explainAttempt", () => {
+  it("explains a graded attempt without changing it", async () => {
+    const pattern = await seedPattern();
+    const exercise = await prisma.exercise.create({
+      data: { userId, type: "MULTIPLE_CHOICE", sourcePatternId: pattern.id, promptData: fakeGeneratedExercise() },
+    });
+    const graded = await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "0");
+    const explainAttempt = vi.fn().mockResolvedValue({ explanation: "You picked the wrong preposition." });
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+      explainAttempt,
+    };
+    const service = createAttemptExplanationService({ prisma, aiProvider });
+
+    const explanation = await service.explainAttempt({ userId, exerciseId: exercise.id, attemptId: graded.attemptId });
+
+    expect(explanation).toBe("You picked the wrong preposition.");
+    expect(explainAttempt).toHaveBeenCalledWith(expect.objectContaining({ userAnswer: "0" }));
+    const attempt = await prisma.exerciseAttempt.findUniqueOrThrow({ where: { id: graded.attemptId } });
+    expect(attempt.isCorrect).toBe(false);
+  });
+
+  it("returns null for an attempt that isn't the user's on that exercise", async () => {
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
+    };
+    const service = createAttemptExplanationService({ prisma, aiProvider });
+
+    expect(await service.explainAttempt({ userId, exerciseId: "nope", attemptId: "nope" })).toBeNull();
+    expect(aiProvider.explainAttempt).not.toHaveBeenCalled();
   });
 });
 

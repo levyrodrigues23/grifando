@@ -4,6 +4,11 @@ import { z } from "zod";
 
 import { AIResponseValidationError } from "@/server/ai/errors";
 import {
+  buildAnswerExplanationSystemPrompt,
+  buildAnswerExplanationUserMessage,
+  type ExplainAttemptInput,
+} from "@/server/ai/prompts/answerExplanation";
+import {
   buildExerciseGenerationSystemPrompt,
   buildExerciseGenerationUserMessage,
   type ExerciseTarget,
@@ -19,6 +24,7 @@ import {
   type AnalyzeWritingInput,
 } from "@/server/ai/prompts/writingAnalysis";
 import type { AIProvider } from "@/server/ai/provider";
+import { answerExplanationResultSchema } from "@/server/ai/schemas/answerExplanation";
 import {
   exerciseGenerationResultSchema,
   validateExerciseGenerationResult,
@@ -32,6 +38,8 @@ const EXERCISE_GENERATION_TOOL_NAME = "submit_exercises";
 const EXERCISE_GENERATION_MAX_TOKENS = 4096;
 const INTERVIEW_QUESTION_TOOL_NAME = "submit_interview_question";
 const INTERVIEW_QUESTION_MAX_TOKENS = 1024;
+const ANSWER_EXPLANATION_MAX_TOKENS = 1024;
+const ANSWER_EXPLANATION_TOOL_NAME = "submit_answer_explanation";
 
 // The only part of the Anthropic SDK this module depends on — keeps the
 // provider trivially mockable in tests without a real API client.
@@ -143,6 +151,24 @@ export function createAnthropicProvider(client: AnthropicMessagesClient, model: 
           ),
         },
         interviewQuestionResultSchema,
+      );
+    },
+
+    async explainAttempt(input: ExplainAttemptInput) {
+      return callToolAndValidate(
+        client,
+        {
+          model,
+          maxTokens: ANSWER_EXPLANATION_MAX_TOKENS,
+          system: buildAnswerExplanationSystemPrompt(),
+          userMessage: buildAnswerExplanationUserMessage(input),
+          tool: toTool(
+            ANSWER_EXPLANATION_TOOL_NAME,
+            "Submit the explanation of the learner's answer.",
+            answerExplanationResultSchema,
+          ),
+        },
+        answerExplanationResultSchema,
       );
     },
   };
