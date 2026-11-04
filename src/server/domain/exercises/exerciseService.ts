@@ -5,9 +5,11 @@ import { createMistakePatternRepository } from "@/server/domain/mistakes/mistake
 import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
 import { evaluateExerciseAnswer } from "@/server/domain/exercises/answerChecking";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
+import { createCategoryAbilityRepository } from "@/server/domain/exercises/categoryAbility.repository";
+import { DEFAULT_ABILITY, targetLevel, updateAbility } from "@/server/domain/exercises/difficulty";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { assignExerciseType } from "@/server/domain/exercises/exerciseType";
-import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
+import { selectPatternsForPractice, selectReviewSet } from "@/server/domain/exercises/selection";
 
 const DEFAULT_PRACTICE_SET_SIZE = 4;
 
@@ -25,19 +27,36 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
   const { prisma, aiProvider } = deps;
   const patterns = createMistakePatternRepository(prisma);
   const exercises = createExerciseRepository(prisma);
+  const abilities = createCategoryAbilityRepository(prisma);
 
   return {
     // Builds a practice set from the user's actual weak patterns — never
     // generic, random English exercises (SPEC.md §5.4).
-    async generatePracticeSet(userId: string, count = DEFAULT_PRACTICE_SET_SIZE) {
+    // With afterSessionId (the daily session), the mistakes from that writing
+    // session are interleaved with the most-due older patterns.
+    async generatePracticeSet(
+      userId: string,
+      count = DEFAULT_PRACTICE_SET_SIZE,
+      options: { afterSessionId?: string } = {},
+    ) {
       const allPatterns = await patterns.listByUser(userId);
-      const selected = selectPatternsForPractice(allPatterns, count);
+      const now = new Date();
+      const selected = options.afterSessionId
+        ? selectReviewSet(
+            allPatterns,
+            count,
+            now,
+            await patterns.listIdsForSession(options.afterSessionId, userId),
+          )
+        : selectPatternsForPractice(allPatterns, count, now);
 
       if (selected.length === 0) {
         return [];
       }
 
+      const ratings = await abilities.getRatings(userId);
       const targets = selected.map((pattern, index) => ({
+        difficulty: targetLevel(ratings.get(pattern.category) ?? DEFAULT_ABILITY),
         type: assignExerciseType(index),
         category: pattern.category,
         exampleOriginal: pattern.exampleOriginal,
@@ -52,6 +71,7 @@ export function createExerciseGenerationService(deps: { prisma: PrismaClient; ai
           type: item.type,
           sourcePatternId: selected[index].id,
           promptData: item,
+          difficulty: targets[index].difficulty,
         })),
       );
     },
@@ -62,6 +82,7 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
   const { prisma } = deps;
   const patterns = createMistakePatternRepository(prisma);
   const exercises = createExerciseRepository(prisma);
+  const abilities = createCategoryAbilityRepository(prisma);
   const attempts = createExerciseAttemptRepository(prisma);
 
   return {
@@ -92,6 +113,16 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
             isCorrect,
           );
           await patterns.recordAttempt(pattern.id, { ...nextState, isCorrect });
+
+          if (exercise.difficulty !== null) {
+            const ratings = await abilities.getRatings(exercise.userId);
+            const ability = ratings.get(pattern.category) ?? DEFAULT_ABILITY;
+            await abilities.setRating(
+              exercise.userId,
+              pattern.category,
+              updateAbility(ability, exercise.difficulty, isCorrect),
+            );
+          }
         }
       }
 

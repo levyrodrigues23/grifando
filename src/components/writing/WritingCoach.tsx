@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { WritingResults } from "@/components/writing/WritingResults";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { errorMessageFor } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
@@ -21,7 +22,14 @@ type ViewState =
   | { kind: "submitting" }
   | { kind: "result"; session: WritingSessionDTO };
 
-export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialChallenge }) {
+export function WritingCoach({
+  initialChallenge,
+  nextStep,
+}: {
+  initialChallenge?: InitialChallenge;
+  // Shown after a successful analysis; receives the analyzed session's id.
+  nextStep?: { label: string; onClick: (sessionId: string) => void };
+}) {
   const [text, setText] = useState("");
   const [view, setView] = useState<ViewState>({ kind: "editing" });
   // Session of the last failed attempt; resubmitting re-analyzes it instead of
@@ -48,7 +56,7 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
       });
 
       if (!response.ok) {
-        setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+        setView({ kind: "editing", errorMessage: await errorMessageFor(response, GENERIC_FAILURE_MESSAGE) });
         return;
       }
 
@@ -73,7 +81,14 @@ export function WritingCoach({ initialChallenge }: { initialChallenge?: InitialC
   }
 
   if (view.kind === "result") {
-    return <WritingResults session={view.session} onWriteAnother={handleWriteAnother} />;
+    const session = view.session;
+    return (
+      <WritingResults
+        session={session}
+        onWriteAnother={handleWriteAnother}
+        nextStep={nextStep && { label: nextStep.label, onClick: () => nextStep.onClick(session.id) }}
+      />
+    );
   }
 
   const isSubmitting = view.kind === "submitting";

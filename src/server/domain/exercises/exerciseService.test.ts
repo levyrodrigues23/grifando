@@ -192,3 +192,43 @@ describe("attemptExplanationService.explainAttempt", () => {
     expect(aiProvider.explainAttempt).not.toHaveBeenCalled();
   });
 });
+
+describe("difficulty targeting", () => {
+  it("raises the category ability after a correct attempt on a rated exercise", async () => {
+    const pattern = await seedPattern();
+    const exercise = await prisma.exercise.create({
+      data: {
+        userId,
+        type: "MULTIPLE_CHOICE",
+        sourcePatternId: pattern.id,
+        promptData: fakeGeneratedExercise(),
+        difficulty: 3,
+      },
+    });
+
+    await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "1");
+
+    const ability = await prisma.categoryAbility.findUniqueOrThrow({
+      where: { userId_category: { userId, category: pattern.category } },
+    });
+    expect(ability.rating).toBeGreaterThan(1000);
+    expect(ability.attemptCount).toBe(1);
+  });
+
+  it("asks the generator for a difficulty and stores it on the exercise", async () => {
+    await seedPattern();
+    const generateExercises = vi.fn().mockResolvedValue([fakeGeneratedExercise()]);
+    const aiProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises,
+      continueInterview: vi.fn(),
+    } as unknown as AIProvider;
+
+    const [created] = await createExerciseGenerationService({ prisma, aiProvider }).generatePracticeSet(userId, 1);
+
+    const [targets] = generateExercises.mock.calls[0];
+    expect(targets[0].difficulty).toBeGreaterThanOrEqual(1);
+    expect(targets[0].difficulty).toBeLessThanOrEqual(5);
+    expect(created.difficulty).toBe(targets[0].difficulty);
+  });
+});

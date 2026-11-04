@@ -114,6 +114,7 @@ const oneTarget = [
     category: MistakeCategory.PREPOSITIONS,
     exampleOriginal: "I depend of this library.",
     exampleCorrection: "I depend on this library.",
+    difficulty: 3,
   },
 ];
 

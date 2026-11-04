@@ -7,6 +7,7 @@ import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
+import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_PROMPT_TEXT_LENGTH = 1000;
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  if (limited) return limited;
 
   try {
     const service = createWritingCoachService({

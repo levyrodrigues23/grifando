@@ -14,6 +14,7 @@ export function MistakeCard({ mistake, index }: { mistake: MistakeOccurrenceDTO;
           <Badge variant="outline">
             {MISTAKE_CATEGORY_LABELS[mistake.category] ?? mistake.category}
           </Badge>
+          {mistake.l1Transfer ? <Badge variant="outline">From Portuguese</Badge> : null}
         </div>
         <p className="text-sm">
           <span className="text-destructive line-through">{mistake.originalSpan}</span>
