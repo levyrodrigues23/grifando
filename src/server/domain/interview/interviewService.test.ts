@@ -33,6 +33,7 @@ function fakeProvider(overrides: Partial<AIProvider> = {}): AIProvider {
     analyzeWriting: vi.fn().mockResolvedValue(fakeAnalysisResult()),
     generateExercises: vi.fn(),
     continueInterview: vi.fn().mockResolvedValue({ question: "What did you work on recently?" }),
+    explainAttempt: vi.fn(),
     ...overrides,
   };
 }

@@ -9,9 +9,12 @@ import type { WritingSessionDTO } from "@/components/writing/types";
 export function WritingResults({
   session,
   onWriteAnother,
+  nextStep,
 }: {
   session: WritingSessionDTO;
   onWriteAnother: () => void;
+  // Extra primary action after the results (e.g. the daily session's review step).
+  nextStep?: { label: string; onClick: () => void };
 }) {
   const analysis = session.analysis;
 
@@ -86,9 +89,12 @@ export function WritingResults({
         </CardContent>
       </Card>
 
-      <Button onClick={onWriteAnother} variant="outline">
-        Write something else
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        {nextStep ? <Button onClick={nextStep.onClick}>{nextStep.label}</Button> : null}
+        <Button onClick={onWriteAnother} variant="outline">
+          Write something else
+        </Button>
+      </div>
     </div>
   );
 }

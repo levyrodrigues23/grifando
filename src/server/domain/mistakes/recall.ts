@@ -25,9 +25,17 @@ export function estimateHalfLifeDays({ correctCount, incorrectCount }: RecallCou
   return Math.min(MAX_HALF_LIFE_DAYS, Math.max(MIN_HALF_LIFE_DAYS, halfLife));
 }
 
+// Below this recall probability a pattern is due for review: it sorts to the
+// front of practice selection, and a MASTERED one shows as fading.
+export const REVIEW_THRESHOLD = 0.5;
+
 // 1 right after practice, 0.5 one half-life later. A lastPracticedAt in the
 // future (clock skew) counts as "just practiced".
 export function recallProbability(state: RecallState, now: Date): number {
   const elapsedDays = Math.max(0, now.getTime() - state.lastPracticedAt.getTime()) / MS_PER_DAY;
   return 2 ** (-elapsedDays / estimateHalfLifeDays(state));
+}
+
+export function isDueForReview(state: RecallState, now: Date): boolean {
+  return recallProbability(state, now) < REVIEW_THRESHOLD;
 }

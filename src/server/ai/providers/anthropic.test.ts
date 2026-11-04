@@ -114,6 +114,7 @@ const oneTarget = [
     category: MistakeCategory.PREPOSITIONS,
     exampleOriginal: "I depend of this library.",
     exampleCorrection: "I depend on this library.",
+    difficulty: 3,
   },
 ];
 
@@ -216,5 +217,45 @@ describe("createAnthropicProvider.continueInterview", () => {
     await expect(provider.continueInterview([])).rejects.toBeInstanceOf(
       AIResponseValidationError,
     );
+  });
+});
+
+describe("createAnthropicProvider.explainAttempt", () => {
+  const input = {
+    exercise: {
+      type: "FILL_BLANK" as const,
+      instruction: "Fill the blank.",
+      template: "It depends ___ the config.",
+      acceptableAnswers: ["on"],
+      explanation: "'Depend on'.",
+    },
+    userAnswer: "of",
+  };
+
+  it("returns the validated explanation", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([
+        {
+          type: "tool_use",
+          id: "tool_1",
+          name: "submit_answer_explanation",
+          input: { explanation: "'Depend' is followed by 'on', not 'of'." },
+        },
+      ]),
+    );
+    const provider = createAnthropicProvider({ messages: { create } }, "test-model");
+
+    const result = await provider.explainAttempt(input);
+
+    expect(result.explanation).toContain("'on'");
+  });
+
+  it("throws AIResponseValidationError on an invalid tool input", async () => {
+    const create = vi.fn().mockResolvedValue(
+      fakeMessage([{ type: "tool_use", id: "tool_1", name: "submit_answer_explanation", input: {} }]),
+    );
+    const provider = createAnthropicProvider({ messages: { create } }, "test-model");
+
+    await expect(provider.explainAttempt(input)).rejects.toBeInstanceOf(AIResponseValidationError);
   });
 });
