@@ -3,12 +3,14 @@ import Link from "next/link";
 import { FocusMusic } from "@/components/layout/FocusMusic";
 
 const NAV_LINKS = [
+  { href: "/today", label: "Today" },
   { href: "/write", label: "Write" },
   { href: "/technical", label: "Technical" },
   { href: "/explain-code", label: "Explain Code" },
   { href: "/interview", label: "Interview" },
   { href: "/mistakes", label: "Mistakes" },
   { href: "/exercises", label: "Exercises" },
+  { href: "/vocabulary", label: "Vocabulary" },
 ];
 
 export function SiteHeader() {

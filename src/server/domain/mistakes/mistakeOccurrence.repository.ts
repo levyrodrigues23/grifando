@@ -10,6 +10,7 @@ export type CreateOccurrenceInput = {
   severity: MistakeSeverity;
   explanation: string;
   example: string;
+  l1Transfer: boolean;
 };
 
 export function createMistakeOccurrenceRepository(prisma: PrismaClient) {

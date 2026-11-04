@@ -1,6 +1,8 @@
+import type { ExplainAttemptInput } from "@/server/ai/prompts/answerExplanation";
 import type { ExerciseTarget } from "@/server/ai/prompts/exerciseGeneration";
 import type { InterviewHistoryItem } from "@/server/ai/prompts/interview";
 import type { AnalyzeWritingInput } from "@/server/ai/prompts/writingAnalysis";
+import type { AnswerExplanationResult } from "@/server/ai/schemas/answerExplanation";
 import type { GeneratedExercise } from "@/server/ai/schemas/exerciseGeneration";
 import type { InterviewQuestionResult } from "@/server/ai/schemas/interview";
 import type { WritingAnalysisResult } from "@/server/ai/schemas/writingAnalysis";
@@ -11,4 +13,5 @@ export interface AIProvider {
   analyzeWriting(input: AnalyzeWritingInput): Promise<WritingAnalysisResult>;
   generateExercises(targets: ExerciseTarget[]): Promise<GeneratedExercise[]>;
   continueInterview(history: InterviewHistoryItem[]): Promise<InterviewQuestionResult>;
+  explainAttempt(input: ExplainAttemptInput): Promise<AnswerExplanationResult>;
 }

@@ -4,6 +4,7 @@ import { PromptType } from "@/generated/prisma/enums";
 import { AIResponseValidationError } from "@/server/ai/errors";
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
+import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 
 const prisma = createTestPrismaClient();
@@ -55,6 +56,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockResolvedValue(fakeAnalysisResult()),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -81,6 +83,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockRejectedValue(new AIResponseValidationError("bad response", [])),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -104,7 +107,7 @@ describe("writingCoachService.submitWriting", () => {
       .fn()
       .mockRejectedValueOnce(new AIResponseValidationError("bad response", []))
       .mockResolvedValueOnce(fakeAnalysisResult());
-    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
     const failed = await service.submitWriting({
@@ -133,6 +136,7 @@ describe("writingCoachService.submitWriting", () => {
       analyzeWriting: vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] }),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -150,6 +154,33 @@ describe("writingCoachService.submitWriting", () => {
     expect(second.session.id).not.toBe(analyzed.session.id);
     const first = await prisma.writingSession.findUniqueOrThrow({ where: { id: analyzed.session.id } });
     expect(first.originalText).toBe("first");
+  });
+
+  it("stores the Portuguese-interference flag and filters patterns by it", async () => {
+    const [first] = fakeAnalysisResult().mistakes;
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn().mockResolvedValue({
+        ...fakeAnalysisResult(),
+        mistakes: [
+          { ...first, l1Transfer: true },
+          { ...first, category: "ARTICLES" as const, patternKey: "the-article", l1Transfer: false },
+        ],
+      }),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
+    };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    await service.submitWriting({ userId, promptType: PromptType.FREE, originalText: "I depend of the it." });
+
+    const flagged = await prisma.mistakeOccurrence.findMany({ where: { l1Transfer: true } });
+    expect(flagged).toHaveLength(1);
+
+    const patterns = createMistakePatternRepository(prisma);
+    expect(await patterns.listByUser(userId)).toHaveLength(2);
+    const fromPortuguese = await patterns.listByUser(userId, { l1TransferOnly: true });
+    expect(fromPortuguese.map((p) => p.patternKey)).toEqual(["depend-on"]);
   });
 
   it("drops a MASTERED pattern to IMPROVING when the mistake reappears in writing", async () => {
@@ -170,6 +201,7 @@ describe("writingCoachService.submitWriting", () => {
       }),
       generateExercises: vi.fn(),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
@@ -182,7 +214,7 @@ describe("writingCoachService.submitWriting", () => {
 
   it("passes codeSnippet to the AI but never persists it on the session", async () => {
     const analyzeWriting = vi.fn().mockResolvedValue({ ...fakeAnalysisResult(), mistakes: [] });
-    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
 
     await service.submitWriting({

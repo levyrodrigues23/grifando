@@ -103,6 +103,7 @@ const oneTarget = [
     category: MistakeCategory.PREPOSITIONS,
     exampleOriginal: "I depend of this library.",
     exampleCorrection: "I depend on this library.",
+    difficulty: 3,
   },
 ];
 
@@ -142,5 +143,36 @@ describe("createGeminiProvider.continueInterview", () => {
     const result = await provider.continueInterview([]);
 
     expect(result.question).toBe("Tell me about a project you're proud of.");
+  });
+});
+
+describe("createGeminiProvider.explainAttempt", () => {
+  const input = {
+    exercise: {
+      type: "FILL_BLANK" as const,
+      instruction: "Fill the blank.",
+      template: "It depends ___ the config.",
+      acceptableAnswers: ["on"],
+      explanation: "'Depend on'.",
+    },
+    userAnswer: "of",
+  };
+
+  it("returns the validated explanation", async () => {
+    const generateContent = vi
+      .fn()
+      .mockResolvedValue(fakeResponse({ explanation: "'Depend' is followed by 'on', not 'of'." }));
+    const provider = createGeminiProvider({ models: { generateContent } }, "test-model");
+
+    const result = await provider.explainAttempt(input);
+
+    expect(result.explanation).toContain("'on'");
+  });
+
+  it("throws AIResponseValidationError on an invalid response", async () => {
+    const generateContent = vi.fn().mockResolvedValue(fakeResponse({ explanation: "" }));
+    const provider = createGeminiProvider({ models: { generateContent } }, "test-model");
+
+    await expect(provider.explainAttempt(input)).rejects.toBeInstanceOf(AIResponseValidationError);
   });
 });

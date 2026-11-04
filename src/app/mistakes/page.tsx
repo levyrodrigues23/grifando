@@ -20,6 +20,15 @@ const MASTERY_LABELS: Record<string, string> = {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Builds a /mistakes URL keeping the other filter when one is toggled.
+function mistakesHref(filters: { last30Days: boolean; fromPortuguese: boolean }): string {
+  const params = new URLSearchParams();
+  if (filters.last30Days) params.set("window", "30d");
+  if (filters.fromPortuguese) params.set("origin", "pt");
+  const query = params.toString();
+  return query ? `/mistakes?${query}` : "/mistakes";
+}
+
 function resolveSinceDate(isLast30Days: boolean): Date | undefined {
   return isLast30Days ? new Date(Date.now() - THIRTY_DAYS_MS) : undefined;
 }
@@ -31,12 +40,13 @@ function getNow(): Date {
 export default async function MistakesPage(props: PageProps<"/mistakes">) {
   const searchParams = await props.searchParams;
   const isLast30Days = searchParams.window === "30d";
+  const isFromPortuguese = searchParams.origin === "pt";
 
   const patterns = createMistakePatternRepository(prisma);
   const occurrences = createMistakeOccurrenceRepository(prisma);
 
   const [patternList, categoryCounts] = await Promise.all([
-    patterns.listByUser(DEFAULT_USER_ID),
+    patterns.listByUser(DEFAULT_USER_ID, { l1TransferOnly: isFromPortuguese }),
     occurrences.countByCategory(DEFAULT_USER_ID, { since: resolveSinceDate(isLast30Days) }),
   ]);
 
@@ -72,14 +82,14 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
           <CardTitle>Most common mistakes</CardTitle>
           <div className="flex gap-2 text-xs">
             <Link
-              href="/mistakes"
+              href={mistakesHref({ last30Days: false, fromPortuguese: isFromPortuguese })}
               className={isLast30Days ? "text-muted-foreground" : "font-semibold underline"}
             >
               All time
             </Link>
             <span className="text-muted-foreground">·</span>
             <Link
-              href="/mistakes?window=30d"
+              href={mistakesHref({ last30Days: true, fromPortuguese: isFromPortuguese })}
               className={isLast30Days ? "font-semibold underline" : "text-muted-foreground"}
             >
               Last 30 days
@@ -113,7 +123,28 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
       </Card>
 
       <div className="space-y-3">
-        {patternList.length === 0 ? (
+        <div className="flex gap-2 text-xs">
+          <Link
+            href={mistakesHref({ last30Days: isLast30Days, fromPortuguese: false })}
+            className={isFromPortuguese ? "text-muted-foreground" : "font-semibold underline"}
+          >
+            All patterns
+          </Link>
+          <span className="text-muted-foreground">·</span>
+          <Link
+            href={mistakesHref({ last30Days: isLast30Days, fromPortuguese: true })}
+            className={isFromPortuguese ? "font-semibold underline" : "text-muted-foreground"}
+          >
+            From Portuguese
+          </Link>
+        </div>
+        {patternList.length === 0 && isFromPortuguese ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No mistakes flagged as coming from Portuguese yet.
+            </CardContent>
+          </Card>
+        ) : patternList.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">
               No mistakes yet.{" "}
