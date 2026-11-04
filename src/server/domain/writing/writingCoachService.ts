@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AIProvider } from "@/server/ai/provider";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
+import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
 import { createWritingAnalysisRepository } from "@/server/domain/writing/writingAnalysis.repository";
 import {
@@ -86,6 +87,16 @@ export function createWritingCoachService(deps: {
           exampleCorrection: mistake.correctedSpan,
         });
 
+        // Making the mistake again is a failed recall: it costs mastery the
+        // same way an incorrect exercise attempt does (SPEC.md §6).
+        const demoted = applyExerciseResult(pattern, false);
+        if (
+          demoted.masteryLevel !== pattern.masteryLevel ||
+          demoted.consecutiveCorrectCount !== pattern.consecutiveCorrectCount
+        ) {
+          await patterns.updateMastery(pattern.id, demoted);
+        }
+
         await occurrences.create({
           analysisId: analysis!.id,
           patternId: pattern.id,
@@ -95,6 +106,7 @@ export function createWritingCoachService(deps: {
           severity: mistake.severity,
           explanation: mistake.explanation,
           example: mistake.example,
+          l1Transfer: mistake.l1Transfer ?? false,
         });
       }
 

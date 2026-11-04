@@ -1,22 +1,8 @@
 import { DEFAULT_USER_ID } from "@/lib/constants";
 import { prisma } from "@/server/db/client";
-import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
-import {
-  DAILY_PROMPTS,
-  extractActiveWeakCategories,
-  getTodaysDate,
-  selectDailyPrompt,
-} from "@/server/domain/writing/dailyPrompt";
+import { resolveDailyChallenge } from "@/server/domain/writing/dailyChallenge";
 import { findTechnicalPromptById } from "@/server/domain/writing/technicalPrompts";
 import { WritingCoach, type InitialChallenge } from "@/components/writing/WritingCoach";
-
-async function resolveDailyChallenge(): Promise<InitialChallenge> {
-  const patterns = createMistakePatternRepository(prisma);
-  const userPatterns = await patterns.listByUser(DEFAULT_USER_ID);
-  const weakCategories = extractActiveWeakCategories(userPatterns);
-  const prompt = selectDailyPrompt(DAILY_PROMPTS, getTodaysDate(), weakCategories);
-  return { promptType: "DAILY_CHALLENGE", promptText: prompt.text };
-}
 
 export default async function WritePage(props: PageProps<"/write">) {
   const searchParams = await props.searchParams;
@@ -32,7 +18,7 @@ export default async function WritePage(props: PageProps<"/write">) {
       technicalCategory: technicalPrompt.category,
     };
   } else if (searchParams.mode === "daily") {
-    initialChallenge = await resolveDailyChallenge();
+    initialChallenge = await resolveDailyChallenge(prisma, DEFAULT_USER_ID);
   }
 
   return (
