@@ -12,6 +12,7 @@ import type {
   InterviewTurnRef,
   StartInterviewResponse,
 } from "@/components/interview/types";
+import { errorMessageFor } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -42,7 +43,7 @@ export function InterviewPractice() {
     try {
       const response = await fetch("/api/interview", { method: "POST" });
       if (!response.ok) {
-        setState({ kind: "idle", errorMessage: GENERIC_ERROR });
+        setState({ kind: "idle", errorMessage: await errorMessageFor(response, GENERIC_ERROR) });
         return;
       }
 
@@ -70,7 +71,8 @@ export function InterviewPractice() {
       );
 
       if (!response.ok) {
-        setState({ kind: "active", sessionId, currentTurn, history, errorMessage: GENERIC_ERROR });
+        const errorMessage = await errorMessageFor(response, GENERIC_ERROR);
+        setState({ kind: "active", sessionId, currentTurn, history, errorMessage });
         return;
       }
 

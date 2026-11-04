@@ -25,6 +25,20 @@ export function createExerciseAttemptRepository(prisma: PrismaClient) {
     async countByUser(userId: string) {
       return prisma.exerciseAttempt.count({ where: { exercise: { userId } } });
     },
+
+    // Share of the latest attempts answered correctly, for checking that
+    // difficulty targeting lands near its ~70% goal. Null with no attempts.
+    async recentAccuracy(userId: string, options: { limit: number }) {
+      const recent = await prisma.exerciseAttempt.findMany({
+        where: { exercise: { userId } },
+        orderBy: { attemptedAt: "desc" },
+        take: options.limit,
+        select: { isCorrect: true },
+      });
+      if (recent.length === 0) return null;
+      const correct = recent.filter((attempt) => attempt.isCorrect).length;
+      return { correct, total: recent.length };
+    },
   };
 }
 

@@ -28,6 +28,19 @@ describe("writingAnalysisResultSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts the optional l1Transfer flag and rejects a non-boolean one", () => {
+    const flagged = validResult();
+    Object.assign(flagged.mistakes[0], { l1Transfer: true });
+    const parsed = writingAnalysisResultSchema.parse(flagged);
+    expect(parsed.mistakes[0].l1Transfer).toBe(true);
+
+    expect(writingAnalysisResultSchema.parse(validResult()).mistakes[0].l1Transfer).toBeUndefined();
+
+    const invalid = validResult();
+    Object.assign(invalid.mistakes[0], { l1Transfer: "yes" });
+    expect(writingAnalysisResultSchema.safeParse(invalid).success).toBe(false);
+  });
+
   it("accepts a response with an empty mistakes array", () => {
     const result = writingAnalysisResultSchema.safeParse({
       ...validResult(),

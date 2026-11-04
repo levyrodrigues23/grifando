@@ -5,6 +5,7 @@ import { getAIProvider } from "@/server/ai/client";
 import { AIResponseValidationError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createAttemptExplanationService } from "@/server/domain/exercises/exerciseService";
+import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
 
 const EXPLANATION_FAILED = "We couldn't explain this answer right now. Your grade is unaffected — try again.";
 
@@ -13,6 +14,9 @@ export async function POST(
   context: RouteContext<"/api/exercises/[id]/attempts/[attemptId]/explanation">,
 ) {
   const { id, attemptId } = await context.params;
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  if (limited) return limited;
 
   try {
     const service = createAttemptExplanationService({ prisma, aiProvider: getAIProvider() });
