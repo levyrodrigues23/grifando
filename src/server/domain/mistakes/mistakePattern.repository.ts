@@ -58,6 +58,15 @@ export function createMistakePatternRepository(prisma: PrismaClient) {
       });
     },
 
+    // Patterns of the mistakes found in one writing session, scoped to its owner.
+    async listIdsForSession(sessionId: string, userId: string) {
+      const rows = await prisma.mistakePattern.findMany({
+        where: { userId, occurrences: { some: { analysis: { sessionId } } } },
+        select: { id: true },
+      });
+      return rows.map((row) => row.id);
+    },
+
     async findById(id: string) {
       return prisma.mistakePattern.findUnique({ where: { id } });
     },
