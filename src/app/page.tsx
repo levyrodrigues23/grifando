@@ -12,6 +12,7 @@ import { prisma } from "@/server/db/client";
 import { computeCategoryBreakdown } from "@/server/domain/mistakes/analytics";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
+import { isDueForReview } from "@/server/domain/mistakes/recall";
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { selectPatternsForPractice } from "@/server/domain/exercises/selection";
 import { computeAverageScores } from "@/server/domain/progress/progress";
@@ -25,6 +26,7 @@ import { createWritingSessionRepository } from "@/server/domain/writing/writingS
 
 const RECENT_LIMIT = 3;
 const SCORE_TREND_LIMIT = 10;
+const ACCURACY_WINDOW = 50;
 
 // Reads live, per-request data (mistake patterns, today's date) — must never
 // be statically prerendered at build time.
@@ -43,6 +45,7 @@ export default async function HomePage() {
     recentAnalyzedSessions,
     writingSessionsCompleted,
     exercisesCompleted,
+    exerciseAccuracy,
   ] = await Promise.all([
     patterns.listByUser(DEFAULT_USER_ID),
     occurrences.countByCategory(DEFAULT_USER_ID),
@@ -50,12 +53,15 @@ export default async function HomePage() {
     sessions.listRecentAnalyzed(DEFAULT_USER_ID, { limit: SCORE_TREND_LIMIT }),
     sessions.countAnalyzed(DEFAULT_USER_ID),
     attempts.countByUser(DEFAULT_USER_ID),
+    attempts.recentAccuracy(DEFAULT_USER_ID, { limit: ACCURACY_WINDOW }),
   ]);
 
   const weakCategories = extractActiveWeakCategories(userPatterns);
-  const dailyPrompt = selectDailyPrompt(DAILY_PROMPTS, getTodaysDate(), weakCategories);
+  const now = getTodaysDate();
+  const dailyPrompt = selectDailyPrompt(DAILY_PROMPTS, now, weakCategories);
   const breakdown = computeCategoryBreakdown(categoryCounts);
-  const [recommendation] = selectPatternsForPractice(userPatterns, 1);
+  const [recommendation] = selectPatternsForPractice(userPatterns, 1, now);
+  const dueCount = userPatterns.filter((pattern) => isDueForReview(pattern, now)).length;
   const averageScores = computeAverageScores(
     recentAnalyzedSessions.flatMap((session) => (session.analysis ? [session.analysis] : [])),
   );
@@ -93,6 +99,7 @@ export default async function HomePage() {
             <ProgressSummary
               writingSessionsCompleted={writingSessionsCompleted}
               exercisesCompleted={exercisesCompleted}
+              exerciseAccuracy={exerciseAccuracy}
               averageScores={averageScores}
             />
           </CardContent>
@@ -112,7 +119,13 @@ export default async function HomePage() {
         <CardHeader>
           <CardTitle>Practice recommendation</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
+          {dueCount > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for review — you&apos;re likely
+              to be forgetting {dueCount === 1 ? "it" : "them"}.
+            </p>
+          ) : null}
           {recommendation ? (
             <p className="text-sm">
               You&apos;ve mixed up{" "}
