@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { MasteryLevel } from "@/generated/prisma/enums";
-import { applyExerciseResult, isFading } from "@/server/domain/mistakes/mastery";
+import { ExerciseType, MasteryLevel } from "@/generated/prisma/enums";
+import { applyExerciseResult, isFading, needsMasteryCheck } from "@/server/domain/mistakes/mastery";
 
 describe("applyExerciseResult", () => {
   it("keeps ACTIVE after a single correct attempt", () => {
@@ -20,12 +20,32 @@ describe("applyExerciseResult", () => {
     expect(result).toEqual({ masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 0 });
   });
 
-  it("promotes IMPROVING to MASTERED after two consecutive correct attempts", () => {
-    const result = applyExerciseResult(
-      { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 1 },
-      true,
-    );
-    expect(result).toEqual({ masteryLevel: MasteryLevel.MASTERED, consecutiveCorrectCount: 0 });
+  it("promotes IMPROVING to MASTERED when the second correct answer is unscaffolded", () => {
+    for (const type of [ExerciseType.REWRITE, ExerciseType.TRANSLATION]) {
+      const result = applyExerciseResult(
+        { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 1 },
+        true,
+        type,
+      );
+      expect(result).toEqual({ masteryLevel: MasteryLevel.MASTERED, consecutiveCorrectCount: 0 });
+    }
+  });
+
+  it("keeps IMPROVING waiting for the mastery check after a scaffolded correct answer", () => {
+    for (const type of [ExerciseType.MULTIPLE_CHOICE, ExerciseType.FILL_BLANK, undefined]) {
+      const result = applyExerciseResult(
+        { masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 1 },
+        true,
+        type,
+      );
+      expect(result).toEqual({ masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 1 });
+      expect(needsMasteryCheck(result)).toBe(true);
+    }
+  });
+
+  it("only asks for the mastery check one step from MASTERED", () => {
+    expect(needsMasteryCheck({ masteryLevel: MasteryLevel.IMPROVING, consecutiveCorrectCount: 0 })).toBe(false);
+    expect(needsMasteryCheck({ masteryLevel: MasteryLevel.ACTIVE, consecutiveCorrectCount: 1 })).toBe(false);
   });
 
   it("drops IMPROVING back to ACTIVE on an incorrect attempt", () => {
