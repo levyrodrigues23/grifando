@@ -105,14 +105,18 @@ export function ExercisePractice({ afterSessionId }: { afterSessionId?: string }
   }
 
   if (state.kind === "loading") {
-    return <p className="text-sm text-muted-foreground">Loading exercises...</p>;
+    return (
+      <p className="text-muted-foreground" aria-live="polite">
+        Loading exercises...
+      </p>
+    );
   }
 
   if (state.kind === "error") {
     return (
-      <Card>
-        <CardContent className="space-y-3 pt-4">
-          <p className="text-sm text-destructive">{state.message}</p>
+      <Card className="max-w-2xl">
+        <CardContent className="space-y-4">
+          <p role="alert" className="text-destructive">{state.message}</p>
           <Button variant="outline" onClick={loadExercises}>
             Try again
           </Button>
@@ -128,12 +132,12 @@ export function ExercisePractice({ afterSessionId }: { afterSessionId?: string }
   if (state.kind === "empty" || state.kind === "generating") {
     const isGenerating = state.kind === "generating";
     return (
-      <Card>
+      <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>No exercises to practice right now</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="prose-serif text-lg text-iron">
             Exercises are generated from mistakes found in your writing. Write something first, or
             generate a practice set from what you already have.
           </p>
@@ -150,9 +154,11 @@ export function ExercisePractice({ afterSessionId }: { afterSessionId?: string }
   const current = state.queue[0];
 
   return (
-    <Card>
+    <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle>Practice</CardTitle>
+        <p className="label-mono text-muted-foreground">
+          {state.queue.length} left in this set
+        </p>
       </CardHeader>
       <CardContent>
         <ExerciseQuestion exercise={current.prompt} answer={answer} onAnswerChange={setAnswer} />

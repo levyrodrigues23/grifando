@@ -13,7 +13,7 @@ function Separator({
       data-slot="separator"
       orientation={orientation}
       className={cn(
-        "shrink-0 border-dashed border-border bg-transparent data-horizontal:h-0 data-horizontal:w-full data-horizontal:border-t data-vertical:h-auto data-vertical:w-0 data-vertical:self-stretch data-vertical:border-l",
+        "shrink-0 border-border bg-transparent data-horizontal:h-0 data-horizontal:w-full data-horizontal:border-t data-vertical:h-auto data-vertical:w-0 data-vertical:self-stretch data-vertical:border-l",
         className
       )}
       {...props}

@@ -14,10 +14,17 @@ export function TodaySession({ challenge }: { challenge: InitialChallenge }) {
   const [step, setStep] = useState<Step>({ kind: "write" });
 
   return (
-    <div className="space-y-6">
-      <ol className="flex gap-4 text-xs font-medium tracking-normal uppercase">
-        <li className={step.kind === "write" ? "text-foreground" : "text-muted-foreground"}>1. Write</li>
-        <li className={step.kind === "review" ? "text-foreground" : "text-muted-foreground"}>2. Review</li>
+    <div className="space-y-10">
+      <ol className="flex gap-7" aria-label="Session steps">
+        {(["write", "review"] as const).map((kind, index) => (
+          <li
+            key={kind}
+            aria-current={step.kind === kind ? "step" : undefined}
+            className={`border-b-2 pb-2 text-sm ${step.kind === kind ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`}
+          >
+            <span className="font-mono text-xs">{index + 1}</span> {kind === "write" ? "Write" : "Review"}
+          </li>
+        ))}
       </ol>
 
       {step.kind === "write" ? (

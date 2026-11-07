@@ -6,16 +6,18 @@ type RecentPattern = {
 
 export function RecentMistakes({ patterns }: { patterns: RecentPattern[] }) {
   if (patterns.length === 0) {
-    return <p className="text-sm text-muted-foreground">No mistakes recorded yet.</p>;
+    return <p className="text-muted-foreground">No mistakes recorded yet.</p>;
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="border-t border-border">
       {patterns.map((pattern) => (
-        <li key={pattern.id} className="text-sm">
-          <span className="text-destructive line-through">{pattern.exampleOriginal}</span>
-          {" → "}
-          <span className="font-medium text-success">{pattern.exampleCorrection}</span>
+        <li key={pattern.id} className="prose-serif border-b border-border py-4 text-lg">
+          <span className="text-muted-foreground line-through decoration-1">
+            {pattern.exampleOriginal}
+          </span>{" "}
+          <span aria-hidden="true">→</span> <span className="sr-only">corrected to</span>
+          <span>{pattern.exampleCorrection}</span>
         </li>
       ))}
     </ul>
