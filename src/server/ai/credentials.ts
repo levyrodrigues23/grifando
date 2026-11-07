@@ -1,17 +1,16 @@
+import {
+  AI_KEY_HEADER,
+  AI_PROVIDER_HEADER,
+  isProviderName,
+  type AICredentials,
+  type AIProviderName,
+} from "@/lib/aiCredentials";
 import { InvalidAICredentialsError } from "@/server/ai/errors";
 
-export type AIProviderName = "gemini" | "anthropic";
-export type AICredentials = { provider: AIProviderName; apiKey: string };
-
-export const AI_PROVIDER_HEADER = "x-ai-provider";
-export const AI_KEY_HEADER = "x-ai-key";
+export { AI_KEY_HEADER, AI_PROVIDER_HEADER, type AICredentials, type AIProviderName };
 
 const MAX_KEY_LENGTH = 256;
 const PRINTABLE_ASCII = /^[\x21-\x7e]+$/;
-
-function isProviderName(value: string): value is AIProviderName {
-  return value === "gemini" || value === "anthropic";
-}
 
 export function readAICredentials(headers: Headers): AICredentials | null {
   const provider = headers.get(AI_PROVIDER_HEADER)?.trim();

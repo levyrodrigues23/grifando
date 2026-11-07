@@ -17,6 +17,7 @@ const NAV_LINKS = [
   { href: "/exercises", label: "Exercises" },
   { href: "/mistakes", label: "Mistakes" },
   { href: "/vocabulary", label: "Vocabulary" },
+  { href: "/settings", label: "Key" },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -24,7 +25,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 // Desktop: a tab row where the 2px ink underline marks the active route.
-// Mobile: nine tabs don't fit, so the row collapses into a disclosure that names
+// Mobile: ten tabs don't fit, so the row collapses into a disclosure that names
 // the current page and opens the full list.
 export function NavLinks() {
   const pathname = usePathname();

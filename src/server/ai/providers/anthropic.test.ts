@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ExerciseType, MistakeCategory, PromptType } from "@/generated/prisma/enums";
-import { AIResponseValidationError } from "@/server/ai/errors";
+import { AIKeyRejectedError, AIProviderUnavailableError, AIResponseValidationError } from "@/server/ai/errors";
 import type { AnthropicMessagesClient } from "@/server/ai/providers/anthropic";
-import { createAnthropicProvider } from "@/server/ai/providers/anthropic";
+import { createAnthropicProvider, testKey } from "@/server/ai/providers/anthropic";
 
 function fakeMessage(content: unknown[]) {
   return {
@@ -257,5 +257,19 @@ describe("createAnthropicProvider.explainAttempt", () => {
     const provider = createAnthropicProvider({ messages: { create } }, "test-model");
 
     await expect(provider.explainAttempt(input)).rejects.toBeInstanceOf(AIResponseValidationError);
+  });
+});
+
+describe("testKey", () => {
+  it("makes one 1-token request and resolves when the key works", async () => {
+    const create = vi.fn().mockResolvedValue(fakeMessage([]));
+    await expect(testKey({ messages: { create } }, "test-model")).resolves.toBeUndefined();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ model: "test-model", max_tokens: 1 }));
+  });
+
+  it("maps a 401 to AIKeyRejectedError and a 529 to AIProviderUnavailableError", async () => {
+    const create = vi.fn().mockRejectedValueOnce({ status: 401 }).mockRejectedValueOnce({ status: 529 });
+    await expect(testKey({ messages: { create } }, "m")).rejects.toBeInstanceOf(AIKeyRejectedError);
+    await expect(testKey({ messages: { create } }, "m")).rejects.toBeInstanceOf(AIProviderUnavailableError);
   });
 });
