@@ -54,7 +54,6 @@ pnpm install                 # also runs `prisma generate`
 cp .env.example .env         # then set AI_PROVIDER and that provider's API key
 docker compose up -d         # Postgres on 127.0.0.1:5432
 pnpm db:deploy               # apply migrations to the dev database
-pnpm db:seed                 # create the single default user
 pnpm dev                     # http://localhost:3000
 ```
 
@@ -93,7 +92,6 @@ Tests never need an AI key: the AI provider is mocked.
 | `pnpm db:migrate` | Create and apply a new migration (dev) |
 | `pnpm db:deploy` | Apply existing migrations |
 | `pnpm db:test:prepare` | Create and migrate the test database |
-| `pnpm db:seed` | Seed the default user |
 | `pnpm db:studio` | Prisma Studio |
 
 ## Troubleshooting

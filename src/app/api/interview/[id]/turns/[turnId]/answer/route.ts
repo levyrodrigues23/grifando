@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_ANSWER_LENGTH = 5000;
 
@@ -29,7 +29,10 @@ export async function POST(
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
   if (limited) return limited;
 
   try {
@@ -40,7 +43,7 @@ export async function POST(
     });
 
     const result = await service.answerTurn({
-      userId: DEFAULT_USER_ID,
+      userId,
       sessionId: id,
       turnId,
       answer: parsed.data.answer,

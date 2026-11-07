@@ -76,7 +76,6 @@ old dark "Darkroom" palette, or a dark theme.
 - `pnpm db:test:prepare` — create `english_coach_test` if missing and apply all migrations to
   it (`scripts/prepare-test-db.ts`). Run after pulling new migrations, before `pnpm test`.
 - `pnpm db:studio` — inspect the DB.
-- `pnpm db:seed` — run `prisma/seed.ts`.
 - `prisma generate` also runs automatically on `pnpm install` (`postinstall` script).
 
 ## Next.js 16 / Prisma 7 — read before assuming API shape
@@ -110,10 +109,14 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
 - Every AI response is validated with its Zod schema (`src/server/ai/schemas/*`) before it
   touches the database. An invalid response is a handled failure (session stays `PENDING`,
   original text preserved), never a crash and never persisted as-if-valid.
-- There is no auth/session system in the MVP. The current user is the server-side constant
-  `DEFAULT_USER_ID` (see `src/lib/constants.ts`), resolved from the one seeded user — never
-  taken from client-supplied input. Every domain table still carries `userId`; keep it that
-  way so real auth can be added later by replacing this constant lookup, not by migrating data.
+- There is no login. Each browser gets an anonymous session: `src/proxy.ts` mints a signed
+  `ig_session` cookie (HMAC via `SESSION_SECRET`, `src/server/session/sessionToken.ts`, pure and
+  importable from the proxy) and also forwards it on the request so the same render sees it.
+  `getCurrentUserId()` (`src/server/session/currentUser.ts`) reads and verifies it — read-only,
+  safe in Server Components, never taken from client input. The `User` row is created lazily:
+  every POST/DELETE route calls `ensureUser(prisma, userId)` before its service. Every domain
+  table still carries `userId`. Route tests must `vi.mock("@/server/session/currentUser")`
+  (`cookies()` doesn't exist outside a request).
 - Mistake dedup relies on the AI-proposed `patternKey` per mistake, normalized in
   `mistakePatternRepository.upsertPattern` (`src/server/domain/mistakes/patternKey.ts`). Don't
   build separate fuzzy-matching/embedding-based clustering for this — see SPEC.md §6.

@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { PromptType, TechnicalCategory } from "@/generated/prisma/enums";
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_PROMPT_TEXT_LENGTH = 1000;
@@ -33,7 +33,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
   if (limited) return limited;
 
   try {
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
     });
 
     const result = await service.submitWriting({
-      userId: DEFAULT_USER_ID,
+      userId,
       ...parsed.data,
     });
 
@@ -56,9 +59,10 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const userId = await getCurrentUserId();
   try {
     const repository = createWritingSessionRepository(prisma);
-    const sessions = await repository.listByUser(DEFAULT_USER_ID, { limit: 20 });
+    const sessions = await repository.listByUser(userId, { limit: 20 });
     return NextResponse.json(sessions);
   } catch (error) {
     console.error("Failed to list writing sessions", error);
