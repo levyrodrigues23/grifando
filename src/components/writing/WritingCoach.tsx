@@ -124,7 +124,7 @@ export function WritingCoach({
         </div>
       </div>
 
-      <aside className="space-y-4 lg:pt-6">
+      <aside className="order-first space-y-4 lg:order-none lg:pt-6">
         {initialChallenge ? (
           <>
             <h2 className="label-mono text-muted-foreground">Prompt</h2>
