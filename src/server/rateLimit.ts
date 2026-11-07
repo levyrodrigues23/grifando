@@ -1,56 +1,79 @@
 import { NextResponse } from "next/server";
 
-// In-memory token bucket (SPEC.md §11): enough for a single-user app running in
-// one process. Each AI-calling route consumes a token before calling its
-// service; an empty bucket answers 429 so a double click, a render loop, or a
-// script can't run up the AI bill. State is per process and resets on restart —
-// a multi-instance deployment would need a shared store (Redis, the database).
+import type { PrismaClient } from "@/generated/prisma/client";
+import { hashedClientIp } from "@/server/clientIp";
 
-export type BucketConfig = { capacity: number; refillPerMinute: number };
+// Fixed-window counters in Postgres (table RateLimitWindow), so limits hold
+// across serverless instances. Expired windows are deleted by the cleanup cron.
 
-export type ConsumeResult = { allowed: true } | { allowed: false; retryAfterSeconds: number };
+export type LimitRule = { name: string; max: number; windowSeconds: number };
 
-type BucketState = { tokens: number; updatedAt: number };
-
-export function createRateLimiter(config: BucketConfig, now: () => number = Date.now) {
-  const buckets = new Map<string, BucketState>();
-  const refillPerMs = config.refillPerMinute / 60_000;
-
-  return {
-    consume(key: string): ConsumeResult {
-      const time = now();
-      const previous = buckets.get(key) ?? { tokens: config.capacity, updatedAt: time };
-      const tokens = Math.min(config.capacity, previous.tokens + (time - previous.updatedAt) * refillPerMs);
-
-      if (tokens < 1) {
-        buckets.set(key, { tokens, updatedAt: time });
-        return { allowed: false, retryAfterSeconds: Math.ceil((1 - tokens) / refillPerMs / 1000) };
-      }
-
-      buckets.set(key, { tokens: tokens - 1, updatedAt: time });
-      return { allowed: true };
-    },
-  };
-}
-
-export type RateLimiter = ReturnType<typeof createRateLimiter>;
-
-// Writing analysis (Writing Coach, Daily, Technical, Explain Code, interview
-// answers) and generation calls (exercise sets, interview start) are limited
-// separately: a burst of practice-set generation shouldn't block writing.
-export const aiRateLimits = {
-  analysis: createRateLimiter({ capacity: 10, refillPerMinute: 10 }),
-  generation: createRateLimiter({ capacity: 5, refillPerMinute: 5 }),
-};
+export const RATE_LIMITS = {
+  analysis: [
+    { name: "analysis-min", max: 10, windowSeconds: 60 },
+    { name: "analysis-day", max: 100, windowSeconds: 86_400 },
+  ],
+  generation: [
+    { name: "generation-min", max: 5, windowSeconds: 60 },
+    { name: "generation-day", max: 50, windowSeconds: 86_400 },
+  ],
+  write: [{ name: "write-min", max: 60, windowSeconds: 60 }],
+  keyTest: [{ name: "keytest-hour", max: 5, windowSeconds: 3_600 }],
+  ip: [{ name: "ip-day", max: 300, windowSeconds: 86_400 }],
+} satisfies Record<string, LimitRule[]>;
 
 export const RATE_LIMIT_MESSAGE = "You're going a bit fast. Wait a moment and try again.";
 
-// Returns the 429 response to send, or null when the call may proceed.
-export function rateLimitResponse(limiter: RateLimiter, key: string): NextResponse | null {
-  const result = limiter.consume(key);
-  if (result.allowed) return null;
+export type ConsumeResult = { allowed: true } | { allowed: false; retryAfterSeconds: number };
+
+type Db = Pick<PrismaClient, "$queryRaw">;
+
+// Increments every rule's counter (so counts stay honest) and blocks when any
+// rule is over its max; with several blocking, the longest wait is reported.
+export async function consume(
+  prisma: Db,
+  subject: string,
+  rules: LimitRule[],
+  now: Date = new Date(),
+): Promise<ConsumeResult> {
+  let retryAfterSeconds = 0;
+  for (const rule of rules) {
+    const windowMs = rule.windowSeconds * 1000;
+    const startMs = Math.floor(now.getTime() / windowMs) * windowMs;
+    const key = `${rule.name}:${subject}`;
+    const rows = await prisma.$queryRaw<{ count: number }[]>`
+      INSERT INTO "RateLimitWindow" ("key", "windowStart", "count")
+      VALUES (${key}, ${new Date(startMs)}, 1)
+      ON CONFLICT ("key", "windowStart")
+      DO UPDATE SET "count" = "RateLimitWindow"."count" + 1
+      RETURNING "count"`;
+    if (rows[0].count > rule.max) {
+      const retry = Math.max(1, Math.ceil((startMs + windowMs - now.getTime()) / 1000));
+      retryAfterSeconds = Math.max(retryAfterSeconds, retry);
+    }
+  }
+  return retryAfterSeconds > 0 ? { allowed: false, retryAfterSeconds } : { allowed: true };
+}
+
+// Returns the 429 response to send, or null when the call may proceed. Checks
+// the bucket for the session and the per-IP ceiling for the hashed client IP.
+export async function rateLimitResponse(
+  prisma: Db,
+  request: Request,
+  userId: string,
+  bucket: keyof typeof RATE_LIMITS,
+): Promise<NextResponse | null> {
+  const results = [
+    await consume(prisma, userId, RATE_LIMITS[bucket]),
+    await consume(prisma, hashedClientIp(request.headers), RATE_LIMITS.ip),
+  ];
+  let retryAfter = 0;
+  for (const result of results) {
+    if (!result.allowed) retryAfter = Math.max(retryAfter, result.retryAfterSeconds);
+  }
+  if (retryAfter === 0) return null;
   return NextResponse.json(
     { error: RATE_LIMIT_MESSAGE },
-    { status: 429, headers: { "Retry-After": String(result.retryAfterSeconds) } },
+    { status: 429, headers: { "Retry-After": String(retryAfter) } },
   );
 }

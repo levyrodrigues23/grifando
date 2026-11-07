@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/server/db/client";
+import { NotFoundError } from "@/server/domain/errors";
 import { createExerciseAttemptService } from "@/server/domain/exercises/exerciseService";
+import { logError } from "@/server/logError";
+import { rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const submitAttemptSchema = z.object({
   answer: z.string().trim().min(1).max(1000),
@@ -23,12 +27,20 @@ export async function POST(
     );
   }
 
+  const userId = await getCurrentUserId();
+  const limited = await rateLimitResponse(prisma, request, userId, "write");
+  if (limited) return limited;
+  await ensureUser(prisma, userId);
+
   try {
     const service = createExerciseAttemptService({ prisma });
-    const result = await service.submitAttempt(id, parsed.data.answer);
+    const result = await service.submitAttempt(userId, id, parsed.data.answer);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Failed to submit exercise attempt", error);
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    logError("Failed to submit exercise attempt", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

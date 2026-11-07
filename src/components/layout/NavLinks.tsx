@@ -17,6 +17,7 @@ const NAV_LINKS = [
   { href: "/exercises", label: "Exercises" },
   { href: "/mistakes", label: "Mistakes" },
   { href: "/vocabulary", label: "Vocabulary" },
+  { href: "/settings", label: "Key" },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -24,7 +25,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 // Desktop: a tab row where the 2px ink underline marks the active route.
-// Mobile: nine tabs don't fit, so the row collapses into a disclosure that names
+// Mobile: ten tabs don't fit, so the row collapses into a disclosure that names
 // the current page and opens the full list.
 export function NavLinks() {
   const pathname = usePathname();
@@ -43,13 +44,17 @@ export function NavLinks() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "block border-b-2 pb-3 text-sm transition-colors",
-                  active
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                  "relative block pb-3.5 text-sm transition-colors",
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {link.label}
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="nav-underline absolute inset-x-0 bottom-0 h-0.5 bg-foreground"
+                  />
+                ) : null}
               </Link>
             </li>
           );

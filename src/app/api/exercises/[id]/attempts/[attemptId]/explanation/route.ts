@@ -1,27 +1,40 @@
 import { NextResponse } from "next/server";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
-import { getAIProvider } from "@/server/ai/client";
-import { AIResponseValidationError } from "@/server/ai/errors";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError, AIResponseValidationError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createAttemptExplanationService } from "@/server/domain/exercises/exerciseService";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { logError } from "@/server/logError";
+import { rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const EXPLANATION_FAILED = "We couldn't explain this answer right now. Your grade is unaffected — try again.";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: RouteContext<"/api/exercises/[id]/attempts/[attemptId]/explanation">,
 ) {
   const { id, attemptId } = await context.params;
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
-    const service = createAttemptExplanationService({ prisma, aiProvider: getAIProvider() });
+    const { provider } = createAIProvider(credentials);
+    const service = createAttemptExplanationService({ prisma, aiProvider: provider });
     const explanation = await service.explainAttempt({
-      userId: DEFAULT_USER_ID,
+      userId,
       exerciseId: id,
       attemptId,
     });
@@ -32,7 +45,9 @@ export async function POST(
 
     return NextResponse.json({ explanation });
   } catch (error) {
-    console.error("Failed to explain exercise attempt", error);
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
+    logError("Failed to explain exercise attempt", error);
     const status = error instanceof AIResponseValidationError ? 502 : 500;
     return NextResponse.json({ error: EXPLANATION_FAILED }, { status });
   }

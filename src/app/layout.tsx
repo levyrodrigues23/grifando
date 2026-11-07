@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
+import Link from "next/link";
+import { connection } from "next/server";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -24,12 +28,25 @@ const sourceSerif = Source_Serif_4({
   style: ["normal", "italic"],
 });
 
+const DESCRIPTION = "Personal writing coach for English, built from your own mistakes.";
+
 export const metadata: Metadata = {
-  title: "Inglesando",
-  description: "Personal writing coach for English, built from your own mistakes.",
+  metadataBase: new URL(getSiteUrl()),
+  title: { default: "Inglesando", template: "%s · Inglesando" },
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Inglesando",
+    title: "Inglesando",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image", title: "Inglesando", description: DESCRIPTION },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The CSP nonce is per request, so no page may be prerendered at build time:
+  // a static page would ship scripts without the nonce and the CSP would block them.
+  await connection();
   return (
     <html
       lang="en"
@@ -40,9 +57,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="flex-1">{children}</div>
         <footer className="mx-auto w-full max-w-[1200px] px-6 pt-24 pb-10 md:px-12">
           <p className="label-mono text-smoke">
-            Inglesando · scores are AI-generated heuristics, not a proficiency test
+            Inglesando · scores are AI-generated heuristics, not a proficiency test ·{" "}
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-iron">
+              Privacy
+            </Link>
           </p>
         </footer>
+        <Analytics />
       </body>
     </html>
   );

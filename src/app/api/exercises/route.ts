@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
-import { getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import type { GeneratedExercise } from "@/server/ai/schemas/exerciseGeneration";
 import { prisma } from "@/server/db/client";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { logError } from "@/server/logError";
+import { rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 // Optional: generate the daily session's review set after a writing session.
 const generateSchema = z
@@ -24,12 +28,13 @@ function toResponseShape(exercise: { id: string; type: string; promptData: unkno
 }
 
 export async function GET() {
+  const userId = await getCurrentUserId();
   try {
     const repository = createExerciseRepository(prisma);
-    const pending = await repository.listPending(DEFAULT_USER_ID);
+    const pending = await repository.listPending(userId);
     return NextResponse.json({ exercises: pending.map(toResponseShape) });
   } catch (error) {
-    console.error("Failed to list exercises", error);
+    logError("Failed to list exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
@@ -44,12 +49,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.generation, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
+  const limited = await rateLimitResponse(prisma, request, userId, "generation");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
-    const service = createExerciseGenerationService({ prisma, aiProvider: getAIProvider() });
-    const created = await service.generatePracticeSet(DEFAULT_USER_ID, undefined, {
+    const { provider } = createAIProvider(credentials);
+    const service = createExerciseGenerationService({ prisma, aiProvider: provider });
+    const created = await service.generatePracticeSet(userId, undefined, {
       afterSessionId: parsed.data?.afterSessionId,
     });
 
@@ -62,7 +77,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ exercises: created.map(toResponseShape) }, { status: 201 });
   } catch (error) {
-    console.error("Failed to generate exercises", error);
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
+    logError("Failed to generate exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

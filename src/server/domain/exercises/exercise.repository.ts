@@ -22,9 +22,10 @@ export function createExerciseRepository(prisma: PrismaClient) {
       );
     },
 
-    async findById(id: string) {
-      return prisma.exercise.findUnique({
-        where: { id },
+    // Scoped to the owner: another user's exercise id reads as not found.
+    async findById(id: string, userId: string) {
+      return prisma.exercise.findFirst({
+        where: { id, userId },
         include: { attempts: { orderBy: { attemptedAt: "asc" } } },
       });
     },

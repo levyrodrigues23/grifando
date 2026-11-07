@@ -15,6 +15,7 @@ export function createTestPrismaClient() {
 }
 
 const TABLES = [
+  "RateLimitWindow",
   "CategoryAbility",
   "VocabularyItem",
   "InterviewTurn",

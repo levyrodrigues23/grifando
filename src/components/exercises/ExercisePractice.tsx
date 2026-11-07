@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExerciseQuestion } from "@/components/exercises/ExerciseQuestion";
 import { ExerciseResult } from "@/components/exercises/ExerciseResult";
 import type { ExerciseListItemDTO, SubmitAttemptResponse } from "@/components/exercises/types";
+import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 
 type State =
   | { kind: "loading" }
@@ -14,7 +16,7 @@ type State =
   | { kind: "generating" }
   | { kind: "practicing"; queue: ExerciseListItemDTO[] }
   | { kind: "result"; queue: ExerciseListItemDTO[]; exerciseId: string; result: SubmitAttemptResponse }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; keyRequired?: boolean };
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
@@ -36,14 +38,14 @@ async function fetchPendingExercises(): Promise<State> {
 
 async function generateExercises(afterSessionId?: string): Promise<State> {
   try {
-    const response = await fetch("/api/exercises", {
+    const response = await aiFetch("/api/exercises", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ afterSessionId }),
     });
     return await toQueueState(response);
-  } catch {
-    return { kind: "error", message: GENERIC_ERROR };
+  } catch (error) {
+    return { kind: "error", message: GENERIC_ERROR, keyRequired: error instanceof MissingAIKeyError };
   }
 }
 
@@ -116,7 +118,11 @@ export function ExercisePractice({ afterSessionId }: { afterSessionId?: string }
     return (
       <Card className="max-w-2xl">
         <CardContent className="space-y-4">
-          <p role="alert" className="text-destructive">{state.message}</p>
+          {state.keyRequired ? (
+            <KeyRequiredNotice />
+          ) : (
+            <p role="alert" className="text-destructive">{state.message}</p>
+          )}
           <Button variant="outline" onClick={loadExercises}>
             Try again
           </Button>

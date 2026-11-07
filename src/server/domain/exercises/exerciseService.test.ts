@@ -3,6 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MasteryLevel, MistakeCategory } from "@/generated/prisma/enums";
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
+import { NotFoundError } from "@/server/domain/errors";
 import {
   createAttemptExplanationService,
   createExerciseAttemptService,
@@ -94,7 +95,7 @@ describe("exerciseAttemptService.submitAttempt", () => {
     });
     const service = createExerciseAttemptService({ prisma });
 
-    const result = await service.submitAttempt(exercise.id, "1");
+    const result = await service.submitAttempt(userId, exercise.id, "1");
 
     expect(result.isCorrect).toBe(true);
 
@@ -123,7 +124,7 @@ describe("exerciseAttemptService.submitAttempt", () => {
     });
     const service = createExerciseAttemptService({ prisma });
 
-    const result = await service.submitAttempt(exercise.id, "0");
+    const result = await service.submitAttempt(userId, exercise.id, "0");
 
     expect(result.isCorrect).toBe(false);
 
@@ -149,7 +150,7 @@ describe("exerciseAttemptService.submitAttempt", () => {
     // createExerciseAttemptService takes only { prisma } — this test's mere
     // existence (and passing) proves grading has no AI dependency.
     const service = createExerciseAttemptService({ prisma });
-    const result = await service.submitAttempt(exercise.id, "1");
+    const result = await service.submitAttempt(userId, exercise.id, "1");
 
     expect(result.isCorrect).toBe(true);
   });
@@ -161,7 +162,7 @@ describe("attemptExplanationService.explainAttempt", () => {
     const exercise = await prisma.exercise.create({
       data: { userId, type: "MULTIPLE_CHOICE", sourcePatternId: pattern.id, promptData: fakeGeneratedExercise() },
     });
-    const graded = await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "0");
+    const graded = await createExerciseAttemptService({ prisma }).submitAttempt(userId, exercise.id, "0");
     const explainAttempt = vi.fn().mockResolvedValue({ explanation: "You picked the wrong preposition." });
     const aiProvider: AIProvider = {
       analyzeWriting: vi.fn(),
@@ -206,7 +207,7 @@ describe("difficulty targeting", () => {
       },
     });
 
-    await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "1");
+    await createExerciseAttemptService({ prisma }).submitAttempt(userId, exercise.id, "1");
 
     const ability = await prisma.categoryAbility.findUniqueOrThrow({
       where: { userId_category: { userId, category: pattern.category } },
@@ -230,5 +231,24 @@ describe("difficulty targeting", () => {
     expect(targets[0].difficulty).toBeGreaterThanOrEqual(1);
     expect(targets[0].difficulty).toBeLessThanOrEqual(5);
     expect(created.difficulty).toBe(targets[0].difficulty);
+  });
+});
+
+describe("exerciseAttemptService ownership", () => {
+  it("rejects another user's exercise and leaves the owner's data untouched", async () => {
+    const pattern = await seedPattern({ masteryLevel: MasteryLevel.ACTIVE, consecutiveCorrectCount: 1 });
+    const exercise = await prisma.exercise.create({
+      data: { userId, type: "MULTIPLE_CHOICE", sourcePatternId: pattern.id, promptData: fakeGeneratedExercise() },
+    });
+    await prisma.user.create({ data: { id: "intruder" } });
+
+    await expect(
+      createExerciseAttemptService({ prisma }).submitAttempt("intruder", exercise.id, "1"),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    expect(await prisma.exerciseAttempt.count()).toBe(0);
+    const after = await prisma.mistakePattern.findUniqueOrThrow({ where: { id: pattern.id } });
+    expect(after.consecutiveCorrectCount).toBe(1);
+    expect(after.masteryLevel).toBe(MasteryLevel.ACTIVE);
   });
 });

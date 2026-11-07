@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { AIResponseValidationError } from "@/server/ai/errors";
+import { AIProviderUnavailableError, AIResponseValidationError, accessErrorForStatus } from "@/server/ai/errors";
 import {
   buildAnswerExplanationSystemPrompt,
   buildAnswerExplanationUserMessage,
@@ -53,6 +53,18 @@ export type GeminiContentClient = {
   };
 };
 
+// @google/genai throws ApiError (with a numeric `status`); network failures
+// and aborts are treated as the provider being unavailable.
+function mapGeminiError(error: unknown): unknown {
+  const status = (error as { status?: unknown } | null)?.status;
+  if (typeof status === "number") {
+    return accessErrorForStatus(status, error instanceof Error ? error.message : "") ?? error;
+  }
+  return error instanceof TypeError || (error instanceof Error && error.name === "AbortError")
+    ? new AIProviderUnavailableError()
+    : error;
+}
+
 // Gemini's native JSON mode (responseMimeType + responseJsonSchema) rather
 // than function calling — simpler for "give me structured data back" than
 // wrapping every capability as a tool call. Shared "call, parse, validate"
@@ -68,16 +80,21 @@ async function generateStructured<T>(
   },
   schema: z.ZodType<T>,
 ): Promise<T> {
-  const response = await client.models.generateContent({
-    model: args.model,
-    contents: args.contents,
-    config: {
-      systemInstruction: args.systemInstruction,
-      maxOutputTokens: args.maxOutputTokens,
-      responseMimeType: "application/json",
-      responseJsonSchema: args.jsonSchema,
-    },
-  });
+  let response: { text: string | undefined };
+  try {
+    response = await client.models.generateContent({
+      model: args.model,
+      contents: args.contents,
+      config: {
+        systemInstruction: args.systemInstruction,
+        maxOutputTokens: args.maxOutputTokens,
+        responseMimeType: "application/json",
+        responseJsonSchema: args.jsonSchema,
+      },
+    });
+  } catch (error) {
+    throw mapGeminiError(error);
+  }
 
   if (!response.text) {
     throw new AIResponseValidationError("Model did not return any text", []);
@@ -97,6 +114,17 @@ async function generateStructured<T>(
   }
 
   return result.data;
+}
+
+// Key check for /settings: the smallest real request (one output token). Not
+// an AIProvider capability — resolves when the key works, throws the same
+// typed errors as the provider otherwise.
+export async function testKey(client: GeminiContentClient, model: string): Promise<void> {
+  try {
+    await client.models.generateContent({ model, contents: "Hi", config: { maxOutputTokens: 1 } });
+  } catch (error) {
+    throw mapGeminiError(error);
+  }
 }
 
 export function createGeminiProvider(client: GeminiContentClient, model: string): AIProvider {
