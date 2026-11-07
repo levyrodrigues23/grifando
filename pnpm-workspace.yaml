@@ -6,3 +6,11 @@ allowBuilds:
   protobufjs: true
   sharp: false
   unrs-resolver: false
+overrides:
+  proxy-addr: 2.0.8
+  body-parser: 2.4.0
+  deepmerge-ts: 8.0.2
+  mysql2: 3.24.6
+  '@modelcontextprotocol/sdk': 1.32.2
+  sharp: 0.35.5
+  source-map-js: 1.2.2
