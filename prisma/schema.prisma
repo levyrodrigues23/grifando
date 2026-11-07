@@ -79,10 +79,12 @@ enum InterviewStatus {
 
 model User {
   id             String   @id @default(cuid())
-  email          String   @unique
-  displayName    String
+  // Anonymous users have no email; email stays unique when present.
+  email          String?  @unique
+  displayName    String?
   nativeLanguage String   @default("pt-BR")
   createdAt      DateTime @default(now())
+  lastActiveAt   DateTime @default(now())
 
   writingSessions   WritingSession[]
   mistakePatterns   MistakePattern[]
@@ -90,6 +92,17 @@ model User {
   interviewSessions InterviewSession[]
   vocabularyItems   VocabularyItem[]
   categoryAbilities CategoryAbility[]
+
+  @@index([lastActiveAt])
+}
+
+// Fixed-window request counters for rate limiting (key = e.g. "<userId>:<route>").
+model RateLimitWindow {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
 }
 
 model WritingSession {
