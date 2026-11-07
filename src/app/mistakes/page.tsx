@@ -1,9 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { MISTAKE_CATEGORY_LABELS } from "@/lib/mistakeCategoryLabels";
 import { prisma } from "@/server/db/client";
 import { computeCategoryBreakdown } from "@/server/domain/mistakes/analytics";
@@ -11,6 +11,7 @@ import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mist
 import { isFading } from "@/server/domain/mistakes/mastery";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
 import { isDueForReview } from "@/server/domain/mistakes/recall";
+import { getCurrentUserId } from "@/server/session/currentUser";
 
 const MASTERY_LABELS: Record<string, string> = {
   ACTIVE: "Active",
@@ -50,7 +51,13 @@ function getNow(): Date {
   return new Date();
 }
 
+export const metadata: Metadata = {
+  title: "Mistake notebook",
+  description: "Your recurring English mistakes, grouped by pattern.",
+};
+
 export default async function MistakesPage(props: PageProps<"/mistakes">) {
+  const userId = await getCurrentUserId();
   const searchParams = await props.searchParams;
   const isLast30Days = searchParams.window === "30d";
   const isFromPortuguese = searchParams.origin === "pt";
@@ -59,8 +66,8 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
   const occurrences = createMistakeOccurrenceRepository(prisma);
 
   const [patternList, categoryCounts] = await Promise.all([
-    patterns.listByUser(DEFAULT_USER_ID, { l1TransferOnly: isFromPortuguese }),
-    occurrences.countByCategory(DEFAULT_USER_ID, { since: resolveSinceDate(isLast30Days) }),
+    patterns.listByUser(userId, { l1TransferOnly: isFromPortuguese }),
+    occurrences.countByCategory(userId, { since: resolveSinceDate(isLast30Days) }),
   ]);
 
   const breakdown = computeCategoryBreakdown(categoryCounts);

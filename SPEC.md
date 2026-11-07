@@ -15,11 +15,14 @@ tracked over time.
 
 ## 2. Target user (MVP)
 
-- Single user: a Brazilian Portuguese-speaking software developer learning English.
-- No public signup flow in the MVP. One user record is seeded at setup time; there is no
-  login screen. The domain model still scopes every record by `userId` from day one so a
-  real auth system (multi-user, sessions, OAuth) can be added later without a data model
-  rewrite — only a login screen and session lookup need to be added.
+- A Brazilian Portuguese-speaking software developer learning English. The app is public:
+  anyone can use it, with no signup or login. Each browser gets an anonymous signed-cookie
+  session (`ig_session`), and every record is scoped by that session's `userId`. A user with
+  no activity for 90 days is deleted by a daily cleanup job, and a visitor can delete their
+  own data at any time (`DELETE /api/me`). No email or other PII is collected.
+- AI is bring-your-own-key: each visitor stores a Google Gemini or Anthropic key in their own
+  browser (`/settings`) and it is sent per request in headers; the server holds no AI key in
+  production.
 - Interface language: English, with Portuguese used inside explanations where it clarifies a
   concept (e.g. explaining why a literal translation from Portuguese fails). All practice
   content itself is in English.
@@ -54,16 +57,16 @@ mutually-compatible versions as of 2026-09-14.
 
 | Concern | Choice | Notes |
 |---|---|---|
-| Framework | Next.js 16 (App Router) | `next@16.3.5` |
+| Framework | Next.js 16 (App Router) | `next@16.4.5` |
 | Language | TypeScript | Pinned to `5.9.3`, **not** the new TS 7 line — `typescript-eslint@8.x` only supports `<6.1.0`; TS7 would break linting today. |
-| UI | React 19 + Tailwind CSS 4 + shadcn/ui | `react@19.3.0`, `tailwindcss@4.3.3` |
+| UI | React 19 + Tailwind CSS 4 + shadcn/ui | `react@19.2.8`, `tailwindcss@4.3.3` |
 | Database | PostgreSQL via Docker Compose (local dev) | |
 | ORM | Prisma | Pinned to `7.10.0` for both `prisma` and `@prisma/client` — `prisma@latest` currently resolves to an `8.0.0-rc`, which is not stable. |
-| Validation | Zod 4 | `zod@4.6.5`, used for both DB-adjacent input validation and AI structured-output validation |
+| Validation | Zod 4 | `zod@4.6.7`, used for both DB-adjacent input validation and AI structured-output validation |
 | Testing | Vitest | `vitest@5.0.0` |
-| AI provider | Anthropic Claude API | `@anthropic-ai/sdk`, model id configurable via env var |
+| AI provider | Gemini or Anthropic Claude, visitor's own key | Behind `AIProvider`; models configurable, one fallback model on overload |
 | Package manager | pnpm | already available locally (`12.3.4`) |
-| Auth | None in MVP | Single seeded user, `userId` foreign keys everywhere, no session/login UI. Revisit with Auth.js if the app ever needs multiple users or a public deployment. |
+| Auth | Anonymous sessions | No login. A signed `ig_session` cookie (minted in `src/proxy.ts`) identifies the browser; `userId` foreign keys everywhere. AI access is BYOK: the visitor's key travels in `x-ai-provider`/`x-ai-key` headers and is never stored server-side. |
 
 The AI provider sits behind a small `AIProvider` interface (see §9) so switching providers
 later touches one adapter, not the domain layer.
@@ -340,13 +343,15 @@ src/server/ai/
 - Input caps: writing submissions capped (~5,000 characters), pasted code for Explain Code
   capped (~2,000 characters) — enforced both client-side and server-side (Zod).
 - All AI-facing API routes validate input shape/size before calling the model.
-- No secrets logged; API keys only read from environment variables, never committed
-  (`.env.example` provided, `.env` gitignored).
-- Basic per-user rate limiting on AI-calling routes (in-memory token bucket is enough for a
-  single-user MVP; revisit if the app ever gets multiple users).
-- Since there's no login, the "current user" is a server-side constant (`DEFAULT_USER_ID`)
-  resolved once at startup from the seeded user — never taken from client input — so nothing
-  in the request can spoof a different user's data.
+- No secrets logged. Visitors' AI keys are never persisted, logged, or sent to analytics;
+  server secrets come from environment variables, never committed (`.env.example` provided,
+  `.env` gitignored). Env-var AI keys are a local-development convenience only; production
+  never uses them.
+- Rate limiting on AI-calling routes, per user and per hashed IP, in Postgres fixed windows
+  (`RateLimitWindow`) so limits hold across serverless instances.
+- The "current user" is resolved from the verified signed session cookie
+  (`getCurrentUserId()`), never taken from client input, so nothing in the request can spoof
+  a different user's data.
 
 ## 12. Non-functional notes
 

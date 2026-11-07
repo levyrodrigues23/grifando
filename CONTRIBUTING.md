@@ -20,8 +20,8 @@ git switch develop && git pull
 git switch -c feature/<short-name>
 ```
 
-Branch protection isn't available on this private free-plan repo, so the rules below are
-conventions, not enforcement: never push directly to `main`, and don't merge a PR whose CI
+Branch protection may not be enabled on this repo, so the rules below are conventions, not
+enforcement: never push directly to `main`, and don't merge a PR whose CI
 is red.
 
 ## Issues

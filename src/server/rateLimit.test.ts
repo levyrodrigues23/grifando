@@ -1,55 +1,67 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
-import { createRateLimiter, rateLimitResponse } from "@/server/rateLimit";
+import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
+import { consume, rateLimitResponse, RATE_LIMIT_MESSAGE, type LimitRule } from "@/server/rateLimit";
 
-function fakeClock(start = 0) {
-  let time = start;
-  return { now: () => time, advance: (ms: number) => (time += ms) };
-}
+const prisma = createTestPrismaClient();
+const rule: LimitRule = { name: "t", max: 3, windowSeconds: 60 };
+const t0 = new Date("2026-01-01T00:00:10Z");
 
-describe("createRateLimiter", () => {
-  it("allows up to capacity, then refuses with a retry hint", () => {
-    const clock = fakeClock();
-    const limiter = createRateLimiter({ capacity: 3, refillPerMinute: 6 }, clock.now);
+beforeEach(() => resetDatabase(prisma));
+afterAll(() => prisma.$disconnect());
 
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u")).toEqual({ allowed: false, retryAfterSeconds: 10 });
+describe("consume", () => {
+  it("allows max calls then blocks with retryAfterSeconds within the window", async () => {
+    for (let i = 0; i < 3; i++) {
+      expect(await consume(prisma, "u", [rule], t0)).toEqual({ allowed: true });
+    }
+    expect(await consume(prisma, "u", [rule], t0)).toEqual({
+      allowed: false,
+      retryAfterSeconds: 50,
+    });
   });
 
-  it("refills over time without exceeding capacity", () => {
-    const clock = fakeClock();
-    const limiter = createRateLimiter({ capacity: 2, refillPerMinute: 6 }, clock.now);
-    limiter.consume("u");
-    limiter.consume("u");
-
-    clock.advance(10_000); // one token back
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u").allowed).toBe(false);
-
-    clock.advance(60 * 60_000); // long idle: still capped at 2
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u").allowed).toBe(true);
-    expect(limiter.consume("u").allowed).toBe(false);
+  it("allows again in a new window", async () => {
+    for (let i = 0; i < 4; i++) await consume(prisma, "u", [rule], t0);
+    const next = new Date(t0.getTime() + 60_000);
+    expect(await consume(prisma, "u", [rule], next)).toEqual({ allowed: true });
   });
 
-  it("keeps separate buckets per key", () => {
-    const limiter = createRateLimiter({ capacity: 1, refillPerMinute: 1 }, fakeClock().now);
-    expect(limiter.consume("a").allowed).toBe(true);
-    expect(limiter.consume("b").allowed).toBe(true);
-    expect(limiter.consume("a").allowed).toBe(false);
+  it("keeps subjects independent", async () => {
+    for (let i = 0; i < 4; i++) await consume(prisma, "a", [rule], t0);
+    expect(await consume(prisma, "b", [rule], t0)).toEqual({ allowed: true });
+  });
+
+  it("blocks when any rule is exceeded and reports the largest retry", async () => {
+    const rules: LimitRule[] = [
+      { name: "m", max: 1, windowSeconds: 60 },
+      { name: "d", max: 1, windowSeconds: 3600 },
+    ];
+    await consume(prisma, "u", rules, t0);
+    expect(await consume(prisma, "u", rules, t0)).toEqual({
+      allowed: false,
+      retryAfterSeconds: 3590,
+    });
   });
 });
 
 describe("rateLimitResponse", () => {
-  it("returns null while allowed and a 429 with Retry-After once exhausted", async () => {
-    const limiter = createRateLimiter({ capacity: 1, refillPerMinute: 2 }, fakeClock().now);
-    expect(rateLimitResponse(limiter, "u")).toBeNull();
-
-    const response = rateLimitResponse(limiter, "u");
+  it("returns 429 with Retry-After once the bucket is exhausted", async () => {
+    const request = new Request("http://test", { headers: { "x-forwarded-for": "203.0.113.9" } });
+    for (let i = 0; i < 5; i++) {
+      expect(await rateLimitResponse(prisma, request, "u", "generation")).toBeNull();
+    }
+    const response = await rateLimitResponse(prisma, request, "u", "generation");
     expect(response?.status).toBe(429);
-    expect(response?.headers.get("Retry-After")).toBe("30");
-    expect(await response?.json()).toEqual({ error: expect.any(String) });
+    expect(Number(response?.headers.get("Retry-After"))).toBeGreaterThanOrEqual(1);
+    expect(await response?.json()).toEqual({ error: RATE_LIMIT_MESSAGE });
+  });
+
+  it("stores no raw IP", async () => {
+    const request = new Request("http://test", { headers: { "x-forwarded-for": "203.0.113.9" } });
+    await rateLimitResponse(prisma, request, "u", "write");
+    const rows = await prisma.rateLimitWindow.findMany();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.some((r) => r.key.includes("203.0.113.9"))).toBe(false);
   });
 });

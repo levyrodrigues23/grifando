@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
+
+import { CountUp } from "@/components/motion/CountUp";
 import { ScoreBar } from "@/components/writing/ScoreBar";
 import { TARGET_SUCCESS } from "@/server/domain/exercises/difficulty";
 import type { AverageScores } from "@/server/domain/progress/progress";
 
-function Figure({ value, label }: { value: string; label: string }) {
+function Figure({ value, label }: { value: ReactNode; label: string }) {
   return (
     <div className="space-y-2">
       <p className="text-display tabular-nums">{value}</p>
@@ -29,10 +32,10 @@ export function ProgressSummary({
   return (
     <div className="space-y-12">
       <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-3">
-        <Figure value={String(writingSessionsCompleted)} label="Writing sessions" />
-        <Figure value={String(exercisesCompleted)} label="Exercises done" />
+        <Figure value={<CountUp value={writingSessionsCompleted} />} label="Writing sessions" />
+        <Figure value={<CountUp value={exercisesCompleted} />} label="Exercises done" />
         <Figure
-          value={accuracy === null ? "—" : `${accuracy}%`}
+          value={accuracy === null ? "—" : <CountUp value={accuracy} suffix="%" />}
           label={
             exerciseAccuracy
               ? `Accuracy over your last ${exerciseAccuracy.total} · aiming for about ${Math.round(TARGET_SUCCESS * 100)}%`

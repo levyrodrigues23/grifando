@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { ExercisePractice } from "@/components/exercises/ExercisePractice";
+
+export const metadata: Metadata = {
+  title: "Exercises",
+  description: "Practice exercises built from your own English mistakes.",
+};
 
 export default function ExercisesPage() {
   return (
