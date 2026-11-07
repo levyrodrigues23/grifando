@@ -103,6 +103,7 @@ model RateLimitWindow {
   count       Int      @default(0)
 
   @@id([key, windowStart])
+  @@index([windowStart])
 }
 
 model WritingSession {
