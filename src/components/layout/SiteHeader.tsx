@@ -13,7 +13,7 @@ export function SiteHeader() {
         </Link>
         <div className="flex items-center gap-2">
           <FocusMusic />
-          <Button size="sm" render={<Link href="/today">Start today</Link>} />
+          <Button size="sm" className="hidden sm:inline-flex" render={<Link href="/today">Start today</Link>} />
         </div>
       </div>
       <div className="mx-auto w-full max-w-[1200px] px-6 md:px-12">

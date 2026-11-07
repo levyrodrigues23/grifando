@@ -45,6 +45,8 @@ function Button({
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
+      // A `render` prop swaps in a non-<button> (e.g. a Next <Link>); tell Base UI so.
+      nativeButton={props.render === undefined}
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
