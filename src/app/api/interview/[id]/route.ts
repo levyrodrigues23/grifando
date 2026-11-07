@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db/client";
 import { createInterviewRepository } from "@/server/domain/interview/interview.repository";
+import { logError } from "@/server/logError";
 import { getCurrentUserId } from "@/server/session/currentUser";
 
 function toTurnDTO(turn: {
@@ -50,7 +51,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/intervi
       turns: session.turns.map(toTurnDTO),
     });
   } catch (error) {
-    console.error("Failed to fetch interview session", error);
+    logError("Failed to fetch interview session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

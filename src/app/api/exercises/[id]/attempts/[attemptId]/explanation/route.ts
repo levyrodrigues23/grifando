@@ -6,6 +6,7 @@ import { resolveAICredentials } from "@/server/ai/credentials";
 import { AIKeyRequiredError, AIResponseValidationError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createAttemptExplanationService } from "@/server/domain/exercises/exerciseService";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -47,7 +48,7 @@ export async function POST(
   } catch (error) {
     const aiResponse = aiErrorResponse(error);
     if (aiResponse) return aiResponse;
-    console.error("Failed to explain exercise attempt", error);
+    logError("Failed to explain exercise attempt", error);
     const status = error instanceof AIResponseValidationError ? 502 : 500;
     return NextResponse.json({ error: EXPLANATION_FAILED }, { status });
   }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db/client";
 import { createInterviewRepository } from "@/server/domain/interview/interview.repository";
+import { logError } from "@/server/logError";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 // Ending a session is a plain status update — no AI involved, so this
@@ -20,7 +21,7 @@ export async function POST(_request: Request, context: RouteContext<"/api/interv
     }
     return NextResponse.json({ status: "ended" });
   } catch (error) {
-    console.error("Failed to end interview session", error);
+    logError("Failed to end interview session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

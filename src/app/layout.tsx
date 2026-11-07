@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
+import { connection } from "next/server";
 import "./globals.css";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -30,7 +31,10 @@ export const metadata: Metadata = {
   description: "Personal writing coach for English, built from your own mistakes.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The CSP nonce is per request, so no page may be prerendered at build time:
+  // a static page would ship scripts without the nonce and the CSP would block them.
+  await connection();
   return (
     <html
       lang="en"

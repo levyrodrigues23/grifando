@@ -10,6 +10,7 @@ import { prisma } from "@/server/db/client";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -33,7 +34,7 @@ export async function GET() {
     const pending = await repository.listPending(userId);
     return NextResponse.json({ exercises: pending.map(toResponseShape) });
   } catch (error) {
-    console.error("Failed to list exercises", error);
+    logError("Failed to list exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const aiResponse = aiErrorResponse(error);
     if (aiResponse) return aiResponse;
-    console.error("Failed to generate exercises", error);
+    logError("Failed to generate exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
