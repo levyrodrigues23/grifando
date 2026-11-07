@@ -142,8 +142,8 @@ export default async function HomePage() {
         </Section>
       </Reveal>
 
-      <Reveal>
-        <div className="grid gap-x-16 gap-y-16 pt-20 md:pt-24 lg:grid-cols-2">
+      <div className="grid gap-x-16 gap-y-16 pt-20 md:pt-24 lg:grid-cols-2">
+        <Reveal>
           <section>
             <SectionTitle>Practice next</SectionTitle>
             <div className="space-y-4">
@@ -186,12 +186,16 @@ export default async function HomePage() {
               </div>
             </div>
           </section>
+        </Reveal>
 
+        <Reveal>
           <section>
             <SectionTitle>Weak areas</SectionTitle>
             <WeakAreas breakdown={breakdown} />
           </section>
+        </Reveal>
 
+        <Reveal>
           <section>
             <SectionTitle
               aside={
@@ -204,15 +208,17 @@ export default async function HomePage() {
             </SectionTitle>
             <RecentMistakes patterns={recentPatterns} />
           </section>
+        </Reveal>
 
+        <Reveal>
           <section>
             <SectionTitle>Recent writing</SectionTitle>
             <RecentWriting
               sessions={recentAnalyzedSessions.slice(0, RECENT_LIMIT)}
             />
           </section>
-        </div>
-      </Reveal>
+        </Reveal>
+      </div>
     </PageShell>
   );
 }
