@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 export async function POST() {
-  const limited = rateLimitResponse(aiRateLimits.generation, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
+  const limited = rateLimitResponse(aiRateLimits.generation, userId);
   if (limited) return limited;
 
   try {
@@ -17,7 +20,7 @@ export async function POST() {
       modelId: getAIModelId(),
     });
 
-    const { sessionId, turn } = await service.startInterview(DEFAULT_USER_ID);
+    const { sessionId, turn } = await service.startInterview(userId);
 
     return NextResponse.json(
       { sessionId, turn: { id: turn.id, question: turn.question, order: turn.order } },

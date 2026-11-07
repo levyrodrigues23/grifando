@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIProvider } from "@/server/ai/client";
 import type { GeneratedExercise } from "@/server/ai/schemas/exerciseGeneration";
 import { prisma } from "@/server/db/client";
@@ -9,6 +8,7 @@ import { createExerciseRepository } from "@/server/domain/exercises/exercise.rep
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 // Optional: generate the daily session's review set after a writing session.
 const generateSchema = z
@@ -24,9 +24,10 @@ function toResponseShape(exercise: { id: string; type: string; promptData: unkno
 }
 
 export async function GET() {
+  const userId = await getCurrentUserId();
   try {
     const repository = createExerciseRepository(prisma);
-    const pending = await repository.listPending(DEFAULT_USER_ID);
+    const pending = await repository.listPending(userId);
     return NextResponse.json({ exercises: pending.map(toResponseShape) });
   } catch (error) {
     console.error("Failed to list exercises", error);
@@ -44,12 +45,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.generation, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
+  const limited = rateLimitResponse(aiRateLimits.generation, userId);
   if (limited) return limited;
 
   try {
     const service = createExerciseGenerationService({ prisma, aiProvider: getAIProvider() });
-    const created = await service.generatePracticeSet(DEFAULT_USER_ID, undefined, {
+    const created = await service.generatePracticeSet(userId, undefined, {
       afterSessionId: parsed.data?.afterSessionId,
     });
 

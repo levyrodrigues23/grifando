@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { getAIProvider } from "@/server/ai/client";
 import { AIResponseValidationError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createAttemptExplanationService } from "@/server/domain/exercises/exerciseService";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const EXPLANATION_FAILED = "We couldn't explain this answer right now. Your grade is unaffected — try again.";
 
@@ -15,13 +15,16 @@ export async function POST(
 ) {
   const { id, attemptId } = await context.params;
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
+  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
   if (limited) return limited;
 
   try {
     const service = createAttemptExplanationService({ prisma, aiProvider: getAIProvider() });
     const explanation = await service.explainAttempt({
-      userId: DEFAULT_USER_ID,
+      userId,
       exerciseId: id,
       attemptId,
     });

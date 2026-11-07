@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { prisma } from "@/server/db/client";
 import { createVocabularyRepository } from "@/server/domain/vocabulary/vocabulary.repository";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const createVocabularyItemSchema = z.object({
   term: z.string().trim().min(1).max(120),
@@ -23,9 +23,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const userId = await getCurrentUserId();
+  await ensureUser(prisma, userId);
+
   try {
     const repository = createVocabularyRepository(prisma);
-    const item = await repository.create({ userId: DEFAULT_USER_ID, ...parsed.data });
+    const item = await repository.create({ userId, ...parsed.data });
     return NextResponse.json(item, { status: 201 });
   } catch (error) {
     console.error("Failed to save vocabulary item", error);

@@ -7,7 +7,6 @@ import { RecentMistakes } from "@/components/dashboard/RecentMistakes";
 import { RecentWriting } from "@/components/dashboard/RecentWriting";
 import { StreakStatus } from "@/components/dashboard/StreakStatus";
 import { WeakAreas } from "@/components/dashboard/WeakAreas";
-import { DEFAULT_USER_ID } from "@/lib/constants";
 import { MISTAKE_CATEGORY_LABELS } from "@/lib/mistakeCategoryLabels";
 import { prisma } from "@/server/db/client";
 import { computeCategoryBreakdown } from "@/server/domain/mistakes/analytics";
@@ -25,6 +24,7 @@ import {
   selectDailyPrompt,
 } from "@/server/domain/writing/dailyPrompt";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
+import { getCurrentUserId } from "@/server/session/currentUser";
 
 const RECENT_LIMIT = 3;
 const SCORE_TREND_LIMIT = 10;
@@ -35,6 +35,7 @@ const ACCURACY_WINDOW = 50;
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const userId = await getCurrentUserId();
   const patterns = createMistakePatternRepository(prisma);
   const occurrences = createMistakeOccurrenceRepository(prisma);
   const sessions = createWritingSessionRepository(prisma);
@@ -51,15 +52,15 @@ export default async function HomePage() {
     attemptDates,
     exerciseAccuracy,
   ] = await Promise.all([
-    patterns.listByUser(DEFAULT_USER_ID),
-    occurrences.countByCategory(DEFAULT_USER_ID),
-    patterns.listRecentByUser(DEFAULT_USER_ID, { limit: RECENT_LIMIT }),
-    sessions.listRecentAnalyzed(DEFAULT_USER_ID, { limit: SCORE_TREND_LIMIT }),
-    sessions.countAnalyzed(DEFAULT_USER_ID),
-    attempts.countByUser(DEFAULT_USER_ID),
-    sessions.listAnalyzedDates(DEFAULT_USER_ID),
-    attempts.listAttemptDates(DEFAULT_USER_ID),
-    attempts.recentAccuracy(DEFAULT_USER_ID, { limit: ACCURACY_WINDOW }),
+    patterns.listByUser(userId),
+    occurrences.countByCategory(userId),
+    patterns.listRecentByUser(userId, { limit: RECENT_LIMIT }),
+    sessions.listRecentAnalyzed(userId, { limit: SCORE_TREND_LIMIT }),
+    sessions.countAnalyzed(userId),
+    attempts.countByUser(userId),
+    sessions.listAnalyzedDates(userId),
+    attempts.listAttemptDates(userId),
+    attempts.recentAccuracy(userId, { limit: ACCURACY_WINDOW }),
   ]);
 
   const weakCategories = extractActiveWeakCategories(userPatterns);
