@@ -36,6 +36,11 @@ old dark "Darkroom" palette, or a dark theme.
 
 ## Stack & versions (pinned deliberately — do not "helpfully" bump)
 
+- Current pins: `next` and `eslint-config-next` 16.4.5, `zod` 4.6.7, `@google/genai` 3.0.0,
+  `@vercel/analytics` 2.0.1 (exact versions). Transitive security fixes are forced through
+  `overrides` in `pnpm-workspace.yaml`; don't remove an override without re-running
+  `pnpm audit`.
+
 - TypeScript is pinned to `5.9.3`, **not** the TS 7 line. `typescript-eslint` does not support
   TS 7 yet (`>=4.8.4 <6.1.0` peer range). Do not upgrade TypeScript without re-checking that.
 - Prisma is pinned to `7.10.0` for both `prisma` and `@prisma/client`. `prisma@latest` on npm
@@ -120,9 +125,11 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
 - Mistake dedup relies on the AI-proposed `patternKey` per mistake, normalized in
   `mistakePatternRepository.upsertPattern` (`src/server/domain/mistakes/patternKey.ts`). Don't
   build separate fuzzy-matching/embedding-based clustering for this — see SPEC.md §6.
-- `getAIProvider()` in `src/server/ai/client.ts` is the one place that reads `AI_PROVIDER`
-  (`"anthropic"` default, or `"gemini"`) plus that provider's API key/model env vars and
-  constructs the real client — it throws lazily on first use, not at import time, so importing
+- `getAIProvider()` in `src/server/ai/client.ts` builds the real client from the credentials
+  resolved by `resolveAICredentials` (`src/server/ai/credentials.ts`): the visitor's key from
+  the `x-ai-provider`/`x-ai-key` headers first; only outside production does it fall back to
+  `AI_PROVIDER` (`"anthropic"` default, or `"gemini"`) plus that provider's key/model env vars.
+  It throws lazily on first use — it throws lazily on first use, not at import time, so importing
   AI modules never breaks tests that don't need a real key. `AIProvider` methods (currently
   `analyzeWriting`/`generateExercises`/`continueInterview`/`explainAttempt`) are added one at a time, only when
   a feature phase needs them — don't pre-add stub methods, and implement any new one in *both*
@@ -180,6 +187,30 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   `computeAverageScores` (`src/server/domain/progress/progress.ts`) is the one place that
   averages scores across sessions — deliberately simple (a rounded mean), per SPEC.md's
   "avoid fake precision" warning about heuristic scores.
+
+## Public deployment model (BYOK, rate limits, privacy)
+
+- **BYOK.** The visitor's AI key lives only in their browser (`localStorage`, `src/lib/aiKeyStore.ts`)
+  and is attached by `aiFetch` (`src/lib/aiFetch.ts`) as `x-ai-provider`/`x-ai-key` headers on
+  same-origin requests. It must never be persisted in the DB, logged (`logError` strips it;
+  `noKeyInLogs.test.ts` guards this), put in a URL, sent to analytics, or committed. Production
+  never falls back to env-var keys. `/api/ai-key/test` validates a key.
+- **AI resilience** (`src/server/ai/resilient.ts`): 60s timeout and one fallback model
+  (`gemini-3.5-flash-lite` / `claude-haiku-5-5`) on overload only; key/quota/validation errors
+  never trigger the fallback. User text is never lost when an AI call fails.
+- **Rate limits** (`src/server/rateLimit.ts`): fixed windows in Postgres (`RateLimitWindow`), per
+  user and per hashed client IP (`IP_HASH_SALT`; the raw IP is never stored). AI-calling routes
+  go through the `analysis`/`generation` buckets, key tests through `keyTest`.
+- **`src/proxy.ts`** mints the session cookie and sets the per-request CSP nonce and security
+  headers. New inline scripts/styles need the nonce; don't loosen the CSP to fix one.
+- **Privacy**: `/privacy` (EN + PT), `DELETE /api/me` (user deletes own data), and the daily
+  cron `/api/cron/cleanup` (bearer `CRON_SECRET`, scheduled in `vercel.json`) that deletes users
+  idle 90 days and old rate-limit windows. No login, email or PII.
+- **Env vars** (see `.env.example`): `DATABASE_URL`, `TEST_DATABASE_URL`, `SESSION_SECRET`,
+  `IP_HASH_SALT`, `CRON_SECRET` (the three secrets are required in production),
+  `NEXT_PUBLIC_SITE_URL` (optional), and the local-development-only `AI_PROVIDER`,
+  `GEMINI_API_KEY`/`GEMINI_MODEL`, `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL`.
+- CI runs gitleaks and `pnpm audit --prod --audit-level high` besides check + build.
 
 ## Lint gotcha: impure calls in Server Components
 
