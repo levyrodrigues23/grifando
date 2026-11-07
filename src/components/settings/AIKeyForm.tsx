@@ -45,7 +45,13 @@ export function AIKeyForm() {
     event.preventDefault();
     if (apiKey.trim()) {
       const credentials = { provider, apiKey: apiKey.trim() };
-      saveAIKey(credentials);
+      if (!saveAIKey(credentials)) {
+        setStatus({
+          kind: "error",
+          message: "This browser blocked saving the key (private mode or storage turned off). Allow site storage and try again.",
+        });
+        return;
+      }
       setSaved(credentials);
       setApiKey("");
     }

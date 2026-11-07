@@ -63,6 +63,24 @@ describe("aiKeyStore", () => {
 });
 
 describe("aiFetch", () => {
+  it("refuses absolute and protocol-relative URLs without calling fetch", async () => {
+    const storage = memoryStorage();
+    saveAIKey({ provider: "gemini", apiKey: "secret-key" }, storage);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("window", { localStorage: storage });
+
+    await expect(aiFetch("https://evil.example/api")).rejects.toThrow(/same-origin/);
+    await expect(aiFetch("//evil.example/api")).rejects.toThrow(/same-origin/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("saveAIKey reports false when storage throws", () => {
+    const blocked = { setItem: () => { throw new Error("blocked"); } } as unknown as Storage;
+    expect(saveAIKey({ provider: "gemini", apiKey: "k" }, blocked)).toBe(false);
+    expect(saveAIKey({ provider: "gemini", apiKey: "k" }, memoryStorage())).toBe(true);
+  });
+
   it("rejects with MissingAIKeyError and never calls fetch when no key is stored", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
