@@ -26,6 +26,8 @@ Passo a passo para publicar o Inglesando na Vercel, sem precisar ser especialist
    - `DATABASE_URL_UNPOOLED`: conexão direta. O `scripts/vercel-build.mjs` usa essa para rodar as migrações, se existir.
 4. O app lê `DATABASE_URL`, e o nome já é esse. Só se a Vercel pedir um **Custom Prefix** (porque já existe uma `DATABASE_URL` sua) é que o nome muda. Nesse caso crie manualmente `DATABASE_URL` com o valor da variável com prefixo.
 
+O build de produção falha de propósito se `SESSION_SECRET`, `IP_HASH_SALT`, `CRON_SECRET` ou `DATABASE_URL` estiverem vazias (só os nomes faltantes aparecem no log).
+
 Não precisa rodar migração à mão: o build de produção faz `prisma migrate deploy`.
 
 ## 3. Variáveis de ambiente

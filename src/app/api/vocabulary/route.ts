@@ -26,10 +26,9 @@ export async function POST(request: Request) {
   }
 
   const userId = await getCurrentUserId();
-  await ensureUser(prisma, userId);
-
   const limited = await rateLimitResponse(prisma, request, userId, "write");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
     const repository = createVocabularyRepository(prisma);

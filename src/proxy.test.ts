@@ -21,6 +21,30 @@ function forwardedCookie(response: Response) {
 }
 
 describe("proxy", () => {
+  it("answers 401 SESSION_REQUIRED to an /api request without a valid cookie and mints nothing", async () => {
+    const response = proxy(new NextRequest("http://127.0.0.1:3000/api/vocabulary", { method: "POST" }));
+    expect(response.status).toBe(401);
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(await response.json()).toEqual({
+      error: "Session expired. Reload the page.",
+      code: "SESSION_REQUIRED",
+    });
+  });
+
+  it("lets /api/cron requests through without a session or a new cookie", () => {
+    const response = proxy(new NextRequest("http://127.0.0.1:3000/api/cron/cleanup"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("lets an /api request with a valid cookie through", () => {
+    const token = signSessionId("user-1", getSessionSecret());
+    const response = proxy(
+      new NextRequest("http://127.0.0.1:3000/api/vocabulary", { headers: { cookie: `${SESSION_COOKIE}=${token}` } }),
+    );
+    expect(response.status).toBe(200);
+  });
+
   it("mints a cookie when none is present and forwards it to the same render", () => {
     const response = proxy(request());
     const set = response.headers.get("set-cookie") ?? "";
