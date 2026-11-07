@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/server/db/client";
 import { createVocabularyRepository } from "@/server/domain/vocabulary/vocabulary.repository";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     const item = await repository.create({ userId, ...parsed.data });
     return NextResponse.json(item, { status: 201 });
   } catch (error) {
-    console.error("Failed to save vocabulary item", error);
+    logError("Failed to save vocabulary item", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

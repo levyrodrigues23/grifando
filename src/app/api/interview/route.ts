@@ -6,6 +6,7 @@ import { resolveAICredentials } from "@/server/ai/credentials";
 import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const aiResponse = aiErrorResponse(error);
     if (aiResponse) return aiResponse;
-    console.error("Failed to start interview", error);
+    logError("Failed to start interview", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

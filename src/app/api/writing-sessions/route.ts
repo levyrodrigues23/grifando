@@ -9,6 +9,7 @@ import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const aiResponse = aiErrorResponse(error);
     if (aiResponse) return aiResponse;
-    console.error("Failed to submit writing session", error);
+    logError("Failed to submit writing session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
@@ -74,7 +75,7 @@ export async function GET() {
     const sessions = await repository.listByUser(userId, { limit: 20 });
     return NextResponse.json(sessions);
   } catch (error) {
-    console.error("Failed to list writing sessions", error);
+    logError("Failed to list writing sessions", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

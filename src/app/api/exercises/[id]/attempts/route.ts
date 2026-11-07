@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/server/db/client";
 import { NotFoundError } from "@/server/domain/errors";
 import { createExerciseAttemptService } from "@/server/domain/exercises/exerciseService";
+import { logError } from "@/server/logError";
 import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
@@ -40,7 +41,7 @@ export async function POST(
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    console.error("Failed to submit exercise attempt", error);
+    logError("Failed to submit exercise attempt", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
