@@ -26,7 +26,16 @@ export default async function OpengraphImage() {
           fontWeight: 300,
         }}
       >
-        <div style={{ fontSize: 120, letterSpacing: "-0.03em", lineHeight: 1 }}>Inglesando</div>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 32, fontSize: 120, letterSpacing: "-0.03em", lineHeight: 1 }}
+        >
+          <svg width="144" height="144" viewBox="0 0 32 32">
+            <rect x="12" y="2" width="8" height="8" fill="#0007cb" />
+            <rect x="12" y="12.5" width="8" height="12.5" fill="#111111" />
+            <rect x="3" y="26.5" width="26" height="4" fill="#0007cb" />
+          </svg>
+          <span>Inglesando</span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ display: "flex", fontSize: 48, lineHeight: 1.3 }}>
             <span>She&nbsp;</span>
