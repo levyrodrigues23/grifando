@@ -292,6 +292,21 @@ it("throws AIProviderUnavailableError when both are overloaded", ...)
 - [ ] **Step 2:** `pnpm check`; then screenshots at 390px and 1440px of `/` (mid-animation and final) and a results page; confirm with reduced motion emulated that nothing moves.
 - [ ] **Step 3:** Commit `feat: soft motion and a live specimen hero`.
 
+### Task 11b: Logo
+
+**Files:**
+- Create: `src/components/brand/Logo.tsx` (inline SVG component: `<LogoMark />` and `<Logo />` = mark + wordmark), `src/app/icon.svg`, `src/app/apple-icon.png` (180×180, rendered from the SVG with `magick`), `public/logo.svg`
+- Delete: `src/app/favicon.ico` (replaced by `icon.svg`)
+- Modify: `src/components/layout/SiteHeader.tsx` (use `<Logo />`), `src/app/opengraph-image.tsx` (use the mark), `README.md` header (Task 12 uses `public/logo.svg`)
+
+**Interfaces:**
+- Produces: `Logo({ className?: string })`, `LogoMark({ className?: string; title?: string })`.
+- Design, authored by hand as SVG (no image generation): a proofreader's mark as the identity — a lowercase "i" (Inter 300 weight feel, drawn as paths, not a font dependency) whose tittle is a small violet `#0007cb` square and which sits on a short violet underline stroke, echoing the mistake marks of the proofed page. Ink `#111111` on transparent. Wordmark "Inglesando" in Inter 300 with -0.03em tracking set as text in `<Logo />` (not outlined), mark height = cap height × 1.3. Must read at 16px (favicon) — check by rendering 16/32/180px PNGs with `magick` and viewing them. Violet appears only in the mark (consistent with "violet is rare").
+
+- [ ] **Step 1:** Draw the SVG; render 16, 32, 180, 512px previews into the plan workspace and inspect.
+- [ ] **Step 2:** Wire header, icons, OG image. `pnpm check && pnpm build`.
+- [ ] **Step 3:** Commit `feat: logo and favicon`.
+
 ### Task 12: Repository ready to be public
 
 **Files:**
