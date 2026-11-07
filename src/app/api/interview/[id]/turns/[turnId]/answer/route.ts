@@ -8,7 +8,7 @@ import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_ANSWER_LENGTH = 5000;
@@ -43,7 +43,7 @@ export async function POST(
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
 
   try {

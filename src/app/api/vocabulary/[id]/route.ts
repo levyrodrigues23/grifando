@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db/client";
 import { createVocabularyRepository } from "@/server/domain/vocabulary/vocabulary.repository";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
-export async function DELETE(_request: Request, context: RouteContext<"/api/vocabulary/[id]">) {
+export async function DELETE(request: Request, context: RouteContext<"/api/vocabulary/[id]">) {
   const { id } = await context.params;
 
   const userId = await getCurrentUserId();
   await ensureUser(prisma, userId);
+
+  const limited = await rateLimitResponse(prisma, request, userId, "write");
+  if (limited) return limited;
 
   try {
     const repository = createVocabularyRepository(prisma);

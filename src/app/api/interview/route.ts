@@ -6,7 +6,7 @@ import { resolveAICredentials } from "@/server/ai/credentials";
 import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 export async function POST(request: Request) {
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
-  const limited = rateLimitResponse(aiRateLimits.generation, userId);
+  const limited = await rateLimitResponse(prisma, request, userId, "generation");
   if (limited) return limited;
 
   try {

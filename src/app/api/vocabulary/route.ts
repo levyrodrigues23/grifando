@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/server/db/client";
 import { createVocabularyRepository } from "@/server/domain/vocabulary/vocabulary.repository";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const createVocabularyItemSchema = z.object({
@@ -25,6 +26,9 @@ export async function POST(request: Request) {
 
   const userId = await getCurrentUserId();
   await ensureUser(prisma, userId);
+
+  const limited = await rateLimitResponse(prisma, request, userId, "write");
+  if (limited) return limited;
 
   try {
     const repository = createVocabularyRepository(prisma);

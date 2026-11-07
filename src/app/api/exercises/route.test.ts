@@ -10,8 +10,7 @@ vi.mock("@/server/session/currentUser", () => ({
   ensureUser: vi.fn(async () => undefined),
 }));
 vi.mock("@/server/rateLimit", () => ({
-  aiRateLimits: { generation: {}, analysis: {} },
-  rateLimitResponse: () => null,
+  rateLimitResponse: async () => null,
 }));
 vi.mock("@/server/domain/exercises/exerciseService", () => ({
   createExerciseGenerationService: () => ({ generatePracticeSet: mocks.generatePracticeSet }),

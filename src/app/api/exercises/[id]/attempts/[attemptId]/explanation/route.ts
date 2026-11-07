@@ -6,7 +6,7 @@ import { resolveAICredentials } from "@/server/ai/credentials";
 import { AIKeyRequiredError, AIResponseValidationError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createAttemptExplanationService } from "@/server/domain/exercises/exerciseService";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const EXPLANATION_FAILED = "We couldn't explain this answer right now. Your grade is unaffected — try again.";
@@ -27,7 +27,7 @@ export async function POST(
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
 
   try {

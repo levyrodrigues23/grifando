@@ -10,7 +10,7 @@ import { prisma } from "@/server/db/client";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { createExerciseGenerationService } from "@/server/domain/exercises/exerciseService";
 import { toPublicExercise } from "@/server/domain/exercises/publicView";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 // Optional: generate the daily session's review set after a writing session.
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
-  const limited = rateLimitResponse(aiRateLimits.generation, userId);
+  const limited = await rateLimitResponse(prisma, request, userId, "generation");
   if (limited) return limited;
 
   try {
