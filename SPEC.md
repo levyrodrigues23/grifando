@@ -59,7 +59,7 @@ mutually-compatible versions as of 2026-09-14.
 |---|---|---|
 | Framework | Next.js 16 (App Router) | `next@16.4.5` |
 | Language | TypeScript | Pinned to `5.9.3`, **not** the new TS 7 line — `typescript-eslint@8.x` only supports `<6.1.0`; TS7 would break linting today. |
-| UI | React 19 + Tailwind CSS 4 + shadcn/ui | `react@19.3.0`, `tailwindcss@4.3.3` |
+| UI | React 19 + Tailwind CSS 4 + shadcn/ui | `react@19.2.8`, `tailwindcss@4.3.3` |
 | Database | PostgreSQL via Docker Compose (local dev) | |
 | ORM | Prisma | Pinned to `7.10.0` for both `prisma` and `@prisma/client` — `prisma@latest` currently resolves to an `8.0.0-rc`, which is not stable. |
 | Validation | Zod 4 | `zod@4.6.7`, used for both DB-adjacent input validation and AI structured-output validation |

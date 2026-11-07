@@ -129,7 +129,7 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   resolved by `resolveAICredentials` (`src/server/ai/credentials.ts`): the visitor's key from
   the `x-ai-provider`/`x-ai-key` headers first; only outside production does it fall back to
   `AI_PROVIDER` (`"anthropic"` default, or `"gemini"`) plus that provider's key/model env vars.
-  It throws lazily on first use — it throws lazily on first use, not at import time, so importing
+  It throws lazily on first use, not at import time, so importing
   AI modules never breaks tests that don't need a real key. `AIProvider` methods (currently
   `analyzeWriting`/`generateExercises`/`continueInterview`/`explainAttempt`) are added one at a time, only when
   a feature phase needs them — don't pre-add stub methods, and implement any new one in *both*
