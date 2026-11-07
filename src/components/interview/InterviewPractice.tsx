@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { WritingSheet } from "@/components/writing/WritingSheet";
@@ -12,13 +13,14 @@ import type {
   InterviewTurnRef,
   StartInterviewResponse,
 } from "@/components/interview/types";
+import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 type State =
-  | { kind: "idle"; errorMessage?: string }
+  | { kind: "idle"; errorMessage?: string; keyRequired?: boolean }
   | { kind: "starting" }
   | {
       kind: "active";
@@ -26,6 +28,7 @@ type State =
       currentTurn: InterviewTurnRef;
       history: CompletedTurn[];
       errorMessage?: string;
+      keyRequired?: boolean;
     }
   | { kind: "submitting"; sessionId: string; currentTurn: InterviewTurnRef; history: CompletedTurn[] }
   | { kind: "ended"; history: CompletedTurn[] };
@@ -41,7 +44,7 @@ export function InterviewPractice() {
     setState({ kind: "starting" });
 
     try {
-      const response = await fetch("/api/interview", { method: "POST" });
+      const response = await aiFetch("/api/interview", { method: "POST" });
       if (!response.ok) {
         setState({ kind: "idle", errorMessage: await errorMessageFor(response, GENERIC_ERROR) });
         return;
@@ -49,8 +52,12 @@ export function InterviewPractice() {
 
       const data = (await response.json()) as StartInterviewResponse;
       setState({ kind: "active", sessionId: data.sessionId, currentTurn: data.turn, history: [] });
-    } catch {
-      setState({ kind: "idle", errorMessage: GENERIC_ERROR });
+    } catch (error) {
+      setState(
+        error instanceof MissingAIKeyError
+          ? { kind: "idle", keyRequired: true }
+          : { kind: "idle", errorMessage: GENERIC_ERROR },
+      );
     }
   }
 
@@ -61,7 +68,7 @@ export function InterviewPractice() {
     setState({ kind: "submitting", sessionId, currentTurn, history });
 
     try {
-      const response = await fetch(
+      const response = await aiFetch(
         `/api/interview/${sessionId}/turns/${currentTurn.id}/answer`,
         {
           method: "POST",
@@ -101,8 +108,12 @@ export function InterviewPractice() {
       }
 
       setState({ kind: "active", sessionId, currentTurn: result.nextTurn, history: nextHistory });
-    } catch {
-      setState({ kind: "active", sessionId, currentTurn, history, errorMessage: GENERIC_ERROR });
+    } catch (error) {
+      setState(
+        error instanceof MissingAIKeyError
+          ? { kind: "active", sessionId, currentTurn, history, keyRequired: true }
+          : { kind: "active", sessionId, currentTurn, history, errorMessage: GENERIC_ERROR },
+      );
     }
   }
 
@@ -133,6 +144,7 @@ export function InterviewPractice() {
             answer in English, and each answer is scored — including how clearly you communicate
             technical ideas.
           </p>
+          {state.kind === "idle" && state.keyRequired ? <KeyRequiredNotice /> : null}
           {state.kind === "idle" && state.errorMessage ? (
             <p role="alert" className="text-sm text-destructive">{state.errorMessage}</p>
           ) : null}
@@ -189,6 +201,7 @@ export function InterviewPractice() {
             disabled={isSubmitting}
             minHeight="min-h-[240px]"
           />
+          {state.kind === "active" && state.keyRequired ? <KeyRequiredNotice /> : null}
           {state.kind === "active" && state.errorMessage ? (
             <p role="alert" className="text-sm text-destructive">{state.errorMessage}</p>
           ) : null}

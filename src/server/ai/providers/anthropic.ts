@@ -113,6 +113,17 @@ async function callToolAndValidate<T>(
   return result.data;
 }
 
+// Key check for /settings: the smallest real request (one output token). Not
+// an AIProvider capability — resolves when the key works, throws the same
+// typed errors as the provider otherwise.
+export async function testKey(client: AnthropicMessagesClient, model: string): Promise<void> {
+  try {
+    await client.messages.create({ model, max_tokens: 1, messages: [{ role: "user", content: "Hi" }] });
+  } catch (error) {
+    throw mapAnthropicError(error);
+  }
+}
+
 export function createAnthropicProvider(client: AnthropicMessagesClient, model: string): AIProvider {
   return {
     async analyzeWriting(input: AnalyzeWritingInput) {

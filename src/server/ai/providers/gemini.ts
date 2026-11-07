@@ -116,6 +116,17 @@ async function generateStructured<T>(
   return result.data;
 }
 
+// Key check for /settings: the smallest real request (one output token). Not
+// an AIProvider capability — resolves when the key works, throws the same
+// typed errors as the provider otherwise.
+export async function testKey(client: GeminiContentClient, model: string): Promise<void> {
+  try {
+    await client.models.generateContent({ model, contents: "Hi", config: { maxOutputTokens: 1 } });
+  } catch (error) {
+    throw mapGeminiError(error);
+  }
+}
+
 export function createGeminiProvider(client: GeminiContentClient, model: string): AIProvider {
   return {
     async analyzeWriting(input: AnalyzeWritingInput) {

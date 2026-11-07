@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 
+import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
 import { WritingResults } from "@/components/writing/WritingResults";
 import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
@@ -17,7 +19,7 @@ export type InitialChallenge =
   | { promptType: "TECHNICAL"; promptText: string; technicalCategory: string };
 
 type ViewState =
-  | { kind: "editing"; errorMessage?: string }
+  | { kind: "editing"; errorMessage?: string; keyRequired?: boolean }
   | { kind: "submitting" }
   | { kind: "result"; session: WritingSessionDTO };
 
@@ -39,7 +41,7 @@ export function WritingCoach({
     setView({ kind: "submitting" });
 
     try {
-      const response = await fetch("/api/writing-sessions", {
+      const response = await aiFetch("/api/writing-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,8 +73,12 @@ export function WritingCoach({
 
       setFailedSessionId(undefined);
       setView({ kind: "result", session: result.session });
-    } catch {
-      setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+    } catch (error) {
+      setView(
+        error instanceof MissingAIKeyError
+          ? { kind: "editing", keyRequired: true }
+          : { kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE },
+      );
     }
   }
 
@@ -109,6 +115,7 @@ export function WritingCoach({
               : "Free writing, a GitHub issue, a PR description, an explanation of something you built today..."
           }
         />
+        {view.kind === "editing" && view.keyRequired ? <KeyRequiredNotice /> : null}
         {view.kind === "editing" && view.errorMessage ? (
           <p role="alert" className="text-sm text-destructive">
             {view.errorMessage}

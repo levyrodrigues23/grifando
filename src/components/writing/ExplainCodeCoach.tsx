@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 
+import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
 import { WritingResults } from "@/components/writing/WritingResults";
 import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
 
 const MAX_CODE_LENGTH = 2000;
@@ -15,7 +17,7 @@ const GENERIC_FAILURE_MESSAGE =
   "We couldn't analyze this writing right now. Your text has not been lost.";
 
 type ViewState =
-  | { kind: "editing"; errorMessage?: string }
+  | { kind: "editing"; errorMessage?: string; keyRequired?: boolean }
   | { kind: "submitting" }
   | { kind: "result"; session: WritingSessionDTO };
 
@@ -31,7 +33,7 @@ export function ExplainCodeCoach() {
     setView({ kind: "submitting" });
 
     try {
-      const response = await fetch("/api/writing-sessions", {
+      const response = await aiFetch("/api/writing-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -60,8 +62,12 @@ export function ExplainCodeCoach() {
 
       setFailedSessionId(undefined);
       setView({ kind: "result", session: result.session });
-    } catch {
-      setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+    } catch (error) {
+      setView(
+        error instanceof MissingAIKeyError
+          ? { kind: "editing", keyRequired: true }
+          : { kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE },
+      );
     }
   }
 
@@ -99,6 +105,7 @@ export function ExplainCodeCoach() {
           placeholder="This function checks whether..."
         />
       </div>
+      {view.kind === "editing" && view.keyRequired ? <KeyRequiredNotice /> : null}
       {view.kind === "editing" && view.errorMessage ? (
         <p role="alert" className="text-sm text-destructive">
           {view.errorMessage}
