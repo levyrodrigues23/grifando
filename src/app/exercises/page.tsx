@@ -1,9 +1,14 @@
+import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { ExercisePractice } from "@/components/exercises/ExercisePractice";
 
 export default function ExercisesPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <PageShell>
+      <PageHeader
+        title="Exercises"
+        description="Built from your own mistakes. Answer before you see the solution — recall is what makes it stick."
+      />
       <ExercisePractice />
-    </main>
+    </PageShell>
   );
 }

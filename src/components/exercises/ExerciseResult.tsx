@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SubmitAttemptResponse } from "@/components/exercises/types";
@@ -26,16 +25,16 @@ function AnswerDiff({ userAnswer, acceptableAnswers }: { userAnswer: string; acc
   if (!expected) return null;
 
   return (
-    <div className="space-y-1 text-sm">
-      <p>
-        Closest answer: <span className="font-medium">{expected}</span>
+    <div className="space-y-2">
+      <p className="text-muted-foreground">
+        Closest answer: <span className="prose-serif text-lg text-foreground">{expected}</span>
       </p>
-      <p aria-label="Differences between your answer and the closest answer">
+      <p className="prose-serif text-lg" aria-label="Differences between your answer and the closest answer">
         {diffWords(userAnswer, expected).map((segment, index) => (
           <span key={index}>
             {index > 0 ? " " : null}
             {segment.kind === "removed" ? (
-              <del className="text-destructive">{segment.text}</del>
+              <del className="text-destructive decoration-1">{segment.text}</del>
             ) : segment.kind === "added" ? (
               <ins className="text-success no-underline">{segment.text}</ins>
             ) : (
@@ -79,7 +78,7 @@ function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemp
   }
 
   if (state.kind === "done") {
-    return <p className="text-sm">{state.text}</p>;
+    return <p className="prose-serif text-lg text-iron">{state.text}</p>;
   }
 
   return (
@@ -106,24 +105,25 @@ export function ExerciseResult({
   hasNext: boolean;
 }) {
   return (
-    <Card>
+    <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle>
-          <Badge variant={result.isCorrect ? "success" : "destructive"}>
-            {result.isCorrect ? "Correct" : "Not quite"}
-          </Badge>
+        <CardTitle className={result.isCorrect ? "text-success" : "text-destructive"}>
+          {result.isCorrect ? "Correct" : "Not quite"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-4">
         {!result.isCorrect &&
           (result.exercise.type === "REWRITE" || result.exercise.type === "TRANSLATION" ? (
             <AnswerDiff userAnswer={userAnswer} acceptableAnswers={result.exercise.acceptableAnswers} />
           ) : (
-            <p className="text-sm">
-              Expected: <span className="font-medium">{correctAnswerText(result.exercise)}</span>
+            <p className="text-muted-foreground">
+              Expected:{" "}
+              <span className="prose-serif text-lg text-foreground">
+                {correctAnswerText(result.exercise)}
+              </span>
             </p>
           ))}
-        <p className="text-sm text-muted-foreground">{result.explanation}</p>
+        <p className="text-iron">{result.explanation}</p>
         {!result.isCorrect && <ExplainMyAnswer exerciseId={exerciseId} attemptId={result.attemptId} />}
       </CardContent>
       <CardFooter>

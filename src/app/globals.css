@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Single light theme: keep `dark:` utilities inert (never follow the OS). */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -9,23 +10,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
   --font-heading: var(--font-sans);
-  --color-ember: var(--ember);
+  --color-violet: var(--violet);
+  --color-linen: var(--linen);
+  --color-stone: var(--stone);
+  --color-iron: var(--iron);
+  --color-smoke: var(--smoke);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -42,116 +35,135 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 /*
- * Palette: "Darkroom product editorial" — adapted from a warm dark-mode
- * product-showcase reference. Single theme (dark only, no light variant) —
- * `.dark` mirrors `:root` so nothing breaks if the class is ever applied.
- * Ember (#dc5000) is deliberately rare: focus rings, links, and score/
- * progress fills only — never generic hover states or every button.
+ * Palette: "Warm cream editorial" — a light, paper-on-paper system adapted from
+ * a user-supplied style reference. See DESIGN.md and CLAUDE.md design notes.
+ * Depth comes from surface tone (canvas → linen → stone, white cards), never
+ * from shadows. Violet is rare on purpose: focus rings and mistake marks only.
  */
 :root {
-  --background: #100904;
-  --foreground: #ffedd7;
-  --card: #100904;
-  --card-foreground: #ffedd7;
-  --popover: #100904;
-  --popover-foreground: #ffedd7;
-  --primary: #382416;
-  --primary-foreground: #ffedd7;
-  --secondary: #1c130a;
-  --secondary-foreground: #ffedd7;
-  --muted: #1c130a;
-  --muted-foreground: #a08e79;
-  --accent: #241a10;
-  --accent-foreground: #ffedd7;
-  /* Not part of the source palette — a warm red mixed to fit it, needed for
-     functional error/incorrect states the reference (a product page) never had to define. */
-  --destructive: #c1442e;
-  --destructive-foreground: #ffedd7;
-  --border: #40372e;
-  --input: #40372e;
-  --ring: #dc5000;
-  --ember: #dc5000;
-  /* Also not in the source palette — a muted warm green for "mastered"/"correct" states. */
-  --success: #7c8f5a;
-  --success-foreground: #100904;
-  --chart-1: #dc5000;
-  --chart-2: #6c5f51;
-  --chart-3: #382416;
-  --chart-4: #a08e79;
-  --chart-5: #40372e;
-  --radius: 0.75rem;
-  --sidebar: #100904;
-  --sidebar-foreground: #ffedd7;
-  --sidebar-primary: #382416;
-  --sidebar-primary-foreground: #ffedd7;
-  --sidebar-accent: #241a10;
-  --sidebar-accent-foreground: #ffedd7;
-  --sidebar-border: #40372e;
-  --sidebar-ring: #dc5000;
-}
-
-.dark {
-  --background: #100904;
-  --foreground: #ffedd7;
-  --card: #100904;
-  --card-foreground: #ffedd7;
-  --popover: #100904;
-  --popover-foreground: #ffedd7;
-  --primary: #382416;
-  --primary-foreground: #ffedd7;
-  --secondary: #1c130a;
-  --secondary-foreground: #ffedd7;
-  --muted: #1c130a;
-  --muted-foreground: #a08e79;
-  --accent: #241a10;
-  --accent-foreground: #ffedd7;
-  --destructive: #c1442e;
-  --destructive-foreground: #ffedd7;
-  --border: #40372e;
-  --input: #40372e;
-  --ring: #dc5000;
-  --ember: #dc5000;
-  --success: #7c8f5a;
-  --success-foreground: #100904;
-  --chart-1: #dc5000;
-  --chart-2: #6c5f51;
-  --chart-3: #382416;
-  --chart-4: #a08e79;
-  --chart-5: #40372e;
-  --sidebar: #100904;
-  --sidebar-foreground: #ffedd7;
-  --sidebar-primary: #382416;
-  --sidebar-primary-foreground: #ffedd7;
-  --sidebar-accent: #241a10;
-  --sidebar-accent-foreground: #ffedd7;
-  --sidebar-border: #40372e;
-  --sidebar-ring: #dc5000;
+  --background: #faf9f6; /* canvas cream */
+  --foreground: #111111; /* ink */
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f1eee9; /* linen */
+  --secondary-foreground: #111111;
+  --muted: #f1eee9;
+  --muted-foreground: #585858; /* graphite */
+  --accent: #f1eee9;
+  --accent-foreground: #111111;
+  --linen: #f1eee9;
+  --stone: #d3cec6;
+  --iron: #414141;
+  --smoke: #767676; /* reference #888, darkened for 4.5:1 placeholders */
+  /* Not in the source reference (a marketing page never needed error/positive
+     states): a warm brick red and a warm olive green tuned for the cream canvas. */
+  --destructive: #b3261e;
+  --success: #3f6a35;
+  --success-foreground: #ffffff;
+  --border: #dedbd6; /* hairline */
+  --input: #dedbd6;
+  --ring: #0007cb;
+  --violet: #0007cb;
+  --radius: 4px;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    font-feature-settings: "tnum" on;
+    -webkit-font-smoothing: antialiased;
+    scrollbar-color: var(--stone) transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--stone);
+    color: var(--foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--violet);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
   }
 }
 
-/* Section Divider (Dashed Hairline) — used between content blocks, never as
-   plain decoration. See CLAUDE.md design notes. */
-.divider-dashed {
-  border-style: dashed;
+/* Type scale — Inter at weight 300 for display, tight tracking. */
+@utility text-display-lg {
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  text-wrap: balance;
+}
+@utility text-display {
+  font-size: clamp(2.5rem, 5vw, 3.375rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  text-wrap: balance;
+}
+@utility text-heading-lg {
+  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  text-wrap: balance;
+}
+@utility text-heading {
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 300;
+}
+@utility text-heading-sm {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  font-weight: 300;
+}
+@utility text-subheading {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+/* Monospace labeling system — tags, metadata, section labels. */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+/* The learner's own prose and editorial standfirsts. */
+@utility prose-serif {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.55;
 }

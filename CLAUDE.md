@@ -4,47 +4,35 @@ Inglesando — a personal AI English coach. Full product spec: `SPEC.md`. Read i
 feature-level change — this file only covers things a future session needs that aren't
 obvious from the code.
 
-## Design system — "Darkroom product editorial"
+## Design system — "Warm cream editorial"
 
-Single dark theme (no light mode, no toggle) adapted from a user-supplied reference built for
-a product-showcase landing page. Tokens live in `src/app/globals.css`'s `:root` (mirrored in
-`.dark` in case that class is ever applied). Fidelity to these tokens matters — don't
-reintroduce Tailwind's stock colors (`amber-*`, `emerald-*`, etc.) or a light theme.
+Single light theme (no dark mode, no toggle) adapted from a user-supplied style reference
+(an editorial, magazine-spread product page). Full token list and rationale: `DESIGN.md`.
+Tokens live in `src/app/globals.css`'s `:root`. Don't reintroduce Tailwind stock colors, the
+old dark "Darkroom" palette, or a dark theme.
 
-- **Palette**: `--background`/`--card`/`--popover` #100904 (Walnut Shadow) — cards are the same
-  color as the page and rely on a `ring-border` hairline, not a lighter fill, for separation.
-  `--foreground` #ffedd7 (Warm Cream). `--primary` #382416 (Bark Brown, the one filled-button
-  color). `--border`/`--input` #40372e (Cork Border). `--muted-foreground` a lightened
-  Driftwood (#a08e79) for readable secondary text. `--ember` / `--ring` #dc5000 is the *rare*
-  accent — see below.
-- **Ember is rare on purpose**: reserved for focus rings, the progress/score-bar fill, and
-  highlighted mistake spans in `HighlightedText.tsx` — deliberately *not* wired into generic
-  nav-link hovers or the Button/Badge `link` variant (those use underline + cream text
-  instead). Don't add `hover:text-ember` or similar to everyday chrome; it breaks the "rarity"
-  the reference explicitly calls for.
-- **`--destructive` (#c1442e) and `--success` (#7c8f5a) are not in the source reference** — a
-  product-showcase page never needed error/positive states. They're a warm red and a muted
-  warm green mixed to fit the existing palette family. Reuse them for anything error/positive
-  (form validation, "Incorrect"/"Correct" badges, mastery states); don't invent a third
-  ad-hoc semantic color.
-- **Uppercase is for chrome, not content**: nav, `CardTitle`, buttons, and badges are
-  `uppercase tracking-normal` (baked into those components, not applied per-page). Body text —
-  AI feedback, mistake explanations, exercise instructions/options, textarea/input content —
-  stays normal case. This is a deliberate adaptation of the reference (which uppercases nearly
-  everything on a low-density marketing page); a dense app with paragraphs of feedback needs
-  the mixed-case readability. Don't uppercase real sentence content to chase literal fidelity.
-- **Inputs are underline-only** (`border-0 border-b`, `rounded-none`), not boxed — see
-  `input.tsx`/`textarea.tsx`. Buttons are full pill (`rounded-full`) — see `button.tsx`. Cards
-  keep the default `rounded-xl` (~12-17px depending on `--radius`), never below that.
-- **Dividers are dashed** (`border-dashed`): `SiteHeader`'s bottom border, `CardFooter`'s top
-  border, and the `Separator` component all use dashed hairlines, not solid lines — matches
-  the reference's "Section Divider (Dashed Hairline)" component.
-- Font is Inter (`--font-sans`) + JetBrains Mono (`--font-mono`), the reference's suggested
-  substitutes for its licensed display typeface — set in `src/app/layout.tsx`. (This also
-  fixed a pre-existing bug: `globals.css` referenced `--font-sans`/`--font-geist-mono` but
-  `layout.tsx` only ever set `--font-geist-sans`/`--font-geist-mono`, so `--font-sans` was
-  never actually defined and the app silently fell back to a serif system font the whole time
-  before this pass.)
+- **Surfaces, not shadows**: canvas `--background` #faf9f6, `--linen` #f1eee9 for bands and
+  secondary panels, white `--card` with a `ring-border` (#dedbd6) hairline. No `box-shadow`,
+  no gradients. Sections are separated by tone and space (64-96px), not divider lines.
+- **Type**: Inter 300 for display/headings via the `text-display-lg`/`text-display`/
+  `text-heading-lg`/`text-heading`/`text-heading-sm` utilities (never 600+ for display);
+  Inter 400 body; Source Serif 4 300 (`prose-serif`) for the learner's own prose, corrections
+  and standfirsts; JetBrains Mono `label-mono` (12px, uppercase, +0.1em) for tags/metadata
+  only. Sentence content is never uppercased. No kicker/eyebrow label above a heading.
+- **Radius is 4px everywhere** (`--radius`; all `rounded-*` scale tokens map to it). Buttons,
+  inputs, cards, badges. No pills.
+- **Primary button is black** (`--primary` #000). Secondary actions are `outline` (white +
+  ink border) or `ghost`.
+- **Violet #0007cb is rare on purpose**: focus outlines and mistake marks in
+  `HighlightedText.tsx`/`MistakeCard.tsx` only. Progress/score bars are ink on stone, not
+  violet. Don't add violet hovers to everyday chrome.
+- **`--destructive` #b3261e and `--success` #3f6a35** are not in the reference; reuse them for
+  every error/positive state, don't invent a third semantic color.
+- **Page layout**: every route uses `PageShell` + `PageHeader` (`components/layout/PageHeader.tsx`):
+  1200px column, whisper-weight headline left, serif standfirst column right. Writing inputs use
+  `WritingSheet` (white sheet, serif text), not a boxed `Textarea`. Nav is tab-style with a 2px
+  ink underline for the active route (`NavLinks.tsx`).
+- `--smoke` is #767676, darker than the reference's #888, so placeholders meet 4.5:1.
 
 ## Stack & versions (pinned deliberately — do not "helpfully" bump)
 

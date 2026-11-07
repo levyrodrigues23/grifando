@@ -117,12 +117,12 @@ export function FocusMusic() {
         ref={buttonRef}
         type="button"
         variant="ghost"
-        size="xs"
+        size="sm"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={toggle}
       >
-        Focus Music
+        Focus music
       </Button>
       {/* Stays mounted once loaded and is only hidden when closed: unmounting the
           iframe would stop playback. The header lives in the root layout, so it
@@ -132,14 +132,14 @@ export function FocusMusic() {
           id={panelId}
           aria-hidden={!open}
           inert={!open}
-          className={`absolute top-full right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-3 rounded-xl bg-card p-3 ring-1 ring-border ${open ? "" : "invisible"}`}
+          className={`absolute top-full right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-4 rounded-[4px] bg-card p-4 ring-1 ring-border ${open ? "" : "invisible"}`}
         >
           <iframe
             key={`${source.provider}:${source.kind}:${source.id}`}
             title="Focus music player"
             src={toEmbedUrl(source)}
             className={source.provider === "youtube" ? "aspect-video w-full" : "h-[152px] w-full"}
-            style={{ borderRadius: "0.75rem", border: 0 }}
+            style={{ borderRadius: "4px", border: 0 }}
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           />
           {playlists.length > 0 ? (
@@ -152,7 +152,7 @@ export function FocusMusic() {
                       type="button"
                       aria-current={isCurrent ? "true" : undefined}
                       onClick={() => play(playlist)}
-                      className={`min-w-0 flex-1 truncate rounded-sm text-left text-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring ${isCurrent ? "text-foreground" : "text-muted-foreground"}`}
+                      className={`min-w-0 flex-1 truncate text-left text-sm hover:underline ${isCurrent ? "text-foreground" : "text-muted-foreground"}`}
                     >
                       {playlist.name}
                     </button>
@@ -188,7 +188,7 @@ export function FocusMusic() {
                 aria-label="Playlist name"
                 maxLength={40}
               />
-              <Button type="submit" size="xs">
+              <Button type="submit" size="sm">
                 Save &amp; play
               </Button>
             </div>
