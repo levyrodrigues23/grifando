@@ -13,21 +13,20 @@ function truncate(text: string, max: number): string {
 
 export function RecentWriting({ sessions }: { sessions: RecentSession[] }) {
   if (sessions.length === 0) {
-    return <p className="text-sm text-muted-foreground">No writing sessions yet.</p>;
+    return <p className="text-muted-foreground">No writing sessions yet.</p>;
   }
 
   return (
-    <ul className="space-y-3">
+    <ul className="border-t border-border">
       {sessions.map((session) => (
-        <li
-          key={session.id}
-          className="space-y-1 border-b border-dashed border-border pb-3 last:border-0 last:pb-0"
-        >
-          <div className="flex items-center justify-between text-xs tracking-normal text-muted-foreground uppercase">
+        <li key={session.id} className="space-y-2 border-b border-border py-4">
+          <div className="label-mono flex items-center justify-between gap-4 text-muted-foreground">
             <span>{session.promptType.replace(/_/g, " ")}</span>
-            <span>{session.createdAt.toLocaleDateString()}</span>
+            <time dateTime={session.createdAt.toISOString()}>
+              {session.createdAt.toLocaleDateString()}
+            </time>
           </div>
-          <p className="text-sm">{truncate(session.originalText, EXCERPT_LENGTH)}</p>
+          <p className="prose-serif text-lg">{truncate(session.originalText, EXCERPT_LENGTH)}</p>
         </li>
       ))}
     </ul>

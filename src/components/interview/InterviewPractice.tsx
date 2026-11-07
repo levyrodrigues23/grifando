@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { WritingSheet } from "@/components/writing/WritingSheet";
 import { TurnFeedback } from "@/components/interview/TurnFeedback";
 import type {
   AnswerTurnResponse,
@@ -121,18 +121,18 @@ export function InterviewPractice() {
 
   if (state.kind === "idle" || state.kind === "starting") {
     return (
-      <Card>
+      <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>Interview Practice</CardTitle>
+          <CardTitle>Ready when you are</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">
+        <CardContent className="space-y-4">
+          <p className="prose-serif text-lg text-iron">
             A text-based software engineering interview. The interviewer asks a question, you
             answer in English, and each answer is scored — including how clearly you communicate
             technical ideas.
           </p>
           {state.kind === "idle" && state.errorMessage ? (
-            <p className="text-sm text-destructive">{state.errorMessage}</p>
+            <p role="alert" className="text-sm text-destructive">{state.errorMessage}</p>
           ) : null}
         </CardContent>
         <CardFooter>
@@ -146,13 +146,13 @@ export function InterviewPractice() {
 
   if (state.kind === "ended") {
     return (
-      <div className="space-y-6">
+      <div className="space-y-16">
         {state.history.map((turn, index) => (
-          <TurnFeedback key={index} turn={turn} />
+          <TurnFeedback key={index} turn={turn} index={index} />
         ))}
         <Card>
-          <CardContent className="flex items-center justify-between pt-4">
-            <p className="text-sm">Interview complete.</p>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-heading-sm">Interview complete.</p>
             <Button onClick={handleRestart} variant="outline">
               Start a new interview
             </Button>
@@ -165,41 +165,41 @@ export function InterviewPractice() {
   const isSubmitting = state.kind === "submitting";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-16">
       {state.history.map((turn, index) => (
-        <TurnFeedback key={index} turn={turn} />
+        <TurnFeedback key={index} turn={turn} index={index} />
       ))}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Interviewer</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="rounded-md bg-muted px-3 py-2 text-sm">{state.currentTurn.question}</p>
-          <Textarea
+      <section className="grid gap-x-16 gap-y-8 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div className="space-y-3">
+          <p className="label-mono text-muted-foreground">
+            Question {state.history.length + 1}
+          </p>
+          <h2 className="text-heading-sm">{state.currentTurn.question}</h2>
+        </div>
+        <div className="space-y-6">
+          <WritingSheet
+            label="Your answer"
             value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
+            onChange={setAnswer}
             maxLength={MAX_LENGTH}
-            rows={6}
             placeholder="Answer in English..."
             disabled={isSubmitting}
+            minHeight="min-h-[240px]"
           />
-          <div className="text-right text-xs text-muted-foreground">
-            {answer.length} / {MAX_LENGTH}
-          </div>
           {state.kind === "active" && state.errorMessage ? (
-            <p className="text-sm text-destructive">{state.errorMessage}</p>
+            <p role="alert" className="text-sm text-destructive">{state.errorMessage}</p>
           ) : null}
-        </CardContent>
-        <CardFooter className="justify-between">
-          <Button variant="outline" onClick={handleEnd} disabled={isSubmitting}>
-            End interview
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || answer.trim().length === 0}>
-            {isSubmitting ? "Submitting..." : "Submit answer"}
-          </Button>
-        </CardFooter>
-      </Card>
+          <div className="flex flex-wrap justify-between gap-2">
+            <Button onClick={handleSubmit} disabled={isSubmitting || answer.trim().length === 0}>
+              {isSubmitting ? "Submitting..." : "Submit answer"}
+            </Button>
+            <Button variant="ghost" onClick={handleEnd} disabled={isSubmitting}>
+              End interview
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

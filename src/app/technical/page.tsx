@@ -1,39 +1,45 @@
 import Link from "next/link";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { TechnicalCategory } from "@/generated/prisma/enums";
 import { TECHNICAL_CATEGORY_LABELS } from "@/lib/technicalCategoryLabels";
 import { getTechnicalPromptsByCategory } from "@/server/domain/writing/technicalPrompts";
 
 export default function TechnicalPage() {
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-medium tracking-normal uppercase">Technical English</h1>
-        <p className="text-sm text-muted-foreground">
-          Practice writing about the kind of topics developers actually explain — pick a prompt
-          to get started.
-        </p>
+    <PageShell>
+      <PageHeader
+        title="Technical English"
+        description="Practice writing about the topics developers actually explain. Pick a prompt to start."
+      />
+      <div className="space-y-16">
+        {Object.values(TechnicalCategory).map((category) => (
+          <section
+            key={category}
+            className="grid gap-x-16 gap-y-4 lg:grid-cols-[280px_minmax(0,1fr)]"
+          >
+            <h2 className="text-heading-sm">{TECHNICAL_CATEGORY_LABELS[category] ?? category}</h2>
+            <ul className="border-t border-border">
+              {getTechnicalPromptsByCategory(category).map((prompt) => (
+                <li key={prompt.id} className="border-b border-border">
+                  <Link
+                    href={`/write?promptId=${prompt.id}`}
+                    className="group flex items-baseline justify-between gap-6 py-4 hover:bg-card"
+                  >
+                    <span className="prose-serif text-lg">{prompt.text}</span>
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 text-sm text-muted-foreground group-hover:text-foreground"
+                    >
+                      Write →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
-
-      {Object.values(TechnicalCategory).map((category) => (
-        <Card key={category}>
-          <CardHeader>
-            <CardTitle>{TECHNICAL_CATEGORY_LABELS[category] ?? category}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {getTechnicalPromptsByCategory(category).map((prompt) => (
-              <Link
-                key={prompt.id}
-                href={`/write?promptId=${prompt.id}`}
-                className="block rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-              >
-                {prompt.text}
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-    </main>
+    </PageShell>
   );
 }
