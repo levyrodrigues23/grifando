@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { RemoveVocabularyButton } from "@/components/vocabulary/RemoveVocabularyButton";
 import { VocabularyForm } from "@/components/vocabulary/VocabularyForm";
@@ -8,6 +9,11 @@ import { getCurrentUserId } from "@/server/session/currentUser";
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+export const metadata: Metadata = {
+  title: "Vocabulary",
+  description: "Words and expressions worth keeping, with meaning and example sentences.",
+};
 
 export default async function VocabularyPage(props: PageProps<"/vocabulary">) {
   const userId = await getCurrentUserId();

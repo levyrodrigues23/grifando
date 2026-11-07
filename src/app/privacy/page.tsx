@@ -3,7 +3,10 @@ import type { Metadata } from "next";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { DeleteMyDataButton } from "@/components/privacy/DeleteMyDataButton";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = {
+  title: "Privacy",
+  description: "What Inglesando stores, how long, and how to delete it.",
+};
 
 function Block({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (

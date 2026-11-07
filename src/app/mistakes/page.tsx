@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,11 @@ function resolveSinceDate(isLast30Days: boolean): Date | undefined {
 function getNow(): Date {
   return new Date();
 }
+
+export const metadata: Metadata = {
+  title: "Mistake notebook",
+  description: "Your recurring English mistakes, grouped by pattern.",
+};
 
 export default async function MistakesPage(props: PageProps<"/mistakes">) {
   const userId = await getCurrentUserId();

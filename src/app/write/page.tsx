@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { prisma } from "@/server/db/client";
 import { resolveDailyChallenge } from "@/server/domain/writing/dailyChallenge";
 import { findTechnicalPromptById } from "@/server/domain/writing/technicalPrompts";
 import { WritingCoach, type InitialChallenge } from "@/components/writing/WritingCoach";
 import { getCurrentUserId } from "@/server/session/currentUser";
+
+export const metadata: Metadata = {
+  title: "Write",
+  description: "Write in English and get feedback that turns your mistakes into practice.",
+};
 
 export default async function WritePage(props: PageProps<"/write">) {
   const userId = await getCurrentUserId();
