@@ -24,13 +24,19 @@ export function PageHeader({
         className,
       )}
     >
-      <h1 className={size === "display-lg" ? "text-display-lg" : "text-display"}>{title}</h1>
+      <h1 className={cn("rise-in", size === "display-lg" ? "text-display-lg" : "text-display")}>
+        {title}
+      </h1>
       {description || actions ? (
-        <div className="space-y-6 lg:pb-1">
+        <div className="rise-in space-y-6 lg:pb-1" style={{ animationDelay: "80ms" }}>
           {description ? (
             <div className="prose-serif text-lg text-iron">{description}</div>
           ) : null}
-          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+          {actions ? (
+            <div className="rise-in flex flex-wrap gap-2" style={{ animationDelay: "160ms" }}>
+              {actions}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </header>

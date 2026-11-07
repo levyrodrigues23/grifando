@@ -1,10 +1,16 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { PageShell, Section, SectionTitle } from "@/components/layout/PageHeader";
+import {
+  PageShell,
+  Section,
+  SectionTitle,
+} from "@/components/layout/PageHeader";
 import { ProgressSummary } from "@/components/dashboard/ProgressSummary";
 import { RecentMistakes } from "@/components/dashboard/RecentMistakes";
 import { RecentWriting } from "@/components/dashboard/RecentWriting";
+import { Reveal } from "@/components/motion/Reveal";
+import { LiveSpecimen } from "@/components/home/LiveSpecimen";
 import { StreakStatus } from "@/components/dashboard/StreakStatus";
 import { WeakAreas } from "@/components/dashboard/WeakAreas";
 import { MISTAKE_CATEGORY_LABELS } from "@/lib/mistakeCategoryLabels";
@@ -68,11 +74,15 @@ export default async function HomePage() {
   const dailyPrompt = selectDailyPrompt(DAILY_PROMPTS, now, weakCategories);
   const breakdown = computeCategoryBreakdown(categoryCounts);
   const [recommendation] = selectPatternsForPractice(userPatterns, 1, now);
-  const dueCount = userPatterns.filter((pattern) => isDueForReview(pattern, now)).length;
+  const dueCount = userPatterns.filter((pattern) =>
+    isDueForReview(pattern, now),
+  ).length;
   // Days follow the server's local time zone (the app runs on the learner's machine).
   const streak = computeStreak([...writingDates, ...attemptDates], now);
   const averageScores = computeAverageScores(
-    recentAnalyzedSessions.flatMap((session) => (session.analysis ? [session.analysis] : [])),
+    recentAnalyzedSessions.flatMap((session) =>
+      session.analysis ? [session.analysis] : [],
+    ),
   );
 
   const promptIsLong = dailyPrompt.text.length > 110;
@@ -80,99 +90,129 @@ export default async function HomePage() {
   return (
     <PageShell>
       <header className="grid gap-x-16 gap-y-10 pt-12 pb-16 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
-        <div className="space-y-6">
-          <p className="label-mono text-muted-foreground">Today&apos;s challenge</p>
-          <h1 className={promptIsLong ? "text-heading-lg max-w-[22ch]" : "text-display-lg max-w-[16ch]"}>
+        <div className="rise-in space-y-6">
+          <p className="label-mono text-muted-foreground">
+            Today&apos;s challenge
+          </p>
+          <h1
+            className={
+              promptIsLong
+                ? "text-heading-lg max-w-[22ch]"
+                : "text-display-lg max-w-[16ch]"
+            }
+          >
             {dailyPrompt.text}
           </h1>
         </div>
-        <div className="space-y-6">
+        <div className="rise-in space-y-6" style={{ animationDelay: "80ms" }}>
           <StreakStatus streak={streak} />
           <div className="flex flex-wrap gap-2">
-            <Button render={<Link href="/today">Start today&apos;s session</Link>} />
-            <Button variant="ghost" render={<Link href="/write">Write freely</Link>} />
+            <Button
+              render={<Link href="/today">Start today&apos;s session</Link>}
+            />
+            <Button
+              variant="ghost"
+              render={<Link href="/write">Write freely</Link>}
+            />
           </div>
         </div>
       </header>
 
-      <Section tone="linen">
-        <SectionTitle
-          aside={
-            <span className="label-mono text-muted-foreground">Heuristic AI scores</span>
-          }
-        >
-          Progress
-        </SectionTitle>
-        <ProgressSummary
-          writingSessionsCompleted={writingSessionsCompleted}
-          exercisesCompleted={exercisesCompleted}
-          exerciseAccuracy={exerciseAccuracy}
-          averageScores={averageScores}
-        />
+      <Section className="pb-12 md:pb-16">
+        <LiveSpecimen />
       </Section>
 
-      <div className="grid gap-x-16 gap-y-16 pt-20 md:pt-24 lg:grid-cols-2">
-        <section>
-          <SectionTitle>Practice next</SectionTitle>
-          <div className="space-y-4">
-            {dueCount > 0 ? (
-              <p className="text-iron">
-                {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for review — you&apos;re
-                likely to be forgetting {dueCount === 1 ? "it" : "them"}.
-              </p>
-            ) : null}
-            {recommendation ? (
-              <>
-                <p className="text-iron">
-                  You&apos;ve mixed up{" "}
-                  {MISTAKE_CATEGORY_LABELS[recommendation.category] ?? recommendation.category}{" "}
-                  {recommendation.occurrenceCount} time
-                  {recommendation.occurrenceCount === 1 ? "" : "s"}.
-                </p>
-                <p className="prose-serif text-2xl leading-snug">
-                  <span className="text-muted-foreground line-through decoration-1">
-                    {recommendation.exampleOriginal}
-                  </span>{" "}
-                  <span aria-hidden="true">→</span>{" "}
-                  <span className="sr-only">should be</span>
-                  <span>{recommendation.exampleCorrection}</span>
-                </p>
-              </>
-            ) : (
-              <p className="prose-serif text-lg text-iron">
-                Write something first — exercises are generated from mistakes found in your own
-                writing.
-              </p>
-            )}
-            <div className="pt-2">
-              <Button variant="outline" render={<Link href="/exercises">Go to exercises</Link>} />
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <SectionTitle>Weak areas</SectionTitle>
-          <WeakAreas breakdown={breakdown} />
-        </section>
-
-        <section>
+      <Reveal>
+        <Section tone="linen">
           <SectionTitle
             aside={
-              <Link href="/mistakes" className="text-sm underline">
-                All mistakes
-              </Link>
+              <span className="label-mono text-muted-foreground">
+                Heuristic AI scores
+              </span>
             }
           >
-            Recent mistakes
+            Progress
           </SectionTitle>
-          <RecentMistakes patterns={recentPatterns} />
-        </section>
+          <ProgressSummary
+            writingSessionsCompleted={writingSessionsCompleted}
+            exercisesCompleted={exercisesCompleted}
+            exerciseAccuracy={exerciseAccuracy}
+            averageScores={averageScores}
+          />
+        </Section>
+      </Reveal>
 
-        <section>
-          <SectionTitle>Recent writing</SectionTitle>
-          <RecentWriting sessions={recentAnalyzedSessions.slice(0, RECENT_LIMIT)} />
-        </section>
-      </div>
+      <Reveal>
+        <div className="grid gap-x-16 gap-y-16 pt-20 md:pt-24 lg:grid-cols-2">
+          <section>
+            <SectionTitle>Practice next</SectionTitle>
+            <div className="space-y-4">
+              {dueCount > 0 ? (
+                <p className="text-iron">
+                  {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for
+                  review — you&apos;re likely to be forgetting{" "}
+                  {dueCount === 1 ? "it" : "them"}.
+                </p>
+              ) : null}
+              {recommendation ? (
+                <>
+                  <p className="text-iron">
+                    You&apos;ve mixed up{" "}
+                    {MISTAKE_CATEGORY_LABELS[recommendation.category] ??
+                      recommendation.category}{" "}
+                    {recommendation.occurrenceCount} time
+                    {recommendation.occurrenceCount === 1 ? "" : "s"}.
+                  </p>
+                  <p className="prose-serif text-2xl leading-snug">
+                    <span className="text-muted-foreground line-through decoration-1">
+                      {recommendation.exampleOriginal}
+                    </span>{" "}
+                    <span aria-hidden="true">→</span>{" "}
+                    <span className="sr-only">should be</span>
+                    <span>{recommendation.exampleCorrection}</span>
+                  </p>
+                </>
+              ) : (
+                <p className="prose-serif text-lg text-iron">
+                  Write something first — exercises are generated from mistakes
+                  found in your own writing.
+                </p>
+              )}
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  render={<Link href="/exercises">Go to exercises</Link>}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle>Weak areas</SectionTitle>
+            <WeakAreas breakdown={breakdown} />
+          </section>
+
+          <section>
+            <SectionTitle
+              aside={
+                <Link href="/mistakes" className="text-sm underline">
+                  All mistakes
+                </Link>
+              }
+            >
+              Recent mistakes
+            </SectionTitle>
+            <RecentMistakes patterns={recentPatterns} />
+          </section>
+
+          <section>
+            <SectionTitle>Recent writing</SectionTitle>
+            <RecentWriting
+              sessions={recentAnalyzedSessions.slice(0, RECENT_LIMIT)}
+            />
+          </section>
+        </div>
+      </Reveal>
     </PageShell>
   );
 }

@@ -167,3 +167,148 @@
   letter-spacing: -0.01em;
   line-height: 1.55;
 }
+
+/*
+ * Soft motion. One easing (ease-out expo), <=400ms per element, content always
+ * present in the HTML (nothing starts hidden unless JS arms it), and everything
+ * is switched off under prefers-reduced-motion at the bottom of this block.
+ */
+@property --draw {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes draw-underline {
+  from {
+    --draw: 0;
+  }
+  to {
+    --draw: 1;
+  }
+}
+
+@utility rise-in {
+  animation: rise-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@utility fade-in {
+  animation: fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Scroll reveal: .reveal is only ever added after hydration (see Reveal.tsx). */
+.reveal {
+  opacity: 0;
+}
+.reveal.reveal-in {
+  opacity: 1;
+  animation: rise-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * A proofreader's mark: a violet underline drawn left to right under a span,
+ * with its number fading in. --draw (0..1) drives both; it is 1 at rest, so a
+ * static page shows the finished mark. A single-colour background-image (not a
+ * gradient effect) is used so the line follows the text across line wraps.
+ */
+.proof-mark {
+  background-image: linear-gradient(var(--violet), var(--violet));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: calc(var(--draw) * 100%) 2px;
+  padding-bottom: 4px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.proof-mark-num {
+  opacity: var(--draw);
+}
+.proof-mark-draw {
+  animation: draw-underline 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * Hero specimen: one 10s loop (8s of marks, 2s pause). The marks draw at 0.5s,
+ * 2.9s and 5.3s and clear together at ~9.2s. Keyframe percentages cannot take
+ * variables, so each mark has its own keyframes; the correction notes reuse
+ * them with a short animation-delay.
+ */
+@keyframes specimen-1 {
+  0%, 3% { --draw: 0; }
+  6%, 90% { --draw: 1; }
+  93%, 100% { --draw: 0; }
+}
+@keyframes specimen-2 {
+  0%, 27% { --draw: 0; }
+  30%, 90% { --draw: 1; }
+  93%, 100% { --draw: 0; }
+}
+@keyframes specimen-3 {
+  0%, 51% { --draw: 0; }
+  54%, 90% { --draw: 1; }
+  93%, 100% { --draw: 0; }
+}
+.specimen-loop {
+  animation-duration: 10s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-iteration-count: infinite;
+}
+.specimen-loop-1 { animation-name: specimen-1; }
+.specimen-loop-2 { animation-name: specimen-2; }
+.specimen-loop-3 { animation-name: specimen-3; }
+.specimen-note {
+  opacity: var(--draw);
+  transform: translateY(calc((1 - var(--draw)) * 6px));
+}
+
+/* Sliding nav underline: the active tab's 2px ink bar grows from the left. */
+.nav-underline {
+  transform-origin: left;
+  animation: nav-underline-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes nav-underline-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .fade-in,
+  .reveal.reveal-in,
+  .proof-mark-draw,
+  .specimen-loop,
+  .nav-underline {
+    animation: none !important;
+  }
+  .reveal {
+    opacity: 1;
+  }
+  /* The specimen rests on its final frame. */
+  .specimen-loop,
+  .specimen-note,
+  .proof-mark,
+  .proof-mark-num {
+    --draw: 1;
+  }
+}
