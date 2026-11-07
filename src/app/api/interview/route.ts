@@ -19,10 +19,9 @@ export async function POST(request: Request) {
     return aiErrorResponse(error)!;
   }
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
-  await ensureUser(prisma, userId);
-
   const limited = await rateLimitResponse(prisma, request, userId, "generation");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
     const { provider, modelId } = createAIProvider(credentials);

@@ -14,6 +14,12 @@ function run(args, env = process.env) {
 
 try {
   if (process.env.VERCEL_ENV === "production") {
+    const missing = ["SESSION_SECRET", "IP_HASH_SALT", "CRON_SECRET", "DATABASE_URL"].filter(
+      (name) => !process.env[name]?.trim(),
+    );
+    if (missing.length > 0) {
+      throw new Error(`Missing required production env vars: ${missing.join(", ")}`);
+    }
     const direct = process.env.DATABASE_URL_UNPOOLED;
     await run(
       ["prisma", "migrate", "deploy"],

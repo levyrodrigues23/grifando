@@ -41,7 +41,20 @@ export function proxy(request: NextRequest) {
 
   const secret = getSessionSecret();
   const hasValidSession = verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value, secret);
-  const token = hasValidSession ? null : signSessionId(newSessionId(), secret);
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
+
+  // API calls never mint a session: that would create unbounded anonymous users.
+  // Cron routes use bearer auth and need no session.
+  if (isApi && !hasValidSession && !request.nextUrl.pathname.startsWith("/api/cron/")) {
+    const denied = NextResponse.json(
+      { error: "Session expired. Reload the page.", code: "SESSION_REQUIRED" },
+      { status: 401 },
+    );
+    denied.headers.set("Content-Security-Policy", csp);
+    return denied;
+  }
+
+  const token = hasValidSession || isApi ? null : signSessionId(newSessionId(), secret);
 
   if (token) {
     // Forward the fresh cookie on the request so this same render sees it too.

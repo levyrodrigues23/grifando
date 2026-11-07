@@ -10,9 +10,9 @@ import { SESSION_COOKIE } from "@/server/session/sessionToken";
 // The proxy mints a fresh anonymous session on the next page load.
 export async function DELETE(request: Request) {
   const userId = await getCurrentUserId();
-  await ensureUser(prisma, userId);
   const limited = await rateLimitResponse(prisma, request, userId, "write");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   await deleteUserData(prisma, userId);
 

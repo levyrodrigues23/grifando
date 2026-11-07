@@ -23,9 +23,9 @@ export async function POST(request: Request) {
   }
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
 
-  await ensureUser(prisma, userId);
   const limited = await rateLimitResponse(prisma, request, userId, "keyTest");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   return NextResponse.json({ status: await testAIKey(credentials) });
 }
