@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/server/db/client";
 import { NotFoundError } from "@/server/domain/errors";
 import { createExerciseAttemptService } from "@/server/domain/exercises/exerciseService";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const submitAttemptSchema = z.object({
@@ -27,6 +28,9 @@ export async function POST(
 
   const userId = await getCurrentUserId();
   await ensureUser(prisma, userId);
+
+  const limited = await rateLimitResponse(prisma, request, userId, "write");
+  if (limited) return limited;
 
   try {
     const service = createExerciseAttemptService({ prisma });

@@ -9,7 +9,7 @@ import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_TEXT_LENGTH = 5000;
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, userId);
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
 
   try {
