@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
+import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
 
 const prisma = createTestPrismaClient();
@@ -125,5 +126,30 @@ describe("interviewService.answerTurn", () => {
     });
     expect(session.turns).toHaveLength(1);
     expect(session.turns[0].userAnswer).toBeNull();
+  });
+});
+
+describe("interview ownership", () => {
+  it("hides, refuses to answer and refuses to end another user's session", async () => {
+    const provider = fakeProvider();
+    const service = createInterviewService({ prisma, aiProvider: provider, modelId: "test-model" });
+    const { sessionId, turn } = await service.startInterview(userId);
+    await prisma.user.create({ data: { id: "intruder" } });
+
+    expect(await service.getSession(sessionId, "intruder")).toBeNull();
+    await expect(
+      service.answerTurn({ userId: "intruder", sessionId, turnId: turn.id, answer: "hijack" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(await service.endInterview(sessionId, "intruder")).toBe(false);
+
+    expect(provider.analyzeWriting).not.toHaveBeenCalled();
+    const session = await prisma.interviewSession.findUniqueOrThrow({
+      where: { id: sessionId },
+      include: { turns: true },
+    });
+    expect(session.status).not.toBe("ENDED");
+    expect(session.turns).toHaveLength(1);
+    expect(session.turns[0].userAnswer).toBeNull();
+    expect(await service.endInterview(sessionId, userId)).toBe(true);
   });
 });
