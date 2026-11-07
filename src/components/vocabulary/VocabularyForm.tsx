@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -58,15 +58,12 @@ export function VocabularyForm({
   return (
     <Card>
       <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle>Save a word or expression</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
             <Label htmlFor="vocab-term">Term</Label>
             <Input id="vocab-term" value={term} onChange={(e) => setTerm(e.target.value)} maxLength={120} />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="vocab-meaning">Meaning in Portuguese</Label>
             <Input
               id="vocab-meaning"
@@ -75,7 +72,7 @@ export function VocabularyForm({
               maxLength={300}
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="vocab-example">Example sentence</Label>
             <Input
               id="vocab-example"
@@ -84,7 +81,7 @@ export function VocabularyForm({
               maxLength={500}
             />
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={!canSave || saving}>

@@ -1,9 +1,14 @@
+import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { ExplainCodeCoach } from "@/components/writing/ExplainCodeCoach";
 
 export default function ExplainCodePage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <PageShell>
+      <PageHeader
+        title="Explain code"
+        description="Paste a small snippet and explain what it does in English — the way you would in a code review."
+      />
       <ExplainCodeCoach />
-    </main>
+    </PageShell>
   );
 }

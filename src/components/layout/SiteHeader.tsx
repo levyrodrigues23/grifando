@@ -1,35 +1,23 @@
 import Link from "next/link";
 
 import { FocusMusic } from "@/components/layout/FocusMusic";
-
-const NAV_LINKS = [
-  { href: "/today", label: "Today" },
-  { href: "/write", label: "Write" },
-  { href: "/technical", label: "Technical" },
-  { href: "/explain-code", label: "Explain Code" },
-  { href: "/interview", label: "Interview" },
-  { href: "/mistakes", label: "Mistakes" },
-  { href: "/exercises", label: "Exercises" },
-  { href: "/vocabulary", label: "Vocabulary" },
-];
+import { NavLinks } from "@/components/layout/NavLinks";
+import { Button } from "@/components/ui/button";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-dashed">
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-        <Link href="/" className="text-sm font-medium tracking-normal uppercase">
+    <header className="bg-background">
+      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-6 px-6 pt-5 md:px-12">
+        <Link href="/" className="text-subheading font-normal tracking-[-0.03em]">
           Inglesando
         </Link>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <nav className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium tracking-normal text-muted-foreground uppercase">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:text-foreground hover:underline">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+        <div className="flex items-center gap-2">
           <FocusMusic />
+          <Button size="sm" className="hidden sm:inline-flex" render={<Link href="/today">Start today</Link>} />
         </div>
+      </div>
+      <div className="mx-auto w-full max-w-[1200px] px-6 md:px-12">
+        <NavLinks />
       </div>
     </header>
   );
