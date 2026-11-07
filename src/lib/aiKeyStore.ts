@@ -27,15 +27,17 @@ export function getStoredAIKey(storage: Storage | null = browserStorage()): AICr
   }
 }
 
-export function saveAIKey(credentials: AICredentials, storage: Storage | null = browserStorage()): void {
-  if (!storage) return;
+// Returns false when the browser won't store it (blocked or full storage).
+export function saveAIKey(credentials: AICredentials, storage: Storage | null = browserStorage()): boolean {
+  if (!storage) return false;
   try {
     storage.setItem(
       STORAGE_KEY,
       JSON.stringify({ provider: credentials.provider, apiKey: credentials.apiKey.trim() }),
     );
+    return true;
   } catch {
-    // Storage full or blocked: the key simply isn't remembered.
+    return false;
   }
 }
 
