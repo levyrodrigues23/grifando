@@ -1,3 +1,5 @@
+<img src="./public/logo.svg" alt="" width="48" height="48" align="left">
+
 # Inglesando
 
 A personal AI English coach for a Brazilian developer: it learns from your own mistakes and
