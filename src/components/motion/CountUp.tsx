@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useInView } from "./useInView";
 
@@ -17,9 +17,17 @@ export function CountUp({
 }) {
   const [ref, inView] = useInView<HTMLSpanElement>();
   const [shown, setShown] = useState(value);
+  // Already on screen at mount: keep the server-rendered final value, no count.
+  const visibleAtMount = useRef(false);
 
   useEffect(() => {
-    if (!inView || value <= 0) return;
+    const rect = ref.current?.getBoundingClientRect();
+    visibleAtMount.current =
+      !!rect && rect.top < window.innerHeight && rect.bottom > 0;
+  }, [ref]);
+
+  useEffect(() => {
+    if (!inView || value <= 0 || visibleAtMount.current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let frame = 0;
     const start = performance.now();
