@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
 import { connection } from "next/server";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -26,9 +28,19 @@ const sourceSerif = Source_Serif_4({
   style: ["normal", "italic"],
 });
 
+const DESCRIPTION = "Personal writing coach for English, built from your own mistakes.";
+
 export const metadata: Metadata = {
-  title: "Inglesando",
-  description: "Personal writing coach for English, built from your own mistakes.",
+  metadataBase: new URL(getSiteUrl()),
+  title: { default: "Inglesando", template: "%s · Inglesando" },
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Inglesando",
+    title: "Inglesando",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image", title: "Inglesando", description: DESCRIPTION },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -51,6 +63,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
           </p>
         </footer>
+        <Analytics />
       </body>
     </html>
   );

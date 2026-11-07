@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { TechnicalCategory } from "@/generated/prisma/enums";
 import { TECHNICAL_CATEGORY_LABELS } from "@/lib/technicalCategoryLabels";
 import { getTechnicalPromptsByCategory } from "@/server/domain/writing/technicalPrompts";
+
+export const metadata: Metadata = {
+  title: "Technical English",
+  description: "Writing prompts about the topics developers actually explain.",
+};
 
 export default function TechnicalPage() {
   return (

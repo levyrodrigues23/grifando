@@ -3,7 +3,10 @@ import type { Metadata } from "next";
 import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { AIKeyForm } from "@/components/settings/AIKeyForm";
 
-export const metadata: Metadata = { title: "Your AI key" };
+export const metadata: Metadata = {
+  title: "Your AI key",
+  description: "Use your own AI key for feedback. A free Gemini key takes about two minutes.",
+};
 
 const AI_STUDIO_URL = "https://aistudio.google.com/apikey";
 const ANTHROPIC_CONSOLE_URL = "https://console.anthropic.com/settings/keys";
