@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { isAIAccessError } from "@/server/ai/errors";
 import type { AIProvider } from "@/server/ai/provider";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
 import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
@@ -58,8 +59,11 @@ export function createWritingCoachService(deps: {
           technicalCategory: input.technicalCategory,
           codeSnippet,
         });
-      } catch {
+      } catch (error) {
         await sessions.markFailed(session.id);
+        // Key/quota/availability problems are actionable by the visitor, so
+        // they surface as typed errors; the text stays saved on the FAILED session.
+        if (isAIAccessError(error)) throw error;
         return { status: "failed", sessionId: session.id, message: ANALYSIS_FAILURE_MESSAGE };
       }
 

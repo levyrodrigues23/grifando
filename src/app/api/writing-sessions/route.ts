@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { PromptType, TechnicalCategory } from "@/generated/prisma/enums";
-import { getAIModelId, getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
@@ -34,17 +37,21 @@ export async function POST(request: Request) {
   }
 
   const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
   const limited = rateLimitResponse(aiRateLimits.analysis, userId);
   if (limited) return limited;
 
   try {
-    const service = createWritingCoachService({
-      prisma,
-      aiProvider: getAIProvider(),
-      modelId: getAIModelId(),
-    });
+    const { provider, modelId } = createAIProvider(credentials);
+    const service = createWritingCoachService({ prisma, aiProvider: provider, modelId });
 
     const result = await service.submitWriting({
       userId,
@@ -53,6 +60,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
     console.error("Failed to submit writing session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
