@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAIModelId, getAIProvider } from "@/server/ai/client";
 import { prisma } from "@/server/db/client";
+import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
 import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
 import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
@@ -52,6 +53,9 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     console.error("Failed to answer interview turn", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

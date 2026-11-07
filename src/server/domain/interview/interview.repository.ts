@@ -6,9 +6,9 @@ export function createInterviewRepository(prisma: PrismaClient) {
       return prisma.interviewSession.create({ data: { userId } });
     },
 
-    async findSessionById(id: string) {
-      return prisma.interviewSession.findUnique({
-        where: { id },
+    async findSessionById(id: string, userId: string) {
+      return prisma.interviewSession.findFirst({
+        where: { id, userId },
         include: {
           turns: {
             orderBy: { order: "asc" },
@@ -26,8 +26,13 @@ export function createInterviewRepository(prisma: PrismaClient) {
       return prisma.interviewTurn.update({ where: { id: turnId }, data: input });
     },
 
-    async endSession(id: string) {
-      return prisma.interviewSession.update({ where: { id }, data: { status: "ENDED" } });
+    // Returns false when the session doesn't exist or isn't the user's.
+    async endSession(id: string, userId: string) {
+      const { count } = await prisma.interviewSession.updateMany({
+        where: { id, userId },
+        data: { status: "ENDED" },
+      });
+      return count > 0;
     },
   };
 }
