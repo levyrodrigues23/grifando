@@ -28,8 +28,8 @@ export default function PrivacyPage() {
         <div className="max-w-[720px] space-y-10">
           <Block id="stored-en" title="What we store">
             <p>
-              The texts you write, their analyses, your mistakes, exercises and attempts, and your
-              vocabulary. They are kept under a random id held in a cookie in your browser. We do
+              The texts you write, their analyses, your mistakes, exercises and attempts, your
+              interview practice answers, and your vocabulary. They are kept under a random id held in a cookie in your browser. We do
               not ask for or store your name, email or any login.
             </p>
           </Block>
@@ -65,8 +65,8 @@ export default function PrivacyPage() {
           <h2 className="text-heading">Privacidade</h2>
           <Block id="stored-pt" title="O que guardamos">
             <p>
-              Os textos que você escreve, as análises, seus erros, exercícios e tentativas, e seu
-              vocabulário. Tudo fica ligado a um id aleatório guardado em um cookie no seu navegador.
+              Os textos que você escreve, as análises, seus erros, exercícios e tentativas, suas
+              respostas nas entrevistas de treino e seu vocabulário. Tudo fica ligado a um id aleatório guardado em um cookie no seu navegador.
               Não pedimos nem guardamos nome, e-mail ou login.
             </p>
           </Block>
