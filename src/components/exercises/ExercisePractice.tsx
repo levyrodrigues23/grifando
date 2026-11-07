@@ -13,53 +13,66 @@ type State =
   | { kind: "empty" }
   | { kind: "generating" }
   | { kind: "practicing"; queue: ExerciseListItemDTO[] }
-  | { kind: "result"; queue: ExerciseListItemDTO[]; result: SubmitAttemptResponse }
+  | { kind: "result"; queue: ExerciseListItemDTO[]; exerciseId: string; result: SubmitAttemptResponse }
   | { kind: "error"; message: string };
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
-export function ExercisePractice() {
-  const [state, setState] = useState<State>({ kind: "loading" });
+// Turns an /api/exercises response into the next view state.
+async function toQueueState(response: Response): Promise<State> {
+  const data = await response.json();
+  if (!response.ok) return { kind: "error", message: data.error ?? GENERIC_ERROR };
+  const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
+  return queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" };
+}
+
+async function fetchPendingExercises(): Promise<State> {
+  try {
+    return await toQueueState(await fetch("/api/exercises"));
+  } catch {
+    return { kind: "error", message: GENERIC_ERROR };
+  }
+}
+
+async function generateExercises(afterSessionId?: string): Promise<State> {
+  try {
+    const response = await fetch("/api/exercises", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ afterSessionId }),
+    });
+    return await toQueueState(response);
+  } catch {
+    return { kind: "error", message: GENERIC_ERROR };
+  }
+}
+
+// afterSessionId: the daily session's review step. Generates a fresh set that
+// mixes that writing session's mistakes with due patterns, instead of resuming
+// pending exercises.
+export function ExercisePractice({ afterSessionId }: { afterSessionId?: string } = {}) {
+  const [state, setState] = useState<State>({ kind: afterSessionId ? "generating" : "loading" });
   const [answer, setAnswer] = useState("");
 
   useEffect(() => {
-    loadExercises();
-  }, []);
+    let cancelled = false;
+    const initial = afterSessionId ? generateExercises(afterSessionId) : fetchPendingExercises();
+    void initial.then((next) => {
+      if (!cancelled) setState(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [afterSessionId]);
 
   async function loadExercises() {
     setState({ kind: "loading" });
-    try {
-      const response = await fetch("/api/exercises");
-      const data = await response.json();
-
-      if (!response.ok) {
-        setState({ kind: "error", message: data.error ?? GENERIC_ERROR });
-        return;
-      }
-
-      const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
-      setState(queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" });
-    } catch {
-      setState({ kind: "error", message: GENERIC_ERROR });
-    }
+    setState(await fetchPendingExercises());
   }
 
   async function handleGenerate() {
     setState({ kind: "generating" });
-    try {
-      const response = await fetch("/api/exercises", { method: "POST" });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setState({ kind: "error", message: data.error ?? GENERIC_ERROR });
-        return;
-      }
-
-      const queue = (data.exercises ?? []) as ExerciseListItemDTO[];
-      setState(queue.length > 0 ? { kind: "practicing", queue } : { kind: "empty" });
-    } catch {
-      setState({ kind: "error", message: GENERIC_ERROR });
-    }
+    setState(await generateExercises(afterSessionId));
   }
 
   async function handleSubmit() {
@@ -79,7 +92,7 @@ export function ExercisePractice() {
       }
 
       const result = (await response.json()) as SubmitAttemptResponse;
-      setState({ kind: "result", queue: rest, result });
+      setState({ kind: "result", queue: rest, exerciseId: current.id, result });
     } catch {
       setState({ kind: "error", message: GENERIC_ERROR });
     }
@@ -92,14 +105,18 @@ export function ExercisePractice() {
   }
 
   if (state.kind === "loading") {
-    return <p className="text-sm text-muted-foreground">Loading exercises...</p>;
+    return (
+      <p className="text-muted-foreground" aria-live="polite">
+        Loading exercises...
+      </p>
+    );
   }
 
   if (state.kind === "error") {
     return (
-      <Card>
-        <CardContent className="space-y-3 pt-4">
-          <p className="text-sm text-destructive">{state.message}</p>
+      <Card className="max-w-2xl">
+        <CardContent className="space-y-4">
+          <p role="alert" className="text-destructive">{state.message}</p>
           <Button variant="outline" onClick={loadExercises}>
             Try again
           </Button>
@@ -109,18 +126,18 @@ export function ExercisePractice() {
   }
 
   if (state.kind === "result") {
-    return <ExerciseResult result={state.result} onNext={handleNext} hasNext={state.queue.length > 0} />;
+    return <ExerciseResult exerciseId={state.exerciseId} result={state.result} userAnswer={answer} onNext={handleNext} hasNext={state.queue.length > 0} />;
   }
 
   if (state.kind === "empty" || state.kind === "generating") {
     const isGenerating = state.kind === "generating";
     return (
-      <Card>
+      <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>No exercises to practice right now</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="prose-serif text-lg text-iron">
             Exercises are generated from mistakes found in your writing. Write something first, or
             generate a practice set from what you already have.
           </p>
@@ -137,9 +154,11 @@ export function ExercisePractice() {
   const current = state.queue[0];
 
   return (
-    <Card>
+    <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle>Practice</CardTitle>
+        <p className="label-mono text-muted-foreground">
+          {state.queue.length} left in this set
+        </p>
       </CardHeader>
       <CardContent>
         <ExerciseQuestion exercise={current.prompt} answer={answer} onAnswerChange={setAnswer} />

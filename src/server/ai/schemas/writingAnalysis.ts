@@ -14,6 +14,10 @@ export const mistakeResultSchema = z.object({
   // Short, model-proposed slug identifying the underlying grammatical concept —
   // normalized and used for MistakePattern dedup (SPEC.md §6).
   patternKey: z.string().min(1).max(80),
+  // True when the mistake comes from Portuguese interference (false friend like
+  // "actually"/"atualmente", literal structure, carried-over preposition or
+  // article). Optional so an older-style response without it stays valid.
+  l1Transfer: z.boolean().optional(),
 });
 
 export const writingAnalysisResultSchema = z.object({

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AIProvider } from "@/server/ai/provider";
 import { createMistakeOccurrenceRepository } from "@/server/domain/mistakes/mistakeOccurrence.repository";
+import { applyExerciseResult } from "@/server/domain/mistakes/mastery";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
 import { createWritingAnalysisRepository } from "@/server/domain/writing/writingAnalysis.repository";
 import {
@@ -13,6 +14,10 @@ export type SubmitWritingInput = CreateWritingSessionInput & {
   // EXPLAIN_CODE only — passed to the AI for context, never persisted (see
   // AnalyzeWritingInput.codeSnippet and SPEC.md §5.6).
   codeSnippet?: string;
+  // The sessionId from a previous "failed" result. When it still names a FAILED
+  // session of this user, that session is re-analyzed instead of creating a
+  // duplicate (the resubmitted text replaces the old one).
+  retrySessionId?: string;
 };
 
 export type SubmitWritingResult =
@@ -39,8 +44,10 @@ export function createWritingCoachService(deps: {
     // analysis + mistake breakdown. An AI failure leaves the session FAILED
     // with the original text intact instead of a partial/corrupt record.
     async submitWriting(input: SubmitWritingInput): Promise<SubmitWritingResult> {
-      const { codeSnippet, ...sessionInput } = input;
-      const session = await sessions.create(sessionInput);
+      const { codeSnippet, retrySessionId, ...sessionInput } = input;
+      const session =
+        (retrySessionId && (await sessions.reopenFailed(retrySessionId, sessionInput))) ||
+        (await sessions.create(sessionInput));
 
       let result;
       try {
@@ -80,6 +87,16 @@ export function createWritingCoachService(deps: {
           exampleCorrection: mistake.correctedSpan,
         });
 
+        // Making the mistake again is a failed recall: it costs mastery the
+        // same way an incorrect exercise attempt does (SPEC.md §6).
+        const demoted = applyExerciseResult(pattern, false);
+        if (
+          demoted.masteryLevel !== pattern.masteryLevel ||
+          demoted.consecutiveCorrectCount !== pattern.consecutiveCorrectCount
+        ) {
+          await patterns.updateMastery(pattern.id, demoted);
+        }
+
         await occurrences.create({
           analysisId: analysis!.id,
           patternId: pattern.id,
@@ -89,6 +106,7 @@ export function createWritingCoachService(deps: {
           severity: mistake.severity,
           explanation: mistake.explanation,
           example: mistake.example,
+          l1Transfer: mistake.l1Transfer ?? false,
         });
       }
 

@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { WritingResults } from "@/components/writing/WritingResults";
+import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
+import { errorMessageFor } from "@/lib/responseError";
 
 const MAX_CODE_LENGTH = 2000;
 const MAX_TEXT_LENGTH = 5000;
@@ -23,6 +23,9 @@ export function ExplainCodeCoach() {
   const [code, setCode] = useState("");
   const [text, setText] = useState("");
   const [view, setView] = useState<ViewState>({ kind: "editing" });
+  // Session of the last failed attempt; resubmitting re-analyzes it instead of
+  // leaving it orphaned and creating a duplicate.
+  const [failedSessionId, setFailedSessionId] = useState<string>();
 
   async function handleSubmit() {
     setView({ kind: "submitting" });
@@ -36,21 +39,24 @@ export function ExplainCodeCoach() {
           promptText: EXPLAIN_CODE_INSTRUCTION,
           originalText: text,
           codeSnippet: code,
+          retrySessionId: failedSessionId,
         }),
       });
 
       if (!response.ok) {
-        setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
+        setView({ kind: "editing", errorMessage: await errorMessageFor(response, GENERIC_FAILURE_MESSAGE) });
         return;
       }
 
       const result = (await response.json()) as SubmitWritingResponse;
 
       if (result.status === "failed") {
+        setFailedSessionId(result.sessionId);
         setView({ kind: "editing", errorMessage: result.message });
         return;
       }
 
+      setFailedSessionId(undefined);
       setView({ kind: "result", session: result.session });
     } catch {
       setView({ kind: "editing", errorMessage: GENERIC_FAILURE_MESSAGE });
@@ -71,51 +77,41 @@ export function ExplainCodeCoach() {
   const canSubmit = code.trim().length > 0 && text.trim().length > 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Explain this code in English</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium uppercase tracking-normal">Paste a small code snippet</label>
-          <Textarea
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            maxLength={MAX_CODE_LENGTH}
-            rows={8}
-            placeholder="export async function registerUser(...) { ... }"
-            className="font-mono text-sm"
-            disabled={isSubmitting}
-          />
-          <div className="text-right text-xs text-muted-foreground">
-            {code.length} / {MAX_CODE_LENGTH}
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium uppercase tracking-normal">Explain what it does, in English</label>
-          <Textarea
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            maxLength={MAX_TEXT_LENGTH}
-            rows={6}
-            placeholder="This function checks whether..."
-            disabled={isSubmitting}
-          />
-          <div className="text-right text-xs text-muted-foreground">
-            {text.length} / {MAX_TEXT_LENGTH}
-          </div>
-        </div>
-
-        {view.kind === "editing" && view.errorMessage ? (
-          <p className="text-sm text-destructive">{view.errorMessage}</p>
-        ) : null}
-      </CardContent>
-      <CardFooter>
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <WritingSheet
+          label="Code snippet"
+          variant="code"
+          value={code}
+          onChange={setCode}
+          maxLength={MAX_CODE_LENGTH}
+          disabled={isSubmitting}
+          placeholder="export async function registerUser(...) { ... }"
+        />
+        <WritingSheet
+          label="Your explanation, in English"
+          value={text}
+          onChange={setText}
+          maxLength={MAX_TEXT_LENGTH}
+          disabled={isSubmitting}
+          placeholder="This function checks whether..."
+        />
+      </div>
+      {view.kind === "editing" && view.errorMessage ? (
+        <p role="alert" className="text-sm text-destructive">
+          {view.errorMessage}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-4">
         <Button onClick={handleSubmit} disabled={isSubmitting || !canSubmit}>
           {isSubmitting ? "Analyzing..." : "Get feedback"}
         </Button>
-      </CardFooter>
-    </Card>
+        {isSubmitting ? (
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            Reading your explanation — this can take a little while.
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }

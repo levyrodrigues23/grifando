@@ -9,6 +9,7 @@ export type MistakeOccurrenceDTO = {
   severity: "ERROR" | "UNNATURAL";
   explanation: string;
   example: string;
+  l1Transfer: boolean;
 };
 
 export type WritingAnalysisDTO = {

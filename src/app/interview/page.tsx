@@ -1,9 +1,14 @@
+import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { InterviewPractice } from "@/components/interview/InterviewPractice";
 
 export default function InterviewPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <PageShell>
+      <PageHeader
+        title="Interview"
+        description="A mock technical interview: answer each question in English and get feedback on how you said it."
+      />
       <InterviewPractice />
-    </main>
+    </PageShell>
   );
 }

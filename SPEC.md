@@ -72,9 +72,15 @@ later touches one adapter, not the domain layer.
 
 ### 5.1 Writing Coach (central feature)
 
-The user picks a writing mode (free writing, technical explanation, GitHub issue, PR
-description, README, interview answer, casual/professional message, daily challenge, etc.),
-writes in a plain-text editor, and submits.
+The user picks what to write — free writing, the daily challenge, a Technical English prompt,
+Explain Code, or an interview answer — writes in a plain-text editor, and submits.
+
+Writing modes (decision, #5): GitHub issues, PR descriptions, READMEs, code-review comments and
+similar developer genres are **Technical English prompts** (`technicalPrompts.ts`), not separate
+`PromptType` values. They share one analysis pipeline, the prompt text already tells the model
+what genre it is reading, and a dedicated mode per genre would add a migration, a selector and
+prompt branches without changing the feedback. Revisit only if genre-specific scoring (e.g.
+"does this PR description have a summary and a test plan?") becomes a real need.
 
 One structured AI call analyzes the submission and returns:
 
@@ -224,6 +230,11 @@ deliberately light. Success is measured as patterns mastered *and kept* mastered
   translation), not only multiple choice.
 - **Habit**: a low-bar daily streak (any one activity counts) with limited rest days; no
   punishment mechanics, no leaderboards.
+- **No reminders (decision, #20)**: the app runs on the learner's own machine with no
+  always-on server, so it has no channel to remind from. Web Push needs a running server to
+  send at the right time plus a service worker and VAPID keys; email needs SMTP credentials
+  and a scheduler. Both are infrastructure the app doesn't have yet, for a nudge the streak on
+  the dashboard already gives when the app is opened. Revisit together with deployment.
 
 ## 7. Data model (Prisma, conceptual)
 
@@ -254,10 +265,12 @@ MistakePattern
   exampleOriginal, exampleCorrection, occurrenceCount
   masteryLevel (ACTIVE | IMPROVING | MASTERED)
   firstSeenAt, lastSeenAt
+  correctCount, incorrectCount, lastPracticedAt   (recall history for the half-life, §6.1)
 
 Exercise
   id, userId, type (MULTIPLE_CHOICE | FILL_BLANK | REWRITE | TRANSLATION)
   sourcePatternId (nullable), promptData (JSON: shape depends on type, Zod-validated)
+  difficulty (nullable Int 1-5 — target level requested from the generator, §6.1)
   createdAt
 
 ExerciseAttempt
@@ -268,6 +281,9 @@ InterviewSession
 InterviewTurn
   id, interviewSessionId, question, userAnswer (nullable until answered)
   writingAnalysisId (nullable — reuses WritingAnalysis for scoring), order
+
+CategoryAbility   (Elo-style ability per mistake category, §6.1)
+  id, userId, category (unique per userId+category), rating, attemptCount, updatedAt
 
 VocabularyItem   (schema only in MVP, feature post-MVP)
   id, userId, term, meaningPt, exampleSentence, sourceSessionId (nullable), createdAt

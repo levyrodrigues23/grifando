@@ -1,22 +1,9 @@
+import { PageHeader, PageShell } from "@/components/layout/PageHeader";
 import { DEFAULT_USER_ID } from "@/lib/constants";
 import { prisma } from "@/server/db/client";
-import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
-import {
-  DAILY_PROMPTS,
-  extractActiveWeakCategories,
-  getTodaysDate,
-  selectDailyPrompt,
-} from "@/server/domain/writing/dailyPrompt";
+import { resolveDailyChallenge } from "@/server/domain/writing/dailyChallenge";
 import { findTechnicalPromptById } from "@/server/domain/writing/technicalPrompts";
 import { WritingCoach, type InitialChallenge } from "@/components/writing/WritingCoach";
-
-async function resolveDailyChallenge(): Promise<InitialChallenge> {
-  const patterns = createMistakePatternRepository(prisma);
-  const userPatterns = await patterns.listByUser(DEFAULT_USER_ID);
-  const weakCategories = extractActiveWeakCategories(userPatterns);
-  const prompt = selectDailyPrompt(DAILY_PROMPTS, getTodaysDate(), weakCategories);
-  return { promptType: "DAILY_CHALLENGE", promptText: prompt.text };
-}
 
 export default async function WritePage(props: PageProps<"/write">) {
   const searchParams = await props.searchParams;
@@ -32,12 +19,20 @@ export default async function WritePage(props: PageProps<"/write">) {
       technicalCategory: technicalPrompt.category,
     };
   } else if (searchParams.mode === "daily") {
-    initialChallenge = await resolveDailyChallenge();
+    initialChallenge = await resolveDailyChallenge(prisma, DEFAULT_USER_ID);
   }
 
+  const heading =
+    initialChallenge?.promptType === "DAILY_CHALLENGE"
+      ? { title: "Today’s challenge", description: "Answer the prompt in your own words. Mistakes you make here feed your review." }
+      : initialChallenge?.promptType === "TECHNICAL"
+        ? { title: "Technical English", description: "Explain it the way you would to a teammate — clear beats fancy." }
+        : { title: "Write", description: "Anything in English: free writing, a GitHub issue, a PR description. Write first; feedback comes after." };
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <PageShell>
+      <PageHeader title={heading.title} description={heading.description} />
       <WritingCoach initialChallenge={initialChallenge} />
-    </main>
+    </PageShell>
   );
 }

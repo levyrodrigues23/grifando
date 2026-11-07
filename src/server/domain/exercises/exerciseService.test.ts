@@ -4,6 +4,7 @@ import { MasteryLevel, MistakeCategory } from "@/generated/prisma/enums";
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
 import {
+  createAttemptExplanationService,
   createExerciseAttemptService,
   createExerciseGenerationService,
 } from "@/server/domain/exercises/exerciseService";
@@ -50,7 +51,7 @@ function fakeGeneratedExercise() {
 
 describe("exerciseGenerationService.generatePracticeSet", () => {
   it("returns nothing when the user has no mistake patterns yet", async () => {
-    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn(), continueInterview: vi.fn() };
+    const aiProvider: AIProvider = { analyzeWriting: vi.fn(), generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 
     const result = await service.generatePracticeSet(userId);
@@ -65,6 +66,7 @@ describe("exerciseGenerationService.generatePracticeSet", () => {
       analyzeWriting: vi.fn(),
       generateExercises: vi.fn().mockResolvedValue([fakeGeneratedExercise()]),
       continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
     };
     const service = createExerciseGenerationService({ prisma, aiProvider });
 
@@ -101,6 +103,9 @@ describe("exerciseAttemptService.submitAttempt", () => {
     });
     expect(updatedPattern.masteryLevel).toBe("IMPROVING");
     expect(updatedPattern.consecutiveCorrectCount).toBe(0);
+    expect(updatedPattern.correctCount).toBe(pattern.correctCount + 1);
+    expect(updatedPattern.incorrectCount).toBe(pattern.incorrectCount);
+    expect(updatedPattern.lastPracticedAt.getTime()).toBeGreaterThanOrEqual(pattern.lastPracticedAt.getTime());
   });
 
   it("records an incorrect attempt and resets an IMPROVING pattern to ACTIVE", async () => {
@@ -126,6 +131,8 @@ describe("exerciseAttemptService.submitAttempt", () => {
       where: { id: pattern.id },
     });
     expect(updatedPattern.masteryLevel).toBe("ACTIVE");
+    expect(updatedPattern.incorrectCount).toBe(pattern.incorrectCount + 1);
+    expect(updatedPattern.correctCount).toBe(pattern.correctCount);
   });
 
   it("does not require an AI provider to grade an attempt", async () => {
@@ -145,5 +152,83 @@ describe("exerciseAttemptService.submitAttempt", () => {
     const result = await service.submitAttempt(exercise.id, "1");
 
     expect(result.isCorrect).toBe(true);
+  });
+});
+
+describe("attemptExplanationService.explainAttempt", () => {
+  it("explains a graded attempt without changing it", async () => {
+    const pattern = await seedPattern();
+    const exercise = await prisma.exercise.create({
+      data: { userId, type: "MULTIPLE_CHOICE", sourcePatternId: pattern.id, promptData: fakeGeneratedExercise() },
+    });
+    const graded = await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "0");
+    const explainAttempt = vi.fn().mockResolvedValue({ explanation: "You picked the wrong preposition." });
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+      explainAttempt,
+    };
+    const service = createAttemptExplanationService({ prisma, aiProvider });
+
+    const explanation = await service.explainAttempt({ userId, exerciseId: exercise.id, attemptId: graded.attemptId });
+
+    expect(explanation).toBe("You picked the wrong preposition.");
+    expect(explainAttempt).toHaveBeenCalledWith(expect.objectContaining({ userAnswer: "0" }));
+    const attempt = await prisma.exerciseAttempt.findUniqueOrThrow({ where: { id: graded.attemptId } });
+    expect(attempt.isCorrect).toBe(false);
+  });
+
+  it("returns null for an attempt that isn't the user's on that exercise", async () => {
+    const aiProvider: AIProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises: vi.fn(),
+      continueInterview: vi.fn(),
+      explainAttempt: vi.fn(),
+    };
+    const service = createAttemptExplanationService({ prisma, aiProvider });
+
+    expect(await service.explainAttempt({ userId, exerciseId: "nope", attemptId: "nope" })).toBeNull();
+    expect(aiProvider.explainAttempt).not.toHaveBeenCalled();
+  });
+});
+
+describe("difficulty targeting", () => {
+  it("raises the category ability after a correct attempt on a rated exercise", async () => {
+    const pattern = await seedPattern();
+    const exercise = await prisma.exercise.create({
+      data: {
+        userId,
+        type: "MULTIPLE_CHOICE",
+        sourcePatternId: pattern.id,
+        promptData: fakeGeneratedExercise(),
+        difficulty: 3,
+      },
+    });
+
+    await createExerciseAttemptService({ prisma }).submitAttempt(exercise.id, "1");
+
+    const ability = await prisma.categoryAbility.findUniqueOrThrow({
+      where: { userId_category: { userId, category: pattern.category } },
+    });
+    expect(ability.rating).toBeGreaterThan(1000);
+    expect(ability.attemptCount).toBe(1);
+  });
+
+  it("asks the generator for a difficulty and stores it on the exercise", async () => {
+    await seedPattern();
+    const generateExercises = vi.fn().mockResolvedValue([fakeGeneratedExercise()]);
+    const aiProvider = {
+      analyzeWriting: vi.fn(),
+      generateExercises,
+      continueInterview: vi.fn(),
+    } as unknown as AIProvider;
+
+    const [created] = await createExerciseGenerationService({ prisma, aiProvider }).generatePracticeSet(userId, 1);
+
+    const [targets] = generateExercises.mock.calls[0];
+    expect(targets[0].difficulty).toBeGreaterThanOrEqual(1);
+    expect(targets[0].difficulty).toBeLessThanOrEqual(5);
+    expect(created.difficulty).toBe(targets[0].difficulty);
   });
 });
