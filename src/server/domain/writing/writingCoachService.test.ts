@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PromptType } from "@/generated/prisma/enums";
-import { AIResponseValidationError } from "@/server/ai/errors";
+import { AIKeyRejectedError, AIResponseValidationError } from "@/server/ai/errors";
 import type { AIProvider } from "@/server/ai/provider";
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
 import { createMistakePatternRepository } from "@/server/domain/mistakes/mistakePattern.repository";
@@ -128,6 +128,36 @@ describe("writingCoachService.submitWriting", () => {
     expect(retried.session.id).toBe(failed.sessionId);
     expect(retried.session.status).toBe("ANALYZED");
     expect(retried.session.originalText).toBe("I depend of this library.");
+    expect(await prisma.writingSession.count({ where: { userId } })).toBe(1);
+  });
+
+  it("leaves one FAILED session, exposes its id on a typed access error, and reuses it on retry", async () => {
+    const analyzeWriting = vi
+      .fn()
+      .mockRejectedValueOnce(new AIKeyRejectedError())
+      .mockResolvedValueOnce(fakeAnalysisResult());
+    const aiProvider: AIProvider = { analyzeWriting, generateExercises: vi.fn(), continueInterview: vi.fn(), explainAttempt: vi.fn() };
+    const service = createWritingCoachService({ prisma, aiProvider, modelId: "test-model" });
+
+    const error = await service
+      .submitWriting({ userId, promptType: PromptType.FREE, originalText: "I depend of this library" })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AIKeyRejectedError);
+    const sessionId = (error as AIKeyRejectedError).sessionId;
+    expect(sessionId).toBeTruthy();
+
+    const sessions = await prisma.writingSession.findMany({ where: { userId } });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ id: sessionId, status: "FAILED", originalText: "I depend of this library" });
+
+    const retried = await service.submitWriting({
+      userId,
+      promptType: PromptType.FREE,
+      originalText: "I depend of this library",
+      retrySessionId: sessionId,
+    });
+    if (retried.status !== "analyzed") throw new Error("expected analyzed result");
+    expect(retried.session.id).toBe(sessionId);
     expect(await prisma.writingSession.count({ where: { userId } })).toBe(1);
   });
 

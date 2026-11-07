@@ -13,7 +13,7 @@ const STATUS_BY_CODE: Record<AIErrorCode, number> = {
 export function aiErrorResponse(error: unknown): NextResponse | null {
   if (!isAIAccessError(error)) return null;
   return NextResponse.json(
-    { error: error.message, code: error.code },
+    { error: error.message, code: error.code, ...(error.sessionId && { sessionId: error.sessionId }) },
     { status: STATUS_BY_CODE[error.code] },
   );
 }

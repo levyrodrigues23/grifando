@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { WritingResults } from "@/components/writing/WritingResults";
 import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
-import { errorMessageFor } from "@/lib/responseError";
+import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
@@ -55,6 +55,8 @@ export function WritingCoach({
       });
 
       if (!response.ok) {
+        const savedSessionId = await failedSessionIdFrom(response);
+        if (savedSessionId) setFailedSessionId(savedSessionId);
         setView({ kind: "editing", errorMessage: await errorMessageFor(response, GENERIC_FAILURE_MESSAGE) });
         return;
       }
