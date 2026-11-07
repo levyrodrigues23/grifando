@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getAIModelId, getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
@@ -31,17 +34,21 @@ export async function POST(
   }
 
   const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
   const limited = rateLimitResponse(aiRateLimits.analysis, userId);
   if (limited) return limited;
 
   try {
-    const service = createInterviewService({
-      prisma,
-      aiProvider: getAIProvider(),
-      modelId: getAIModelId(),
-    });
+    const { provider, modelId } = createAIProvider(credentials);
+    const service = createInterviewService({ prisma, aiProvider: provider, modelId });
 
     const result = await service.answerTurn({
       userId,
@@ -56,6 +63,8 @@ export async function POST(
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
     console.error("Failed to answer interview turn", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

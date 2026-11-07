@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import type { GeneratedExercise } from "@/server/ai/schemas/exerciseGeneration";
 import { prisma } from "@/server/db/client";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
@@ -30,6 +33,8 @@ export async function GET() {
     const pending = await repository.listPending(userId);
     return NextResponse.json({ exercises: pending.map(toResponseShape) });
   } catch (error) {
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
     console.error("Failed to list exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
@@ -46,13 +51,21 @@ export async function POST(request: Request) {
   }
 
   const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
   await ensureUser(prisma, userId);
 
   const limited = rateLimitResponse(aiRateLimits.generation, userId);
   if (limited) return limited;
 
   try {
-    const service = createExerciseGenerationService({ prisma, aiProvider: getAIProvider() });
+    const { provider } = createAIProvider(credentials);
+    const service = createExerciseGenerationService({ prisma, aiProvider: provider });
     const created = await service.generatePracticeSet(userId, undefined, {
       afterSessionId: parsed.data?.afterSessionId,
     });
