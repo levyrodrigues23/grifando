@@ -7,6 +7,7 @@ import { evaluateExerciseAnswer } from "@/server/domain/exercises/answerChecking
 import { createExerciseAttemptRepository } from "@/server/domain/exercises/exerciseAttempt.repository";
 import { createCategoryAbilityRepository } from "@/server/domain/exercises/categoryAbility.repository";
 import { DEFAULT_ABILITY, targetLevel, updateAbility } from "@/server/domain/exercises/difficulty";
+import { NotFoundError } from "@/server/domain/errors";
 import { createExerciseRepository } from "@/server/domain/exercises/exercise.repository";
 import { assignExerciseTypeFor } from "@/server/domain/exercises/exerciseType";
 import { selectPatternsForPractice, selectReviewSet } from "@/server/domain/exercises/selection";
@@ -86,10 +87,10 @@ export function createExerciseAttemptService(deps: { prisma: PrismaClient }) {
   const attempts = createExerciseAttemptRepository(prisma);
 
   return {
-    async submitAttempt(exerciseId: string, userAnswer: string): Promise<SubmitAttemptResult> {
-      const exercise = await exercises.findById(exerciseId);
+    async submitAttempt(userId: string, exerciseId: string, userAnswer: string): Promise<SubmitAttemptResult> {
+      const exercise = await exercises.findById(exerciseId, userId);
       if (!exercise) {
-        throw new Error(`Exercise ${exerciseId} not found`);
+        throw new NotFoundError("Exercise");
       }
 
       const promptData = exercise.promptData as GeneratedExercise;

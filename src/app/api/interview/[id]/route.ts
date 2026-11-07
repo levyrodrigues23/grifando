@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db/client";
 import { createInterviewRepository } from "@/server/domain/interview/interview.repository";
+import { logError } from "@/server/logError";
+import { getCurrentUserId } from "@/server/session/currentUser";
 
 function toTurnDTO(turn: {
   id: string;
@@ -33,9 +35,11 @@ function toTurnDTO(turn: {
 export async function GET(_request: Request, context: RouteContext<"/api/interview/[id]">) {
   const { id } = await context.params;
 
+  const userId = await getCurrentUserId();
+
   try {
     const repository = createInterviewRepository(prisma);
-    const session = await repository.findSessionById(id);
+    const session = await repository.findSessionById(id, userId);
 
     if (!session) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -47,7 +51,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/intervi
       turns: session.turns.map(toTurnDTO),
     });
   } catch (error) {
-    console.error("Failed to fetch interview session", error);
+    logError("Failed to fetch interview session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

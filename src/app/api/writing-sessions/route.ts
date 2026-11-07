@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { PromptType, TechnicalCategory } from "@/generated/prisma/enums";
-import { DEFAULT_USER_ID } from "@/lib/constants";
-import { getAIModelId, getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import { createWritingSessionRepository } from "@/server/domain/writing/writingSession.repository";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { logError } from "@/server/logError";
+import { rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_PROMPT_TEXT_LENGTH = 1000;
@@ -33,35 +37,44 @@ export async function POST(request: Request) {
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
-    const service = createWritingCoachService({
-      prisma,
-      aiProvider: getAIProvider(),
-      modelId: getAIModelId(),
-    });
+    const { provider, modelId } = createAIProvider(credentials);
+    const service = createWritingCoachService({ prisma, aiProvider: provider, modelId });
 
     const result = await service.submitWriting({
-      userId: DEFAULT_USER_ID,
+      userId,
       ...parsed.data,
     });
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    console.error("Failed to submit writing session", error);
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
+    logError("Failed to submit writing session", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
 
 export async function GET() {
+  const userId = await getCurrentUserId();
   try {
     const repository = createWritingSessionRepository(prisma);
-    const sessions = await repository.listByUser(DEFAULT_USER_ID, { limit: 20 });
+    const sessions = await repository.listByUser(userId, { limit: 20 });
     return NextResponse.json(sessions);
   } catch (error) {
-    console.error("Failed to list writing sessions", error);
+    logError("Failed to list writing sessions", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

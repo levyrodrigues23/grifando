@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AIProvider } from "@/server/ai/provider";
+import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewRepository } from "@/server/domain/interview/interview.repository";
 import { createWritingCoachService } from "@/server/domain/writing/writingCoachService";
 import type { WritingSessionWithAnalysis } from "@/server/domain/writing/writingSession.repository";
@@ -38,8 +39,8 @@ export function createInterviewService(deps: {
       return { sessionId: session.id, turn };
     },
 
-    async getSession(sessionId: string) {
-      return interviews.findSessionById(sessionId);
+    async getSession(sessionId: string, userId: string) {
+      return interviews.findSessionById(sessionId, userId);
     },
 
     // Answering a turn reuses the Writing Coach pipeline exactly (SPEC.md
@@ -54,14 +55,14 @@ export function createInterviewService(deps: {
       // SubmitWritingInput.retrySessionId).
       retrySessionId?: string;
     }): Promise<AnswerTurnResult> {
-      const session = await interviews.findSessionById(input.sessionId);
+      const session = await interviews.findSessionById(input.sessionId, input.userId);
       if (!session) {
-        throw new Error(`Interview session ${input.sessionId} not found`);
+        throw new NotFoundError("Interview session");
       }
 
       const turn = session.turns.find((t) => t.id === input.turnId);
       if (!turn) {
-        throw new Error(`Interview turn ${input.turnId} not found`);
+        throw new NotFoundError("Interview turn");
       }
 
       const writingResult = await writingCoach.submitWriting({
@@ -84,7 +85,7 @@ export function createInterviewService(deps: {
       });
 
       if (turn.order + 1 >= MAX_TURNS) {
-        await interviews.endSession(input.sessionId);
+        await interviews.endSession(input.sessionId, input.userId);
         return { status: "ended", analysis };
       }
 
@@ -109,8 +110,8 @@ export function createInterviewService(deps: {
       };
     },
 
-    async endInterview(sessionId: string) {
-      return interviews.endSession(sessionId);
+    async endInterview(sessionId: string, userId: string) {
+      return interviews.endSession(sessionId, userId);
     },
   };
 }

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SubmitAttemptResponse } from "@/components/exercises/types";
+import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { diffWords, findClosestAnswer } from "@/lib/answerDiff";
 
 function correctAnswerText(exercise: SubmitAttemptResponse["exercise"]): string {
@@ -51,7 +53,8 @@ type ExplanationState =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "done"; text: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  | { kind: "keyRequired" };
 
 const EXPLANATION_ERROR = "We couldn't explain this answer right now. Your grade is unaffected.";
 
@@ -63,7 +66,7 @@ function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemp
   async function handleExplain() {
     setState({ kind: "loading" });
     try {
-      const response = await fetch(`/api/exercises/${exerciseId}/attempts/${attemptId}/explanation`, {
+      const response = await aiFetch(`/api/exercises/${exerciseId}/attempts/${attemptId}/explanation`, {
         method: "POST",
       });
       const data = (await response.json().catch(() => null)) as { explanation?: string; error?: string } | null;
@@ -72,8 +75,8 @@ function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemp
         return;
       }
       setState({ kind: "done", text: data.explanation });
-    } catch {
-      setState({ kind: "error", message: EXPLANATION_ERROR });
+    } catch (error) {
+      setState(error instanceof MissingAIKeyError ? { kind: "keyRequired" } : { kind: "error", message: EXPLANATION_ERROR });
     }
   }
 
@@ -87,6 +90,7 @@ function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemp
         {state.kind === "loading" ? "Explaining..." : "Explain my answer"}
       </Button>
       {state.kind === "error" ? <p className="text-sm text-destructive">{state.message}</p> : null}
+      {state.kind === "keyRequired" ? <KeyRequiredNotice /> : null}
     </div>
   );
 }

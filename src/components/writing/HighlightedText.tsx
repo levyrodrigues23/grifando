@@ -21,10 +21,11 @@ export function HighlightedText({
           <a
             key={index}
             href={`#mistake-${segment.mistakeIndex}`}
-            className="underline decoration-violet decoration-2 underline-offset-[5px] hover:bg-violet/5"
+            className="proof-mark proof-mark-draw hover:bg-violet/5"
+            style={{ animationDelay: `${200 + segment.mistakeIndex * 120}ms` }}
           >
             {segment.text}
-            <sup className="ml-0.5 font-mono text-[0.625rem] font-medium text-violet">
+            <sup className="proof-mark-num ml-0.5 font-mono text-[0.625rem] font-medium text-violet">
               {segment.mistakeIndex + 1}
             </sup>
           </a>

@@ -85,3 +85,13 @@ describe("writingAnalysisRepository.createForSession", () => {
     );
   });
 });
+
+describe("writingSessionRepository.findByIdForUser", () => {
+  it("returns the owner's session and null for another user", async () => {
+    const session = await sessions.create({ userId, promptType: PromptType.FREE, originalText: "hello" });
+    await prisma.user.create({ data: { id: "intruder" } });
+
+    expect((await sessions.findByIdForUser(session.id, userId))?.id).toBe(session.id);
+    expect(await sessions.findByIdForUser(session.id, "intruder")).toBeNull();
+  });
+});

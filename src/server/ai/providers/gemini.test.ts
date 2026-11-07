@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ExerciseType, MistakeCategory, PromptType } from "@/generated/prisma/enums";
-import { AIResponseValidationError } from "@/server/ai/errors";
+import { AIKeyRejectedError, AIQuotaExceededError, AIResponseValidationError } from "@/server/ai/errors";
 import type { GeminiContentClient } from "@/server/ai/providers/gemini";
-import { createGeminiProvider } from "@/server/ai/providers/gemini";
+import { createGeminiProvider, testKey } from "@/server/ai/providers/gemini";
 
 function fakeResponse(json: unknown) {
   return { text: JSON.stringify(json) };
@@ -174,5 +174,24 @@ describe("createGeminiProvider.explainAttempt", () => {
     const provider = createGeminiProvider({ models: { generateContent } }, "test-model");
 
     await expect(provider.explainAttempt(input)).rejects.toBeInstanceOf(AIResponseValidationError);
+  });
+});
+
+describe("testKey", () => {
+  it("makes one 1-token request and resolves when the key works", async () => {
+    const generateContent = vi.fn().mockResolvedValue({ text: undefined });
+    await expect(testKey({ models: { generateContent } }, "test-model")).resolves.toBeUndefined();
+    expect(generateContent).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "test-model", config: { maxOutputTokens: 1 } }),
+    );
+  });
+
+  it("maps an invalid-key 400 to AIKeyRejectedError and a 429 to AIQuotaExceededError", async () => {
+    const generateContent = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error("API key not valid"), { status: 400 }))
+      .mockRejectedValueOnce(Object.assign(new Error("quota"), { status: 429 }));
+    await expect(testKey({ models: { generateContent } }, "m")).rejects.toBeInstanceOf(AIKeyRejectedError);
+    await expect(testKey({ models: { generateContent } }, "m")).rejects.toBeInstanceOf(AIQuotaExceededError);
   });
 });

@@ -22,6 +22,14 @@ export function createWritingSessionRepository(prisma: PrismaClient) {
       });
     },
 
+    // Scoped to the owner: another user's session id reads as not found.
+    async findByIdForUser(id: string, userId: string) {
+      return prisma.writingSession.findFirst({
+        where: { id, userId },
+        include: { analysis: { include: { occurrences: true } } },
+      });
+    },
+
     async listByUser(userId: string, options: { limit?: number } = {}) {
       return prisma.writingSession.findMany({
         where: { userId },

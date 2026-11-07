@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/lib/constants";
-import { getAIModelId, getAIProvider } from "@/server/ai/client";
+import { aiErrorResponse } from "@/server/ai/aiErrorResponse";
+import { createAIProvider } from "@/server/ai/client";
+import { resolveAICredentials } from "@/server/ai/credentials";
+import { AIKeyRequiredError } from "@/server/ai/errors";
 import { prisma } from "@/server/db/client";
+import { NotFoundError } from "@/server/domain/errors";
 import { createInterviewService } from "@/server/domain/interview/interviewService";
-import { aiRateLimits, rateLimitResponse } from "@/server/rateLimit";
+import { logError } from "@/server/logError";
+import { rateLimitResponse } from "@/server/rateLimit";
+import { ensureUser, getCurrentUserId } from "@/server/session/currentUser";
 
 const MAX_ANSWER_LENGTH = 5000;
 
@@ -29,18 +34,24 @@ export async function POST(
     );
   }
 
-  const limited = rateLimitResponse(aiRateLimits.analysis, DEFAULT_USER_ID);
+  const userId = await getCurrentUserId();
+  let credentials;
+  try {
+    credentials = resolveAICredentials(request.headers);
+  } catch (error) {
+    return aiErrorResponse(error)!;
+  }
+  if (!credentials) return aiErrorResponse(new AIKeyRequiredError())!;
+  const limited = await rateLimitResponse(prisma, request, userId, "analysis");
   if (limited) return limited;
+  await ensureUser(prisma, userId);
 
   try {
-    const service = createInterviewService({
-      prisma,
-      aiProvider: getAIProvider(),
-      modelId: getAIModelId(),
-    });
+    const { provider, modelId } = createAIProvider(credentials);
+    const service = createInterviewService({ prisma, aiProvider: provider, modelId });
 
     const result = await service.answerTurn({
-      userId: DEFAULT_USER_ID,
+      userId,
       sessionId: id,
       turnId,
       answer: parsed.data.answer,
@@ -49,7 +60,12 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Failed to answer interview turn", error);
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
+    logError("Failed to answer interview turn", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
