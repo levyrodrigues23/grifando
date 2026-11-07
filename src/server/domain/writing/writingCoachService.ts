@@ -63,7 +63,10 @@ export function createWritingCoachService(deps: {
         await sessions.markFailed(session.id);
         // Key/quota/availability problems are actionable by the visitor, so
         // they surface as typed errors; the text stays saved on the FAILED session.
-        if (isAIAccessError(error)) throw error;
+        if (isAIAccessError(error)) {
+          error.sessionId = session.id;
+          throw error;
+        }
         return { status: "failed", sessionId: session.id, message: ANALYSIS_FAILURE_MESSAGE };
       }
 

@@ -21,6 +21,9 @@ export type AIErrorCode =
 // the visitor and must never include the key.
 export abstract class AIAccessError extends Error {
   abstract readonly code: AIErrorCode;
+  // FAILED WritingSession holding the visitor's text, so the client can resubmit
+  // with retrySessionId instead of creating a duplicate. Set by the service.
+  sessionId?: string;
 }
 
 export class AIKeyRequiredError extends AIAccessError {

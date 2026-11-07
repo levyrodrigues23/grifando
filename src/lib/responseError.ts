@@ -11,3 +11,11 @@ export async function errorMessageFor(response: Response, fallback: string): Pro
   if (response.status === 429) return body.error;
   return typeof body.code === "string" && body.code.startsWith("AI_") ? body.error : fallback;
 }
+
+// Id of the FAILED session a coded AI error response saved the visitor's text
+// in, so the client can resubmit with retrySessionId. Reads a clone, leaving
+// the body free for errorMessageFor.
+export async function failedSessionIdFrom(response: Response): Promise<string | undefined> {
+  const body = (await response.clone().json().catch(() => null)) as { sessionId?: unknown } | null;
+  return typeof body?.sessionId === "string" ? body.sessionId : undefined;
+}

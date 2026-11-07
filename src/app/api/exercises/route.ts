@@ -33,8 +33,6 @@ export async function GET() {
     const pending = await repository.listPending(userId);
     return NextResponse.json({ exercises: pending.map(toResponseShape) });
   } catch (error) {
-    const aiResponse = aiErrorResponse(error);
-    if (aiResponse) return aiResponse;
     console.error("Failed to list exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
@@ -79,6 +77,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ exercises: created.map(toResponseShape) }, { status: 201 });
   } catch (error) {
+    const aiResponse = aiErrorResponse(error);
+    if (aiResponse) return aiResponse;
     console.error("Failed to generate exercises", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

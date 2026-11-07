@@ -12,7 +12,7 @@ import type {
   InterviewTurnRef,
   StartInterviewResponse,
 } from "@/components/interview/types";
-import { errorMessageFor } from "@/lib/responseError";
+import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
 
 const MAX_LENGTH = 5000;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -71,6 +71,8 @@ export function InterviewPractice() {
       );
 
       if (!response.ok) {
+        const savedSessionId = await failedSessionIdFrom(response);
+        if (savedSessionId) setFailedSessionId(savedSessionId);
         const errorMessage = await errorMessageFor(response, GENERIC_ERROR);
         setState({ kind: "active", sessionId, currentTurn, history, errorMessage });
         return;
