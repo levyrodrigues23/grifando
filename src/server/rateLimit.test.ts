@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { createTestPrismaClient, resetDatabase } from "@/server/db/test-utils";
 import { consume, rateLimitResponse, RATE_LIMIT_MESSAGE, type LimitRule } from "@/server/rateLimit";
@@ -47,6 +47,12 @@ describe("consume", () => {
 
 describe("rateLimitResponse", () => {
   it("returns 429 with Retry-After once the bucket is exhausted", async () => {
+    // Pin the clock mid-window so the 60s bucket can't roll over during the loop.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-01-01T12:00:10Z"));
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const request = new Request("http://test", { headers: { "x-forwarded-for": "203.0.113.9" } });
     for (let i = 0; i < 5; i++) {
       expect(await rateLimitResponse(prisma, request, "u", "generation")).toBeNull();

@@ -26,6 +26,8 @@ try {
       direct ? { ...process.env, DATABASE_URL: direct } : process.env,
     );
   }
+  // Generated client is git-ignored; never rely on the install step having produced it.
+  await run(["prisma", "generate"]);
   await run(["next", "build"]);
 } catch (error) {
   console.error(error instanceof Error ? error.message : "Build failed");
