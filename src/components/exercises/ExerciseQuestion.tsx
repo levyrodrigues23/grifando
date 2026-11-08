@@ -21,7 +21,7 @@ export function ExerciseQuestion({
           {exercise.options.map((option, index) => (
             <Label
               key={index}
-              className="flex cursor-pointer items-center gap-3 rounded-[4px] bg-card px-4 py-3.5 text-base leading-snug text-foreground ring-1 ring-border hover:ring-stone has-data-checked:bg-linen has-data-checked:ring-foreground"
+              className="flex cursor-pointer items-center gap-3 rounded-field bg-card px-4 py-3.5 text-base leading-snug text-foreground ring-1 ring-border hover:ring-stone has-data-checked:bg-linen has-data-checked:ring-foreground"
             >
               <RadioGroupItem value={String(index)} />
               {option}

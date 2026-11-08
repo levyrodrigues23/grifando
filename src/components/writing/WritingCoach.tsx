@@ -9,6 +9,7 @@ import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
 import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
+import { AnalyzingStatus, ButtonSpinner, WRITING_STEPS } from "@/components/feedback/AnalyzingStatus";
 
 const MAX_LENGTH = 5000;
 const GENERIC_FAILURE_MESSAGE =
@@ -123,13 +124,15 @@ export function WritingCoach({
         ) : null}
         <div className="flex flex-wrap items-center gap-4">
           <Button onClick={handleSubmit} disabled={isSubmitting || text.trim().length === 0}>
-            {isSubmitting ? "Analyzing..." : "Get feedback"}
+            {isSubmitting ? (
+              <>
+                <ButtonSpinner /> Analyzing…
+              </>
+            ) : (
+              "Get feedback"
+            )}
           </Button>
-          {isSubmitting ? (
-            <p className="text-sm text-muted-foreground" aria-live="polite">
-              Reading your text — this can take a little while.
-            </p>
-          ) : null}
+          {isSubmitting ? <AnalyzingStatus steps={WRITING_STEPS} /> : null}
         </div>
       </div>
 

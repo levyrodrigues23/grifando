@@ -15,6 +15,7 @@ import type {
 } from "@/components/interview/types";
 import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { errorMessageFor, failedSessionIdFrom } from "@/lib/responseError";
+import { AnalyzingStatus, ButtonSpinner, INTERVIEW_STEPS } from "@/components/feedback/AnalyzingStatus";
 
 const MAX_LENGTH = 5000;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -207,12 +208,19 @@ export function InterviewPractice() {
           ) : null}
           <div className="flex flex-wrap justify-between gap-2">
             <Button onClick={handleSubmit} disabled={isSubmitting || answer.trim().length === 0}>
-              {isSubmitting ? "Submitting..." : "Submit answer"}
+              {isSubmitting ? (
+                <>
+                  <ButtonSpinner /> Analyzing…
+                </>
+              ) : (
+                "Submit answer"
+              )}
             </Button>
             <Button variant="ghost" onClick={handleEnd} disabled={isSubmitting}>
               End interview
             </Button>
           </div>
+          {isSubmitting ? <AnalyzingStatus steps={INTERVIEW_STEPS} /> : null}
         </div>
       </section>
     </div>
