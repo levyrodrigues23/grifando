@@ -65,6 +65,20 @@ function mapGeminiError(error: unknown): unknown {
     : error;
 }
 
+// Gemini rejects some schemas as "INVALID_ARGUMENT" (400) — the array-length
+// bounds on the writing analysis' mistakes list did it in Nov 2026. Array
+// bounds are dropped from what we send; the Zod schema still enforces them on
+// the response, so nothing invalid is ever persisted.
+const GEMINI_UNSUPPORTED_KEYS = new Set(["$schema", "maxItems", "minItems"]);
+
+export function toGeminiSchema(schema: z.ZodType): unknown {
+  return JSON.parse(
+    JSON.stringify(z.toJSONSchema(schema), (key, value) =>
+      GEMINI_UNSUPPORTED_KEYS.has(key) ? undefined : value,
+    ),
+  );
+}
+
 // Gemini's native JSON mode (responseMimeType + responseJsonSchema) rather
 // than function calling — simpler for "give me structured data back" than
 // wrapping every capability as a tool call. Shared "call, parse, validate"
@@ -137,7 +151,7 @@ export function createGeminiProvider(client: GeminiContentClient, model: string)
           maxOutputTokens: WRITING_ANALYSIS_MAX_TOKENS,
           systemInstruction: buildWritingAnalysisSystemPrompt(),
           contents: buildWritingAnalysisUserMessage(input),
-          jsonSchema: z.toJSONSchema(writingAnalysisResultSchema),
+          jsonSchema: toGeminiSchema(writingAnalysisResultSchema),
         },
         writingAnalysisResultSchema,
       );
@@ -151,7 +165,7 @@ export function createGeminiProvider(client: GeminiContentClient, model: string)
           maxOutputTokens: EXERCISE_GENERATION_MAX_TOKENS,
           systemInstruction: buildExerciseGenerationSystemPrompt(),
           contents: buildExerciseGenerationUserMessage(targets),
-          jsonSchema: z.toJSONSchema(exerciseGenerationResultSchema),
+          jsonSchema: toGeminiSchema(exerciseGenerationResultSchema),
         },
         exerciseGenerationResultSchema,
       );
@@ -167,7 +181,7 @@ export function createGeminiProvider(client: GeminiContentClient, model: string)
           maxOutputTokens: INTERVIEW_QUESTION_MAX_TOKENS,
           systemInstruction: buildInterviewSystemPrompt(),
           contents: buildInterviewUserMessage(history),
-          jsonSchema: z.toJSONSchema(interviewQuestionResultSchema),
+          jsonSchema: toGeminiSchema(interviewQuestionResultSchema),
         },
         interviewQuestionResultSchema,
       );
@@ -181,7 +195,7 @@ export function createGeminiProvider(client: GeminiContentClient, model: string)
           maxOutputTokens: ANSWER_EXPLANATION_MAX_TOKENS,
           systemInstruction: buildAnswerExplanationSystemPrompt(),
           contents: buildAnswerExplanationUserMessage(input),
-          jsonSchema: z.toJSONSchema(answerExplanationResultSchema),
+          jsonSchema: toGeminiSchema(answerExplanationResultSchema),
         },
         answerExplanationResultSchema,
       );

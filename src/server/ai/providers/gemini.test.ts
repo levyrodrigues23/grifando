@@ -195,3 +195,13 @@ describe("testKey", () => {
     await expect(testKey({ models: { generateContent } }, "m")).rejects.toBeInstanceOf(AIQuotaExceededError);
   });
 });
+
+describe("toGeminiSchema", () => {
+  it("drops array bounds and $schema that Gemini rejects, keeping the rest", async () => {
+    const { z } = await import("zod");
+    const { toGeminiSchema } = await import("@/server/ai/providers/gemini");
+    const json = JSON.stringify(toGeminiSchema(z.object({ items: z.array(z.string().max(5)).min(1).max(50) })));
+    expect(json).not.toMatch(/maxItems|minItems|\$schema/);
+    expect(json).toContain('"maxLength":5');
+  });
+});
