@@ -96,3 +96,7 @@ By taking part you agree to follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
 npm dependencies are pinned on purpose (TypeScript 5.9, Prisma 7.10, ESLint 9 — reasons in
 `CLAUDE.md`). Bump them by hand, one at a time, with `pnpm check` and a build. Dependabot only
 updates GitHub Actions.
+
+## Deploying
+
+Self-hosting on Vercel + Neon is documented (in Portuguese) in [`docs/deploy.md`](./docs/deploy.md).

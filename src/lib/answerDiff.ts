@@ -29,8 +29,8 @@ function wordDistance(a: string[], b: string[]): number {
 
 // Picks the acceptable answer needing the fewest word insertions/deletions to
 // reach from the user's answer, so a near-miss is compared against the version
-// it was actually close to (Duolingo does the same: docs/research/duolingo.md
-// [S1]). Ties keep the generator's order.
+// it was actually close to.
+// Ties keep the generator's order.
 export function findClosestAnswer(userAnswer: string, acceptableAnswers: string[]): string | null {
   const userWords = tokenize(userAnswer);
   let best: { answer: string; distance: number } | null = null;

@@ -10,7 +10,7 @@ const REQUIRED_STREAK = 2;
 
 // Exercises that give no scaffolding (no options, no blank to fill): the
 // learner produces the whole sentence. Reaching MASTERED requires one of these
-// ("Legendary"-style check, docs/research/duolingo.md §1.5).
+// (a stricter, unscaffolded check).
 const UNSCAFFOLDED_TYPES: readonly ExerciseType[] = [ExerciseType.REWRITE, ExerciseType.TRANSLATION];
 
 export function isUnscaffolded(type: ExerciseType): boolean {

@@ -9,9 +9,8 @@ web
 ## Users
 
 Brazilian Portuguese-speaking software developers improving their professional English
-through writing. Today the only user is the author, running the app locally (one seeded user,
-no login). The author intends to deploy it publicly so anyone can use it and to make the
-repository public; until that work lands, the app stays single-user.
+through writing. The app is public and open source: no login, anonymous per-browser sessions, and visitors bring
+their own AI key.
 
 ## Product Purpose
 
@@ -46,8 +45,6 @@ AI analysis can take seconds to minutes; waiting states are part of normal use.
 - Practice content is always English. Interface language: currently English with Portuguese
   inside explanations; the author is open to either English or Portuguese UI (undecided —
   do not translate copy as part of visual work).
-- Open decision: public multi-user deployment (auth, per-user limits, AI cost control,
-  removal of single-user-only assumptions). Not part of visual work.
 
 ## Brand Commitments
 

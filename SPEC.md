@@ -214,14 +214,13 @@ ten times" must not become ten disconnected rows.
 
 ### 6.1 Retention engine (post-MVP phase — epic #8)
 
-Planned from `docs/research/duolingo.md` (Part A has the full mapping to this codebase). The
-memory model is borrowed from Duolingo's published research; the habit mechanics are kept
-deliberately light. Success is measured as patterns mastered *and kept* mastered, never XP.
+The memory model is based on published spaced-repetition research (Half-Life Regression); the
+habit mechanics are kept deliberately light. Success is measured as patterns mastered *and kept* mastered, never XP.
 
 - **Half-life per pattern** (Half-Life Regression, simplified): recall probability
   `p = 2^(-Δ/h)`, Δ = days since the pattern was last practiced, `h` estimated from the
   pattern's seen/correct/incorrect counters only — no per-pattern difficulty weights (they
-  overfit in Duolingo's own experiments, and one user has no data to fit them).
+  tend to overfit, and one user has no data to fit them).
 - **Review queue**: practice selection orders patterns by lowest recall probability first.
 - **Mixed daily session**: one writing prompt interleaved with review exercises for due
   patterns.
