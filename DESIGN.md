@@ -41,7 +41,9 @@ Rules: never 600+ for display; sentence content never uppercased; no kicker abov
 
 ## Shape and space
 
-- Radius 4px on everything (`--radius`; the whole `rounded-*` scale maps to it).
+- Radius by role, set as tokens in `globals.css`: `rounded-pill` for buttons, nav tabs, badges and
+  chips; `rounded-card` 16px for cards, sheets, panels and dialogs; `rounded-field` 12px for
+  inputs, textareas and selects. The stock `rounded-*` scale maps onto these three.
 - Page column 1200px, gutters 24px (mobile) / 48px (desktop).
 - Page header: 80px top on desktop; sections separated by 64–96px.
 - Cards pad 24px (mobile) / 32px (desktop).
@@ -50,8 +52,8 @@ Rules: never 600+ for display; sentence content never uppercased; no kicker abov
 
 - **PageShell / PageHeader / Section / SectionTitle** (`components/layout/PageHeader.tsx`) —
   the spread: headline left, 380px standfirst+actions column right on `lg`.
-- **Nav** (`NavLinks.tsx`) — tab row, active route has a 2px ink underline; scrolls
-  horizontally on mobile.
+- **Nav** (`NavLinks.tsx`) — a row of pills, the active route is a linen pill with a hairline
+  ring; collapses to a disclosure on mobile.
 - **Button** — default black, `outline` white with ink border, `ghost` text-only, `link`
   underlined. Heights 44 / 36 (sm) / 28 (xs).
 - **WritingSheet** — white sheet with mono label + character count; textarea set in serif
@@ -60,5 +62,5 @@ Rules: never 600+ for display; sentence content never uppercased; no kicker abov
   violet underline and numbered mono superscript per mistake; `MistakeCard` is the matching
   numbered marginal note, highlighted in linen when targeted.
 - **Lists** — hairline-ruled rows (`border-t` on the list, `border-b` per row), not cards.
-- **Badge** — mono uppercase chip, 4px radius; outline/secondary/destructive/success.
+- **Badge** — mono uppercase pill; outline/secondary/destructive/success.
 - **Bars** — 4px tall, stone track, ink fill (`Progress`, weak-area bars).

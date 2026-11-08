@@ -11,12 +11,12 @@ export function TurnFeedback({ turn, index }: { turn: CompletedTurn; index: numb
         <h2 className="text-heading-sm">{turn.question}</h2>
       </div>
       <div className="space-y-6">
-        <p className="prose-serif rounded-[4px] bg-card p-6 text-lg ring-1 ring-border md:p-8">
+        <p className="prose-serif rounded-card bg-card p-6 text-lg ring-1 ring-border md:p-8">
           {turn.answer}
         </p>
         <p className="text-iron">{analysis.overallFeedback}</p>
         {analysis.naturalText !== turn.answer ? (
-          <div className="space-y-2 rounded-[4px] bg-linen p-6 md:p-8">
+          <div className="space-y-2 rounded-card bg-linen p-6 md:p-8">
             <p className="label-mono text-muted-foreground">More naturally</p>
             <p className="prose-serif text-lg">{analysis.naturalText}</p>
           </div>

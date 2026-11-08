@@ -63,7 +63,7 @@ export function Section({
   return (
     <section
       className={cn(
-        tone === "linen" ? "rounded-[4px] bg-linen px-6 py-10 md:px-10 md:py-12" : "py-4",
+        tone === "linen" ? "rounded-card bg-linen px-6 py-10 md:px-10 md:py-12" : "py-4",
         className,
       )}
     >

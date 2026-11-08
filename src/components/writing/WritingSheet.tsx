@@ -28,7 +28,7 @@ export function WritingSheet({
   const id = useId();
 
   return (
-    <div className="rounded-[4px] bg-card ring-1 ring-border transition-shadow focus-within:ring-foreground has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-violet">
+    <div className="rounded-card bg-card ring-1 ring-border transition-shadow focus-within:ring-foreground has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-violet">
       <div className="flex items-center justify-between gap-4 px-6 pt-5 md:px-10 md:pt-8">
         <label htmlFor={id} className="label-mono text-muted-foreground">
           {label}
@@ -43,9 +43,10 @@ export function WritingSheet({
         onChange={(event) => onChange(event.target.value)}
         maxLength={maxLength}
         placeholder={placeholder}
-        disabled={disabled}
+        readOnly={disabled}
+        aria-busy={disabled || undefined}
         className={cn(
-          "field-sizing-content block w-full resize-none bg-transparent px-6 pt-4 pb-8 outline-none placeholder:text-smoke disabled:opacity-60 md:px-10 md:pb-10",
+          "field-sizing-content block w-full resize-none bg-transparent px-6 pt-4 pb-8 outline-none placeholder:text-smoke md:px-10 md:pb-10",
           minHeight,
           variant === "code"
             ? "font-mono text-sm leading-relaxed"

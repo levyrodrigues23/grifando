@@ -36,7 +36,7 @@ export function WritingResults({
                 : `${mistakeCount} mark${mistakeCount === 1 ? "" : "s"}`}
             </span>
           </div>
-          <div className="rounded-[4px] bg-card p-6 ring-1 ring-border md:p-10">
+          <div className="rounded-card bg-card p-6 ring-1 ring-border md:p-10">
             <HighlightedText text={session.originalText} mistakes={analysis.occurrences} />
           </div>
           <p className="prose-serif text-lg text-iron">{analysis.overallFeedback}</p>
@@ -61,13 +61,13 @@ export function WritingResults({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-4 rounded-[4px] bg-linen p-6 md:p-10">
+        <section className="space-y-4 rounded-card bg-linen p-6 md:p-10">
           <h2 className="text-heading-sm">Corrected version</h2>
           <p className="prose-serif text-lg leading-relaxed whitespace-pre-wrap">
             {analysis.correctedText}
           </p>
         </section>
-        <section className="space-y-4 rounded-[4px] bg-linen p-6 md:p-10">
+        <section className="space-y-4 rounded-card bg-linen p-6 md:p-10">
           <h2 className="text-heading-sm">Natural version</h2>
           <p className="text-sm text-muted-foreground">
             How a fluent speaker might phrase the same idea — one option, not the only correct

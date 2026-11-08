@@ -10,6 +10,7 @@ import { ProgressSummary } from "@/components/dashboard/ProgressSummary";
 import { RecentMistakes } from "@/components/dashboard/RecentMistakes";
 import { RecentWriting } from "@/components/dashboard/RecentWriting";
 import { Reveal } from "@/components/motion/Reveal";
+import { HeroNote } from "@/components/home/HeroNote";
 import { LiveSpecimen } from "@/components/home/LiveSpecimen";
 import { StreakStatus } from "@/components/dashboard/StreakStatus";
 import { WeakAreas } from "@/components/dashboard/WeakAreas";
@@ -89,37 +90,61 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <header className="grid gap-x-16 gap-y-10 pt-12 pb-16 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
-        <div className="rise-in space-y-6">
-          <p className="label-mono text-muted-foreground">
-            Today&apos;s challenge
+      <header className="grid gap-x-16 gap-y-8 pt-12 pb-10 md:pt-20 md:pb-14 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end">
+        <h1 className="text-display-lg rise-in max-w-[14ch]">
+          Learn English from the mistakes you actually make.
+        </h1>
+        <div className="rise-in space-y-6 lg:pb-1" style={{ animationDelay: "80ms" }}>
+          <p className="prose-serif text-lg text-iron">
+            Write anything. Inglesando marks each slip, explains it, and turns it into practice
+            built from your own writing.
           </p>
-          <h1
-            className={
-              promptIsLong
-                ? "text-heading-lg max-w-[22ch]"
-                : "text-display-lg max-w-[16ch]"
-            }
-          >
-            {dailyPrompt.text}
-          </h1>
-        </div>
-        <div className="rise-in space-y-6" style={{ animationDelay: "80ms" }}>
-          <StreakStatus streak={streak} />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              render={<Link href="/today">Start today&apos;s session</Link>}
-            />
-            <Button
-              variant="ghost"
-              render={<Link href="/write">Write freely</Link>}
-            />
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button size="lg" render={<Link href="/write">Proof your own writing</Link>} />
+              <Button
+                size="lg"
+                variant="ghost"
+                render={<Link href="/today">Today&apos;s session</Link>}
+              />
+            </div>
+            <HeroNote>your own mistakes, not generic drills</HeroNote>
           </div>
         </div>
       </header>
 
-      <Section className="pb-12 md:pb-16">
+      <Section className="pb-16 md:pb-24">
         <LiveSpecimen />
+      </Section>
+
+      <Section className="pb-16 md:pb-24">
+        <div className="grid gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+          <div className="space-y-5">
+            <p className="label-mono text-muted-foreground">Today&apos;s challenge</p>
+            <h2
+              className={
+                promptIsLong
+                  ? "text-heading-lg max-w-[24ch]"
+                  : "text-display max-w-[18ch]"
+              }
+            >
+              {dailyPrompt.text}
+            </h2>
+          </div>
+          <div className="space-y-6">
+            <StreakStatus streak={streak} />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                render={<Link href="/today">Start today&apos;s session</Link>}
+              />
+              <Button
+                variant="ghost"
+                render={<Link href="/write">Write freely</Link>}
+              />
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Reveal>

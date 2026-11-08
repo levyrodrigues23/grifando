@@ -82,7 +82,7 @@ export default async function MistakesPage(props: PageProps<"/mistakes">) {
       />
 
       {dueCount > 0 ? (
-        <section className="mb-16 flex flex-wrap items-center justify-between gap-6 rounded-[4px] bg-linen px-6 py-8 md:px-10">
+        <section className="mb-16 flex flex-wrap items-center justify-between gap-6 rounded-card bg-linen px-6 py-8 md:px-10">
           <p className="text-heading-sm">
             {dueCount} pattern{dueCount === 1 ? " is" : "s are"} due for review.
           </p>

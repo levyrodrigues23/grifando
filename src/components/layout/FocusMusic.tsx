@@ -132,7 +132,7 @@ export function FocusMusic() {
           id={panelId}
           aria-hidden={!open}
           inert={!open}
-          className={`absolute top-full right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-4 rounded-[4px] bg-card p-4 ring-1 ring-border ${open ? "" : "invisible"}`}
+          className={`absolute top-full right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-4 rounded-card bg-card p-4 ring-1 ring-border ${open ? "" : "invisible"}`}
         >
           <iframe
             key={`${source.provider}:${source.kind}:${source.id}`}
