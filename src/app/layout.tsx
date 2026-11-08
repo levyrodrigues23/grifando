@@ -32,15 +32,15 @@ const DESCRIPTION = "Personal writing coach for English, built from your own mis
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: "Inglesando", template: "%s · Inglesando" },
+  title: { default: "Grifando", template: "%s · Grifando" },
   description: DESCRIPTION,
   openGraph: {
     type: "website",
-    siteName: "Inglesando",
-    title: "Inglesando",
+    siteName: "Grifando",
+    title: "Grifando",
     description: DESCRIPTION,
   },
-  twitter: { card: "summary_large_image", title: "Inglesando", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "Grifando", description: DESCRIPTION },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

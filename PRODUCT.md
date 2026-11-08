@@ -48,7 +48,7 @@ AI analysis can take seconds to minutes; waiting states are part of normal use.
 
 ## Brand Commitments
 
-Name: **Inglesando**. No logo or other brand assets exist yet.
+Name: **Grifando**. No logo or other brand assets exist yet.
 
 ## Evidence on Hand
 

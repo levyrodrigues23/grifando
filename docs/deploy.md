@@ -1,13 +1,13 @@
 # Guia de deploy (Vercel + Postgres)
 
-Passo a passo para publicar o Inglesando na Vercel, sem precisar ser especialista. Plano gratuito basta.
+Passo a passo para publicar o Grifando na Vercel, sem precisar ser especialista. Plano gratuito basta.
 
 > **Importante:** nenhuma chave de IA é configurada no servidor. Cada visitante cola a própria chave em `/settings`. Não crie `GEMINI_API_KEY` nem `ANTHROPIC_API_KEY` na Vercel.
 
 ## 1. Conta e importação do repositório
 
 1. Entre em <https://vercel.com/signup> e escolha **Continue with GitHub**.
-2. Em **Add New… › Project**, importe `levyrodrigues23/inglesando`. Framework: Next.js (detectado sozinho).
+2. Em **Add New… › Project**, importe `levyrodrigues23/grifando`. Framework: Next.js (detectado sozinho).
 3. O Build Command já vem do `vercel.json` (`pnpm vercel-build`): não precisa mudar nada. Esse script confere os segredos obrigatórios, aplica as migrações do banco (só em produção) e depois roda `next build`.
 4. Em **Settings › Git**, o branch de produção é `main`. Desative os deploys de preview (por exemplo, em **Ignored Build Step** use `exit 1` para branches diferentes de `main`, ou desligue previews para pull requests). Assim só `main` é publicado e o banco de produção não é tocado por outros branches.
 

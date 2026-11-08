@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Inglesando — a personal AI English coach. Full product spec: `SPEC.md`. Read it before working on any
+Grifando — a personal AI English coach. Full product spec: `SPEC.md`. Read it before working on any
 feature-level change — this file only covers things a future session needs that aren't
 obvious from the code.
 
@@ -259,7 +259,7 @@ dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` 
 - Don't add features beyond the current phase's scope without checking in first.
 - Git flow, branch naming, labels, and PR rules live in `CONTRIBUTING.md`. In short: branch
   from `develop`, PR back to `develop` (CI must be green), `develop` → `main` for releases.
-  The GitHub repo is `levyrodrigues23/inglesando` (renamed from `projeto_ingles`; the local
+  The GitHub repo is `levyrodrigues23/grifando` (formerly `inglesando`, originally `projeto_ingles`; the local
   folder kept the old name).
 - Work is tracked as GitHub issues written in Portuguese. The current roadmap is the
   retention epic (#8); read SPEC.md §6.1 before

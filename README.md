@@ -1,15 +1,15 @@
 <img src="./public/logo.svg" alt="" width="48" height="48" align="left">
 
-# Inglesando
+# Grifando
 
 An AI English coach for Brazilian developers who read English well and want to write it better:
 PR descriptions, issues, code reviews, interview answers. You write, it proofreads, and it turns
 your recurring mistakes into practice. Explanations are in English, with Portuguese where it
 clarifies why a literal translation fails.
 
-**Live: <https://inglesando.vercel.app>** (no login; bring your own AI key, see [Try it](#try-it))
+**Live: <https://grifando.vercel.app>** (no login; bring your own AI key, see [Try it](#try-it))
 
-[![CI](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml)
+[![CI](https://github.com/levyrodrigues23/grifando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/grifando/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 <img src="./docs/images/proofed-example.png" alt="A paragraph with three typical mistakes underlined and numbered, each with its correction and a one-line reason">
@@ -17,7 +17,7 @@ clarifies why a literal translation fails.
 ## Try it
 
 1. Create a free Google Gemini key at <https://aistudio.google.com/apikey>.
-2. Open <https://inglesando.vercel.app/settings>, paste the key, and test it.
+2. Open <https://grifando.vercel.app/settings>, paste the key, and test it.
 3. Go to `/write` and write something.
 
 Your key stays in your browser (see [Privacy](#privacy)). Anthropic keys work too. A free

@@ -9,7 +9,7 @@ export function SiteHeader() {
   return (
     <header className="bg-background">
       <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-6 px-6 pt-5 md:px-12">
-        <Link href="/" aria-label="Inglesando home" className="text-subheading">
+        <Link href="/" aria-label="Grifando home" className="text-subheading">
           <Logo />
         </Link>
         <div className="flex items-center gap-2">
