@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
+import { Actions } from "@/components/ui/field";
 import { WritingResults } from "@/components/writing/WritingResults";
 import { WritingSheet } from "@/components/writing/WritingSheet";
 import type { SubmitWritingResponse, WritingSessionDTO } from "@/components/writing/types";
@@ -112,7 +113,7 @@ export function ExplainCodeCoach() {
           {view.errorMessage}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-4">
+      <Actions>
         <Button onClick={handleSubmit} disabled={isSubmitting || !canSubmit}>
           {isSubmitting ? (
             <>
@@ -123,7 +124,7 @@ export function ExplainCodeCoach() {
           )}
         </Button>
         {isSubmitting ? <AnalyzingStatus steps={WRITING_STEPS} /> : null}
-      </div>
+      </Actions>
     </div>
   );
 }

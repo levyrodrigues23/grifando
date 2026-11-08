@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Actions } from "@/components/ui/field";
 import { clearAIKey } from "@/lib/aiKeyStore";
 import { errorMessageFor } from "@/lib/responseError";
 
@@ -46,7 +47,7 @@ export function DeleteMyDataButton() {
             This permanently deletes everything stored for you and removes your AI key from this
             browser. It cannot be undone.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <Actions>
             <Button
               type="button"
               variant="destructive"
@@ -66,7 +67,7 @@ export function DeleteMyDataButton() {
             >
               Cancel
             </Button>
-          </div>
+          </Actions>
         </div>
       )}
       {error ? (
