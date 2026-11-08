@@ -254,6 +254,6 @@ dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` 
   The GitHub repo is `levyrodrigues23/inglesando` (renamed from `projeto_ingles`; the local
   folder kept the old name).
 - Work is tracked as GitHub issues written in Portuguese. The current roadmap is the
-  retention epic (#8), planned from `docs/research/duolingo.md` — read its Part A before
+  retention epic (#8); read SPEC.md §6.1 before
   touching mastery, exercise selection, or scheduling.
 - Don't add the "Generated with Claude Code" footer to PR descriptions.

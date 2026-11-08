@@ -1,11 +1,11 @@
-// Simplified Half-Life Regression (Settles & Meeder 2016 — see
-// docs/research/duolingo.md §2.1 and SPEC.md §6.1).
+// Simplified Half-Life Regression (Settles & Meeder 2016; see
+// SPEC.md §6.1).
 //
 // Recall probability decays exponentially with time since the pattern was last
 // practiced: p = 2^(-Δ/h). The half-life h comes only from the pattern's own
 // recall history, with fixed weights: each correct recall doubles it, each
-// failed one shrinks it by √2. No per-pattern difficulty weights — Duolingo
-// found those overfit, and a single user has no data to fit them anyway.
+// failed one shrinks it by √2. No per-pattern difficulty weights: they tend to
+// overfit, and a single user has no data to fit them anyway.
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

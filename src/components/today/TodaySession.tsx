@@ -7,7 +7,7 @@ import { WritingCoach, type InitialChallenge } from "@/components/writing/Writin
 
 type Step = { kind: "write" } | { kind: "review"; sessionId: string };
 
-// The daily session (docs/research/duolingo.md §2.3): write today's challenge,
+// The daily session: write today's challenge,
 // then review — a practice set that interleaves the mistakes just made with the
 // patterns most due for review. One page, no navigation in between.
 export function TodaySession({ challenge }: { challenge: InitialChallenge }) {

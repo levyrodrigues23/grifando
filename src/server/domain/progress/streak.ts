@@ -1,4 +1,4 @@
-// Daily practice streak (docs/research/duolingo.md §3, SPEC.md §6.1).
+// Daily practice streak (SPEC.md §6.1).
 //
 // Low bar: any one activity (an analyzed piece of writing or one exercise
 // attempt) makes a day count. Missing a day is forgiven automatically — a "rest

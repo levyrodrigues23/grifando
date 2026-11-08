@@ -29,7 +29,7 @@ body:
     id: context
     attributes:
       label: Contexto e fontes
-      description: Links para SPEC.md, docs/research, issues relacionadas, épico.
+      description: Links para SPEC.md, issues relacionadas, épico.
   - type: checkboxes
     id: impact
     attributes:

@@ -1,5 +1,4 @@
-// Target difficulty, after Duolingo's Birdbrain V1 (docs/research/duolingo.md
-// §2.2): an Elo-style ability rating per mistake category, updated after every
+// Target difficulty: an Elo-style ability rating per mistake category, updated after every
 // graded attempt, and exercises generated at the difficulty where the learner
 // is expected to succeed about 70% of the time — hard enough to stretch,
 // easy enough to stay motivating.
