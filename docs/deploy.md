@@ -8,13 +8,7 @@ Passo a passo para publicar o Inglesando na Vercel, sem precisar ser especialist
 
 1. Entre em <https://vercel.com/signup> e escolha **Continue with GitHub**.
 2. Em **Add New… › Project**, importe `levyrodrigues23/inglesando`. Framework: Next.js (detectado sozinho).
-3. Antes de clicar em Deploy, abra **Build and Deployment** e ligue **Override** em **Build Command**, com o valor:
-
-   ```
-   pnpm vercel-build
-   ```
-
-   Por quê: a documentação da Vercel diz que, para Next.js, ela roda o script `build` do `package.json`. Não confirmamos que o script `vercel-build` seja usado automaticamente, então definimos o comando de forma explícita. Esse script aplica as migrações do banco (só em produção) e depois roda `next build`.
+3. O Build Command já vem do `vercel.json` (`pnpm vercel-build`): não precisa mudar nada. Esse script confere os segredos obrigatórios, aplica as migrações do banco (só em produção) e depois roda `next build`.
 4. Em **Settings › Git**, o branch de produção é `main`. Desative os deploys de preview (por exemplo, em **Ignored Build Step** use `exit 1` para branches diferentes de `main`, ou desligue previews para pull requests). Assim só `main` é publicado e o banco de produção não é tocado por outros branches.
 
 ## 2. Banco de dados Postgres
