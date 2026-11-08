@@ -73,6 +73,16 @@ is red.
      automatic deletion is **off** on purpose: it also deletes `develop` when a release PR
      (`develop` → `main`) is merged.
 
+### AI review (PR-Agent)
+
+Pull requests from branches in this repository get an automated review from
+[PR-Agent](https://github.com/the-pr-agent/pr-agent) (Gemini), configured in
+`.github/workflows/pr-agent.yml`. It posts a review and code suggestions; treat them as a
+second opinion, not a gate. Comment `/review`, `/improve` or `/ask <question>` on a PR to
+re-run or query it. PRs from forks are not reviewed, because they cannot read the API key.
+
+By taking part you agree to follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## Database changes
 
 - Change `prisma/schema.prisma`, then `pnpm db:migrate` to generate the migration — commit
