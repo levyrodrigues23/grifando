@@ -50,7 +50,9 @@ describe("rateLimitResponse", () => {
     // Pin the clock mid-window so the 60s bucket can't roll over during the loop.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-01-01T12:00:10Z"));
-    onTestFinished(() => vi.useRealTimers());
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const request = new Request("http://test", { headers: { "x-forwarded-for": "203.0.113.9" } });
     for (let i = 0; i < 5; i++) {
       expect(await rateLimitResponse(prisma, request, "u", "generation")).toBeNull();
