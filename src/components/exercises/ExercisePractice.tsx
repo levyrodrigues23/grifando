@@ -9,6 +9,7 @@ import { ExerciseQuestion } from "@/components/exercises/ExerciseQuestion";
 import { ExerciseResult } from "@/components/exercises/ExerciseResult";
 import type { ExerciseListItemDTO, SubmitAttemptResponse } from "@/components/exercises/types";
 import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
+import { AnalyzingStatus, ButtonSpinner, EXERCISE_STEPS } from "@/components/feedback/AnalyzingStatus";
 
 type State =
   | { kind: "loading" }
@@ -150,8 +151,15 @@ export function ExercisePractice({ afterSessionId }: { afterSessionId?: string }
         </CardContent>
         <CardFooter>
           <Button onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? "Generating..." : "Generate practice set"}
+            {isGenerating ? (
+              <>
+                <ButtonSpinner /> Generating…
+              </>
+            ) : (
+              "Generate practice set"
+            )}
           </Button>
+          {isGenerating ? <AnalyzingStatus steps={EXERCISE_STEPS} className="ml-4" /> : null}
         </CardFooter>
       </Card>
     );

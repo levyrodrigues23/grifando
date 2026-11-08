@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import type { SubmitAttemptResponse } from "@/components/exercises/types";
 import { MissingAIKeyError, aiFetch } from "@/lib/aiFetch";
 import { diffWords, findClosestAnswer } from "@/lib/answerDiff";
+import { AnalyzingStatus, ButtonSpinner, EXPLAIN_STEPS } from "@/components/feedback/AnalyzingStatus";
 
 function correctAnswerText(exercise: SubmitAttemptResponse["exercise"]): string {
   switch (exercise.type) {
@@ -87,8 +88,15 @@ function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemp
   return (
     <div className="space-y-2">
       <Button variant="outline" size="sm" onClick={handleExplain} disabled={state.kind === "loading"}>
-        {state.kind === "loading" ? "Explaining..." : "Explain my answer"}
+        {state.kind === "loading" ? (
+          <>
+            <ButtonSpinner /> Explaining…
+          </>
+        ) : (
+          "Explain my answer"
+        )}
       </Button>
+      {state.kind === "loading" ? <AnalyzingStatus steps={EXPLAIN_STEPS} /> : null}
       {state.kind === "error" ? <p className="text-sm text-destructive">{state.message}</p> : null}
       {state.kind === "keyRequired" ? <KeyRequiredNotice /> : null}
     </div>
