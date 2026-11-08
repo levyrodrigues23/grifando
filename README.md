@@ -12,7 +12,7 @@ clarifies why a literal translation fails.
 [![CI](https://github.com/levyrodrigues23/grifando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/grifando/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-<img src="./docs/images/proofed-example.png" alt="A paragraph with three typical mistakes underlined and numbered, each with its correction and a one-line reason">
+<img src="./docs/images/demo.gif" alt="Grifando in use: the home page example marks three mistakes, then a text written on /write comes back with each mistake underlined and explained, including notes in Portuguese" width="880">
 
 ## Try it
 
