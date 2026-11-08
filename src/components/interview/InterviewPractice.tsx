@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { KeyRequiredNotice } from "@/components/settings/KeyRequiredNotice";
 import { Button } from "@/components/ui/button";
+import { Actions } from "@/components/ui/field";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { WritingSheet } from "@/components/writing/WritingSheet";
 import { TurnFeedback } from "@/components/interview/TurnFeedback";
@@ -206,7 +207,7 @@ export function InterviewPractice() {
           {state.kind === "active" && state.errorMessage ? (
             <p role="alert" className="text-sm text-destructive">{state.errorMessage}</p>
           ) : null}
-          <div className="flex flex-wrap justify-between gap-2">
+          <Actions className="justify-between">
             <Button onClick={handleSubmit} disabled={isSubmitting || answer.trim().length === 0}>
               {isSubmitting ? (
                 <>
@@ -219,7 +220,7 @@ export function InterviewPractice() {
             <Button variant="ghost" onClick={handleEnd} disabled={isSubmitting}>
               End interview
             </Button>
-          </div>
+          </Actions>
           {isSubmitting ? <AnalyzingStatus steps={INTERVIEW_STEPS} /> : null}
         </div>
       </section>
