@@ -2,6 +2,7 @@ import { isProviderName, type AICredentials } from "@/lib/aiCredentials";
 
 // The visitor's AI key lives only in this browser's localStorage. Every access
 // is guarded: storage can be missing (server render) or throw (blocked site data).
+// Kept from the project's former name (Inglesando) so keys saved before the rename still work.
 const STORAGE_KEY = "inglesando:ai-key";
 
 function browserStorage(): Storage | null {

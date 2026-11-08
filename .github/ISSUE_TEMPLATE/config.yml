@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Spec do produto
-    url: https://github.com/levyrodrigues23/inglesando/blob/develop/SPEC.md
+    url: https://github.com/levyrodrigues23/grifando/blob/develop/SPEC.md
     about: Leia o SPEC.md antes de propor uma funcionalidade — ele define o escopo e o que está fora dele.
   - name: Vulnerabilidade de segurança (security vulnerability)
-    url: https://github.com/levyrodrigues23/inglesando/security/advisories/new
+    url: https://github.com/levyrodrigues23/grifando/security/advisories/new
     about: Não abra issue pública. Reporte em privado; veja o SECURITY.md.

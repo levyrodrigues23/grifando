@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-labelledby="t d">
-  <title id="t">Inglesando architecture</title>
+  <title id="t">Grifando architecture</title>
   <desc id="d">The browser sends requests with a signed session cookie and, for AI features, the visitor's own key in a header. On Vercel, proxy.ts verifies the session and sets the CSP, API routes rate-limit and validate, domain services hold the logic, repositories read and write Postgres through Prisma, and the AI provider calls Gemini or Claude with a timeout and one fallback model.</desc>
   <defs>
     <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8z" fill="#111111"/></marker>

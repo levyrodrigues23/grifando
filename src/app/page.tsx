@@ -96,7 +96,7 @@ export default async function HomePage() {
         </h1>
         <div className="rise-in space-y-6 lg:pb-1" style={{ animationDelay: "80ms" }}>
           <p className="prose-serif text-lg text-iron">
-            Write anything. Inglesando marks each slip, explains it, and turns it into practice
+            Write anything. Grifando marks each slip, explains it, and turns it into practice
             built from your own writing.
           </p>
           <div className="space-y-4">

@@ -5,7 +5,7 @@ import { DeleteMyDataButton } from "@/components/privacy/DeleteMyDataButton";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "What Inglesando stores, how long, and how to delete it.",
+  description: "What Grifando stores, how long, and how to delete it.",
 };
 
 function Block({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
     <PageShell>
       <PageHeader
         title="Privacy"
-        description="No account, no email. Here is what Inglesando keeps, what it sends out, and how to wipe it."
+        description="No account, no email. Here is what Grifando keeps, what it sends out, and how to wipe it."
       />
 
       <div className="space-y-16 pb-24">

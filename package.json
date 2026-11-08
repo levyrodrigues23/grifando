@@ -1,10 +1,10 @@
 {
-  "name": "inglesando",
+  "name": "grifando",
   "version": "0.1.0",
   "private": true,
   "description": "AI English writing coach for Brazilian developers: your mistakes become your practice.",
-  "homepage": "https://inglesando.vercel.app",
-  "repository": { "type": "git", "url": "https://github.com/levyrodrigues23/inglesando" },
+  "homepage": "https://grifando.vercel.app",
+  "repository": { "type": "git", "url": "https://github.com/levyrodrigues23/grifando" },
   "license": "MIT",
   "engines": {
     "node": "24.x"

@@ -17,7 +17,7 @@ export function SiteFooter() {
   return (
     <footer className="mx-auto w-full max-w-[1200px] px-6 pt-28 pb-12 md:px-12 md:pt-36">
       <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/" aria-label="Inglesando home" className="text-subheading">
+        <Link href="/" aria-label="Grifando home" className="text-subheading">
           <Logo />
         </Link>
         <nav aria-label="Footer">
@@ -31,7 +31,7 @@ export function SiteFooter() {
             ))}
             <li>
               <a
-                href="https://github.com/levyrodrigues23/inglesando"
+                href="https://github.com/levyrodrigues23/grifando"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={linkClass}
@@ -39,7 +39,7 @@ export function SiteFooter() {
                 GitHub
               </a>
             </li>
-            <li className="text-smoke">© 2026 Inglesando</li>
+            <li className="text-smoke">© 2026 Grifando</li>
           </ul>
         </nav>
       </div>
