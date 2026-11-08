@@ -6,12 +6,25 @@ An AI English coach for Portuguese-speaking developers. You write, it proofreads
 your recurring mistakes into practice. It is not a generic grammar checker and not a chat
 window in front of an LLM.
 
+**Live: <https://inglesando.vercel.app>** (no login; bring your own AI key, see [Try it](#try-it))
+
 [![CI](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 <p>
   <img src="./docs/screenshots/home-desktop.png" alt="Inglesando home page on desktop: today's challenge and a worked example with three marked mistakes" width="720">
   <img src="./docs/screenshots/home-mobile.png" alt="Inglesando home page on a phone" width="180">
 </p>
+
+## Try it
+
+1. Create a free Google Gemini key at <https://aistudio.google.com/apikey>.
+2. Open <https://inglesando.vercel.app/settings>, paste the key, and test it.
+3. Go to `/write` and write something.
+
+Your key stays in your browser (see [Privacy](#privacy)). Anthropic keys work too. A free
+Gemini key is convenient, but Google may use prompts sent through free-tier keys to improve its
+products, so do not write anything confidential with one.
 
 ## Who it is for
 
@@ -86,9 +99,11 @@ All variables are documented in [`.env.example`](./.env.example). Use `127.0.0.1
 
 ## Deploy your own on Vercel
 
-In outline: import the repository into Vercel, add a Postgres database from the Marketplace, set `SESSION_SECRET`, `IP_HASH_SALT` and `CRON_SECRET`, run `pnpm db:deploy` against
-the production database, and deploy. `vercel.json` registers the daily cleanup cron. Do not set
-any AI keys; visitors bring their own. The step-by-step guide will live in
+Import the repository into Vercel and add a Postgres database (Neon, via the Vercel
+Marketplace). Set `SESSION_SECRET`, `IP_HASH_SALT` and `CRON_SECRET` and deploy. The build
+command comes from `vercel.json` (`pnpm vercel-build`): it checks the required secrets, applies
+migrations on production builds, then runs `next build`. `vercel.json` also registers the daily
+cleanup cron. Do not set any AI keys; visitors bring their own. Step by step (in Portuguese):
 [`docs/deploy.md`](./docs/deploy.md).
 
 ## Architecture
@@ -116,7 +131,10 @@ Prisma 7, Zod 4, Vitest, pnpm.
 | [`SPEC.md`](./SPEC.md) | Product spec: purpose, features, domain model, out of scope |
 | [`DESIGN.md`](./DESIGN.md) | Design system: tokens, type, layout rules |
 | [`CLAUDE.md`](./CLAUDE.md) | Development conventions: architecture rules, pinned versions, gotchas |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Git flow, branches, issues, PRs, CI |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Git flow, branches, issues, PRs, CI, AI review |
+| [`docs/deploy.md`](./docs/deploy.md) | Deploying your own copy on Vercel (Portuguese) |
+| [`SECURITY.md`](./SECURITY.md) | How to report a vulnerability |
+| [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) | Contributor Covenant 2.1 |
 | [`docs/research/duolingo.md`](./docs/research/duolingo.md) | Retention research that drives the roadmap |
 
 ## Contributing
@@ -124,6 +142,8 @@ Prisma 7, Zod 4, Vitest, pnpm.
 Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`CLAUDE.md`](./CLAUDE.md) first: versions of
 TypeScript, Prisma and ESLint are pinned on purpose. Branch from `develop` and open PRs
 against it; CI (typecheck, lint, tests, build, secret scan, `pnpm audit`) must be green.
+Issues are written in Portuguese; code, commits and docs in English. Branch PRs also get an
+AI review from PR-Agent.
 
 The repository also ships material for coding agents: `AGENTS.md` and `.agents/` (Next.js 16
 and Prisma 7 notes that `CLAUDE.md` points to) and `skills-lock.json` (the pinned agent skills).
