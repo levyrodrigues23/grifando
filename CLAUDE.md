@@ -86,16 +86,16 @@ old dark "Darkroom" palette, or a dark theme.
 ## Next.js 16 / Prisma 7 — read before assuming API shape
 
 Both frameworks jumped a major version very recently and changed things a training-data-only
-model would get wrong. Two agent-maintained doc sources are checked into this repo:
+model would get wrong. Agent-maintained doc sources:
 
 - `AGENTS.md` (root) — points at `node_modules/next/dist/docs/`. Notably: `params`/
   `searchParams`/`cookies()`/`headers()` are async everywhere now; Turbopack is the default
   (no `--turbopack` flag needed); `next lint` is removed (bare `eslint` instead); route types
   come from generated helpers (`LayoutProps<'/path'>`, `PageProps<'/path'>`) that need
   `next typegen` (or a dev/build run) before `tsc` sees them.
-- `.agents/skills/prisma-*` — Prisma 7 requires a driver adapter (`@prisma/adapter-pg` + `pg`
+- Prisma 7 (agent skills for it may exist locally in the git-ignored `.agents/skills/prisma-*`) requires a driver adapter (`@prisma/adapter-pg` + `pg`
   here) passed to `new PrismaClient({ adapter })`; there's no bundled query-engine binary
-  fallback. The datasource URL lives in `prisma.config.ts` (via `env('DATABASE_URL')`), not in
+  fallback. The datasource URL lives in `prisma.config.ts` (`process.env.DATABASE_URL`, not `env()`, so `prisma generate` runs without a database), not in
   `schema.prisma`. The generator is `provider = "prisma-client"` with an explicit `output`
   (`src/generated/prisma` here) — import from `@/generated/prisma/client`, not
   `@prisma/client`.
