@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
-import Link from "next/link";
 import { connection } from "next/server";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -55,14 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         <div className="flex-1">{children}</div>
-        <footer className="mx-auto w-full max-w-[1200px] px-6 pt-24 pb-10 md:px-12">
-          <p className="label-mono text-smoke">
-            Inglesando · scores are AI-generated heuristics, not a proficiency test ·{" "}
-            <Link href="/privacy" className="underline underline-offset-4 hover:text-iron">
-              Privacy
-            </Link>
-          </p>
-        </footer>
+        <SiteFooter />
         <Analytics />
       </body>
     </html>
