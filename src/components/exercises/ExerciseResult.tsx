@@ -58,7 +58,7 @@ type ExplanationState =
 
 const EXPLANATION_ERROR = "We couldn't explain this answer right now. Your grade is unaffected.";
 
-// "Explain my answer" (docs/research/duolingo.md §1.6): an optional AI call on
+// "Explain my answer": an optional AI call on
 // request; the grade above is already final and never changes.
 function ExplainMyAnswer({ exerciseId, attemptId }: { exerciseId: string; attemptId: string }) {
   const [state, setState] = useState<ExplanationState>({ kind: "idle" });

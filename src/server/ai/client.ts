@@ -9,7 +9,8 @@ import { createGeminiProvider, testKey as testGeminiKey } from "@/server/ai/prov
 import { withResilience } from "@/server/ai/resilient";
 
 const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5";
-const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+// gemini-3.8-flash measured ~88s per analysis (Nov 2026), past AI_TIMEOUT_MS; 3.5 Flash answers in ~5s.
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash";
 
 export const AI_TIMEOUT_MS = 60_000;
 export const KEY_TEST_TIMEOUT_MS = 15_000;
@@ -45,7 +46,9 @@ export type KeyTestStatus = "works" | "invalid" | "busy";
 // Rejected/malformed keys read as "invalid"; quota, overload, timeouts and
 // anything unexpected read as "busy" (the key may still be fine).
 export async function testAIKey(credentials: AICredentials): Promise<KeyTestStatus> {
-  const model = primaryModelFor(credentials.provider);
+  // A key is valid or not regardless of model: test on the light fallback so a
+  // slow primary model never makes a working key read as "busy".
+  const model = credentials.provider === "gemini" ? GEMINI_FALLBACK_MODEL : ANTHROPIC_FALLBACK_MODEL;
   const call =
     credentials.provider === "gemini"
       ? testGeminiKey(new GoogleGenAI({ apiKey: credentials.apiKey }), model)

@@ -2,23 +2,30 @@
 
 # Inglesando
 
-An AI English coach for Portuguese-speaking developers. You write, it proofreads, and it turns
-your recurring mistakes into practice. It is not a generic grammar checker and not a chat
-window in front of an LLM.
+An AI English coach for Brazilian developers who read English well and want to write it better:
+PR descriptions, issues, code reviews, interview answers. You write, it proofreads, and it turns
+your recurring mistakes into practice. Explanations are in English, with Portuguese where it
+clarifies why a literal translation fails.
+
+**Live: <https://inglesando.vercel.app>** (no login; bring your own AI key, see [Try it](#try-it))
 
 [![CI](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 <p>
   <img src="./docs/screenshots/home-desktop.png" alt="Inglesando home page on desktop: today's challenge and a worked example with three marked mistakes" width="720">
   <img src="./docs/screenshots/home-mobile.png" alt="Inglesando home page on a phone" width="180">
 </p>
 
-## Who it is for
+## Try it
 
-Brazilian developers who read English well and want to write it better: PR descriptions,
-issues, code reviews, interview answers. Explanations are in English, with Portuguese where it
-clarifies why a literal translation fails ("I have 25 years" instead of "I am 25 years old").
-It is open source so you can read it, run it, or host your own copy.
+1. Create a free Google Gemini key at <https://aistudio.google.com/apikey>.
+2. Open <https://inglesando.vercel.app/settings>, paste the key, and test it.
+3. Go to `/write` and write something.
+
+Your key stays in your browser (see [Privacy](#privacy)). Anthropic keys work too. A free
+Gemini key is convenient, but Google may use prompts sent through free-tier keys to improve its
+products, so do not write anything confidential with one.
 
 ## The mistake loop
 
@@ -34,8 +41,8 @@ It is open source so you can read it, run it, or host your own copy.
    Grading is deterministic; the AI is not called to grade.
 5. **Progress is shown honestly.** Scores are heuristic model signals, not CEFR levels.
 
-Other features: dashboard with streak, vocabulary, turn-based interview practice, Explain Code
-(pasted code is context only and is never stored), and a focus-music player.
+Also: a dashboard with streak, vocabulary, interview practice, and Explain Code (pasted code is
+context only and is never stored).
 
 ## Privacy
 
@@ -49,8 +56,6 @@ data hangs off that random id.
   server-side key.
 - **You can delete everything** from the app (`DELETE /api/me`), and accounts idle for 90 days
   are removed by a daily cron job.
-- **Free Gemini keys:** Google may use prompts sent through free-tier API keys to improve its
-  products. Do not write anything confidential, and prefer a billed key if that matters.
 - Rate limits are kept in Postgres, keyed by user id and a salted hash of the IP, never the
   raw IP.
 
@@ -84,51 +89,28 @@ pnpm check                   # typecheck + lint + tests, what CI runs (CI also b
 All variables are documented in [`.env.example`](./.env.example). Use `127.0.0.1`, not
 `localhost`, in the database URLs.
 
-## Deploy your own on Vercel
+## How it works
 
-In outline: import the repository into Vercel, add a Postgres database from the Marketplace, set `SESSION_SECRET`, `IP_HASH_SALT` and `CRON_SECRET`, run `pnpm db:deploy` against
-the production database, and deploy. `vercel.json` registers the daily cleanup cron. Do not set
-any AI keys; visitors bring their own. The step-by-step guide will live in
-[`docs/deploy.md`](./docs/deploy.md).
-
-## Architecture
-
+```mermaid
+flowchart LR
+  B["Browser<br/>AI key in localStorage<br/>aiFetch adds key headers"] --> P["proxy.ts<br/>session cookie, CSP"]
+  P --> R["API routes"]
+  R --> RL["Rate limit<br/>(Postgres)"]
+  RL --> S["Domain services"]
+  S --> Repo["Repositories"]
+  Repo --> Prisma["Prisma"]
+  Prisma --> DB[("Postgres<br/>Neon")]
+  S --> AI["AIProvider<br/>timeout + fallback model"]
+  AI --> G["Gemini"]
+  AI --> C["Claude"]
 ```
-UI (src/app) -> thin API routes -> domain services (src/server/domain) -> repositories -> Prisma
-```
 
-| Path | Role |
-|---|---|
-| `src/app/` | Next.js App Router pages and thin route handlers under `api/` |
-| `src/proxy.ts`, `src/server/session/` | Anonymous signed-cookie sessions; CSP nonce and security headers |
-| `src/server/ai/` | `AIProvider` interface, Anthropic and Gemini providers, BYOK credentials, timeout and fallback model, Zod schemas for every AI response |
-| `src/server/domain/` | Business logic: writing, mistakes, exercises, interview, progress, vocabulary, privacy |
-| `src/server/rateLimit.ts` | Postgres fixed-window rate limits |
-| `prisma/` | Schema and migrations (Prisma 7 with the `pg` driver adapter) |
-
-Stack: Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4 with shadcn/ui, PostgreSQL,
-Prisma 7, Zod 4, Vitest, pnpm.
-
-## Documentation
-
-| Document | What it covers |
-|---|---|
-| [`SPEC.md`](./SPEC.md) | Product spec: purpose, features, domain model, out of scope |
-| [`DESIGN.md`](./DESIGN.md) | Design system: tokens, type, layout rules |
-| [`CLAUDE.md`](./CLAUDE.md) | Development conventions: architecture rules, pinned versions, gotchas |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Git flow, branches, issues, PRs, CI |
-| [`docs/research/duolingo.md`](./docs/research/duolingo.md) | Retention research that drives the roadmap |
+Routes are thin; business logic lives in domain services, and every AI response is validated
+with a Zod schema before it is stored. Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4
+with shadcn/ui, PostgreSQL, Prisma 7, Zod 4, Vitest, pnpm.
 
 ## Contributing
 
-Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`CLAUDE.md`](./CLAUDE.md) first: versions of
-TypeScript, Prisma and ESLint are pinned on purpose. Branch from `develop` and open PRs
-against it; CI (typecheck, lint, tests, build, secret scan, `pnpm audit`) must be green.
-
-The repository also ships material for coding agents: `AGENTS.md` and `.agents/` (Next.js 16
-and Prisma 7 notes that `CLAUDE.md` points to) and `skills-lock.json` (the pinned agent skills).
-You do not need them to contribute by hand.
-
-## License
-
-[MIT](./LICENSE)
+Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) first (branch from `develop`, CI must be green; some
+dependency versions are pinned on purpose). Product spec: [`SPEC.md`](./SPEC.md). Security
+reports: [`SECURITY.md`](./SECURITY.md). Licensed under [MIT](./LICENSE).

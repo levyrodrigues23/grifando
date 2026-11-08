@@ -46,6 +46,8 @@ next-env.d.ts
 # graphify knowledge graph (local, regenerate with /graphify)
 graphify-out/
 
-# impeccable design tooling: keep the committed surface notes, ignore local caches
-.impeccable/*
-!.impeccable/surfaces/
+# impeccable design tooling: local, not committed
+.impeccable/
+
+# local agent workspaces
+.superpowers/

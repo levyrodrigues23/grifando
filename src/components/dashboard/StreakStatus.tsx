@@ -1,7 +1,7 @@
 import { reachedMilestone, REST_DAYS_PER_WEEK, type StreakSummary } from "@/server/domain/progress/streak";
 
 // A light nudge, not a scoreboard: no loss-aversion warnings, rest days are
-// forgiven silently (docs/research/duolingo.md §3-4).
+// forgiven silently.
 export function StreakStatus({ streak }: { streak: StreakSummary }) {
   if (streak.longest === 0) {
     return (

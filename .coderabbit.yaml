@@ -1,0 +1,6 @@
+# CodeRabbit is turned off for this repo; PR-Agent (.github/workflows/pr-agent.yml) reviews PRs.
+reviews:
+  auto_review:
+    enabled: false
+chat:
+  auto_reply: false

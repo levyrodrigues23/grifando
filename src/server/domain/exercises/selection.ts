@@ -23,7 +23,7 @@ export function selectPatternsForPractice<T extends SelectablePattern>(
 
 // Daily-session review set: interleaves the mistakes just made (freshIds, in
 // their order) with the patterns most due for review, instead of practicing one
-// kind in a block (docs/research/duolingo.md §2.3). Fresh patterns take at most
+// kind in a block. Fresh patterns take at most
 // half the slots when enough due ones exist; either side fills any slots the
 // other cannot.
 export function selectReviewSet<T extends SelectablePattern>(

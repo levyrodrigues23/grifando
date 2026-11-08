@@ -148,9 +148,10 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   `correctOptionIndex` in range) through the one shared `validateExerciseGenerationResult`
   (`src/server/ai/schemas/exerciseGeneration.ts`) — extend that function, don't reimplement the
   checks in a provider file.
-- Gemini model is pinned to `gemini-3.8-flash` (current stable general-purpose Flash model as
-  of this writing, confirmed against Google's own docs — not a `-latest` floating alias, same
-  pin-exact-versions philosophy as the rest of this stack).
+- Gemini model is pinned to `gemini-3.5-flash` (exact id, never a `-latest` alias). `gemini-3.8-flash`
+  was the first choice but measured ~88s per analysis in Nov 2026 — past the 60s timeout, so every
+  call read as "busy". Re-measure before moving to a newer model. The key test
+  (`testAIKey`) uses the light fallback model so a slow primary never fails a valid key.
 - Exercise generation and exercise grading are two separate services
   (`createExerciseGenerationService` / `createExerciseAttemptService` in
   `src/server/domain/exercises/exerciseService.ts`), not one. Grading is fully deterministic
@@ -254,6 +255,6 @@ dynamic signal (see `src/app/page.tsx`). Pages that already read `searchParams` 
   The GitHub repo is `levyrodrigues23/inglesando` (renamed from `projeto_ingles`; the local
   folder kept the old name).
 - Work is tracked as GitHub issues written in Portuguese. The current roadmap is the
-  retention epic (#8), planned from `docs/research/duolingo.md` — read its Part A before
+  retention epic (#8); read SPEC.md §6.1 before
   touching mastery, exercise selection, or scheduling.
 - Don't add the "Generated with Claude Code" footer to PR descriptions.
