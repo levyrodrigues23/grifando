@@ -51,3 +51,5 @@ graphify-out/
 
 # local agent workspaces
 .superpowers/
+.agents/
+skills-lock.json

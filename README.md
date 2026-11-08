@@ -12,10 +12,7 @@ clarifies why a literal translation fails.
 [![CI](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/levyrodrigues23/inglesando/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-<p>
-  <img src="./docs/screenshots/home-desktop.png" alt="Inglesando home page on desktop: today's challenge and a worked example with three marked mistakes" width="720">
-  <img src="./docs/screenshots/home-mobile.png" alt="Inglesando home page on a phone" width="180">
-</p>
+<img src="./docs/images/proofed-example.png" alt="A paragraph with three typical mistakes underlined and numbered, each with its correction and a one-line reason">
 
 ## Try it
 
@@ -91,19 +88,7 @@ All variables are documented in [`.env.example`](./.env.example). Use `127.0.0.1
 
 ## How it works
 
-```mermaid
-flowchart LR
-  B["Browser<br/>AI key in localStorage<br/>aiFetch adds key headers"] --> P["proxy.ts<br/>session cookie, CSP"]
-  P --> R["API routes"]
-  R --> RL["Rate limit<br/>(Postgres)"]
-  RL --> S["Domain services"]
-  S --> Repo["Repositories"]
-  Repo --> Prisma["Prisma"]
-  Prisma --> DB[("Postgres<br/>Neon")]
-  S --> AI["AIProvider<br/>timeout + fallback model"]
-  AI --> G["Gemini"]
-  AI --> C["Claude"]
-```
+<img src="./docs/images/architecture.svg" alt="Request flow: browser, proxy.ts, API routes, domain services, repositories and Postgres; services call Gemini or Claude through AIProvider. The AI key travels only in request headers.">
 
 Routes are thin; business logic lives in domain services, and every AI response is validated
 with a Zod schema before it is stored. Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4

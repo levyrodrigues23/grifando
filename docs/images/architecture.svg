@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-labelledby="t d">
+  <title id="t">Inglesando architecture</title>
+  <desc id="d">The browser sends requests with a signed session cookie and, for AI features, the visitor's own key in a header. On Vercel, proxy.ts verifies the session and sets the CSP, API routes rate-limit and validate, domain services hold the logic, repositories read and write Postgres through Prisma, and the AI provider calls Gemini or Claude with a timeout and one fallback model.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8z" fill="#111111"/></marker>
+    <marker id="v" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8z" fill="#0007cb"/></marker>
+    <style>
+      .t{font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;fill:#111111}
+      .h{font-size:17px;font-weight:300}
+      .s{font-size:12.5px;fill:#5c5c5c}
+      .m{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:1.3px;fill:#767676}
+      .card{fill:#ffffff;stroke:#dedbd6}
+      .ln{stroke:#111111;stroke-width:1.2;fill:none}
+      .key{stroke:#0007cb;stroke-width:1.4;fill:none}
+    </style>
+  </defs>
+  <rect width="960" height="480" fill="#faf9f6"/>
+  <text class="m" x="32" y="44">HOW A REQUEST FLOWS</text>
+
+  <!-- Browser -->
+  <rect class="card" x="32" y="112" width="190" height="112" rx="4"/>
+  <text class="t h" x="52" y="146">Browser</text>
+  <text class="t s" x="52" y="174">Signed session cookie</text>
+  <text class="t s" x="52" y="194">AI key in localStorage,</text>
+  <text class="t s" x="52" y="211">sent only as a header</text>
+
+  <!-- Server panel -->
+  <rect x="262" y="72" width="424" height="372" rx="4" fill="#f1eee9"/>
+  <text class="m" x="282" y="100">NEXT.JS ON VERCEL</text>
+  <rect class="card" x="282" y="114" width="384" height="58" rx="4"/>
+  <text class="t h" x="302" y="140">proxy.ts</text>
+  <text class="t s" x="302" y="160">verifies the session · CSP nonce · security headers</text>
+  <rect class="card" x="282" y="194" width="384" height="58" rx="4"/>
+  <text class="t h" x="302" y="220">API routes</text>
+  <text class="t s" x="302" y="240">rate limits in Postgres · input validated with Zod</text>
+  <rect class="card" x="282" y="274" width="384" height="58" rx="4"/>
+  <text class="t h" x="302" y="300">Domain services</text>
+  <text class="t s" x="302" y="320">mistake patterns · exercises · mastery · streaks</text>
+  <rect class="card" x="282" y="354" width="384" height="58" rx="4"/>
+  <text class="t h" x="302" y="380">Repositories · Prisma 7</text>
+  <text class="t s" x="302" y="400">every query scoped to the session's user</text>
+  <path class="ln" d="M474 172V191" marker-end="url(#a)"/>
+  <path class="ln" d="M474 252V271" marker-end="url(#a)"/>
+  <path class="ln" d="M474 332V351" marker-end="url(#a)"/>
+
+  <!-- Browser to proxy -->
+  <path class="key" d="M222 152H279" marker-end="url(#v)"/>
+
+  <!-- AI provider -->
+  <rect class="card" x="730" y="114" width="198" height="104" rx="4"/>
+  <text class="t h" x="750" y="146">AIProvider</text>
+  <text class="t s" x="750" y="172">60 s timeout</text>
+  <text class="t s" x="750" y="190">one fallback model</text>
+  <text class="t s" x="750" y="208">output checked with Zod</text>
+  <path class="ln" d="M666 303H700V166H727" marker-end="url(#a)"/>
+  <rect class="card" x="730" y="250" width="94" height="44" rx="4"/>
+  <text class="t s" x="777" y="277" text-anchor="middle" style="fill:#111111">Gemini</text>
+  <rect class="card" x="834" y="250" width="94" height="44" rx="4"/>
+  <text class="t s" x="881" y="277" text-anchor="middle" style="fill:#111111">Claude</text>
+  <path class="key" d="M777 218V247" marker-end="url(#v)"/>
+  <path class="key" d="M881 218V247" marker-end="url(#v)"/>
+
+  <!-- Postgres -->
+  <rect class="card" x="730" y="354" width="198" height="58" rx="4"/>
+  <text class="t h" x="750" y="380">Postgres</text>
+  <text class="t s" x="750" y="400">Neon · 90-day cleanup</text>
+  <path class="ln" d="M666 383H727" marker-end="url(#a)"/>
+
+  <!-- Legend -->
+  <path class="key" d="M32 462H64"/>
+  <text class="t s" x="74" y="466">Path of the visitor's AI key: used for one request, never stored or logged</text>
+</svg>
