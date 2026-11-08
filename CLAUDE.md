@@ -19,8 +19,15 @@ old dark "Darkroom" palette, or a dark theme.
   Inter 400 body; Source Serif 4 300 (`prose-serif`) for the learner's own prose, corrections
   and standfirsts; JetBrains Mono `label-mono` (12px, uppercase, +0.1em) for tags/metadata
   only. Sentence content is never uppercased. No kicker/eyebrow label above a heading.
-- **Radius is 4px everywhere** (`--radius`; all `rounded-*` scale tokens map to it). Buttons,
-  inputs, cards, badges. No pills.
+- **Three radii, via tokens** (`globals.css`): `rounded-pill` (fully round) for buttons, nav
+  tabs, badges and chips; `rounded-card` (16px) for cards, sheets, panels and dialogs;
+  `rounded-field` (12px) for inputs, textareas and selects. The stock `rounded-*` scale maps onto
+  them. Use the token classes, never `rounded-[Npx]`. (Replaced the old "4px everywhere" rule.)
+- **Slow AI calls** show `AnalyzingStatus` (`components/feedback/AnalyzingStatus.tsx`): button
+  spinner plus a rotating, honest status line with elapsed seconds, `aria-live="polite"`. The
+  spinner is static under reduced motion. Reuse it for any new AI submit; don't hand-roll busy text.
+- **Home hero** is the product: headline, `LiveSpecimen` with scenario pills (data and test in
+  `specimenData.ts`) and a hand-drawn `HeroNote` arrow at the CTA (existing serif italic, no new font).
 - **Primary button is black** (`--primary` #000). Secondary actions are `outline` (white +
   ink border) or `ghost`.
 - **Violet #0007cb is rare on purpose**: focus outlines and mistake marks in
@@ -31,7 +38,7 @@ old dark "Darkroom" palette, or a dark theme.
 - **Page layout**: every route uses `PageShell` + `PageHeader` (`components/layout/PageHeader.tsx`):
   1200px column, whisper-weight headline left, serif standfirst column right. Writing inputs use
   `WritingSheet` (white sheet, serif text), not a boxed `Textarea`. Nav is tab-style with a 2px
-  ink underline for the active route (`NavLinks.tsx`).
+  linen pill for the active route (`NavLinks.tsx`).
 - `--smoke` is #767676, darker than the reference's #888, so placeholders meet 4.5:1.
 
 ## Stack & versions (pinned deliberately — do not "helpfully" bump)

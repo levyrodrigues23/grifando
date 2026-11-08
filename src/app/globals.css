@@ -35,13 +35,19 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  /* Shape tokens: pill (buttons, tabs, badges, chips), card (cards, sheets,
+     panels, dialogs), field (inputs, textareas, selects). The stock scale maps
+     onto them so shadcn parts inherit the same shapes. */
+  --radius-pill: 9999px;
+  --radius-card: 16px;
+  --radius-field: 12px;
+  --radius-sm: var(--radius-field);
+  --radius-md: var(--radius-field);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-card);
+  --radius-2xl: var(--radius-card);
+  --radius-3xl: var(--radius-card);
+  --radius-4xl: var(--radius-pill);
 }
 
 /*
@@ -78,7 +84,7 @@
   --input: #dedbd6;
   --ring: #0007cb;
   --violet: #0007cb;
-  --radius: 4px;
+  --radius: 12px;
 }
 
 @layer base {
@@ -278,18 +284,31 @@
   transform: translateY(calc((1 - var(--draw)) * 6px));
 }
 
-/* Sliding nav underline: the active tab's 2px ink bar grows from the left. */
-.nav-underline {
-  transform-origin: left;
-  animation: nav-underline-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+/* Busy ring for AnalyzingStatus and busy buttons. Static (a partial arc) under
+   reduced motion. */
+.spinner {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  opacity: 0.7;
+  animation: spin 900ms linear infinite;
 }
-@keyframes nav-underline-in {
-  from {
-    transform: scaleX(0);
-  }
+@keyframes spin {
   to {
-    transform: scaleX(1);
+    transform: rotate(360deg);
   }
+}
+
+/* Hand-drawn note beside the hero CTA: slanted serif italic, existing font. */
+.hand-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  transform: rotate(-4deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -298,7 +317,7 @@
   .reveal.reveal-in,
   .proof-mark-draw,
   .specimen-loop,
-  .nav-underline {
+  .spinner {
     animation: none !important;
   }
   .reveal {

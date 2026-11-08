@@ -56,7 +56,7 @@ export default function SettingsPage() {
           </section>
         </div>
 
-        <aside className="space-y-10 rounded-[4px] bg-linen px-6 py-8 md:px-8">
+        <aside className="space-y-10 rounded-card bg-linen px-6 py-8 md:px-8">
           <section aria-labelledby="gemini-guide-title" className="space-y-4">
             <h2 id="gemini-guide-title" className="text-heading-sm">
               Get a free Gemini key
