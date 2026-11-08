@@ -1,5 +1,5 @@
-// Proofreader's mark: an "i" whose tittle is a violet square, resting on a violet underline.
-// Geometry is drawn as plain rects so it stays legible at 16px.
+// A lowercase "g" whose tail becomes the violet squiggle that marks a mistake.
+// Thick strokes keep it legible at 16px (same drawing as src/app/icon.svg).
 export function LogoMark({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
@@ -9,9 +9,18 @@ export function LogoMark({ className, title }: { className?: string; title?: str
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
-      <rect x="12" y="2" width="8" height="8" fill="#0007cb" />
-      <rect x="12" y="12.5" width="8" height="12.5" fill="#111111" />
-      <rect x="3" y="26.5" width="26" height="4" fill="#0007cb" />
+<g transform="translate(3.25 1)">
+        <circle cx="14" cy="10.5" r="6.5" fill="none" stroke="#111111" strokeWidth="4" />
+        <path d="M20.5 4v14" fill="none" stroke="#111111" strokeWidth="4" strokeLinecap="round" />
+        <path
+          d="M20.5 18c0 5-2.6 8-5.8 8-3.6 0-4.3-3.6-7.6-3.6-2 0-3.2 1.1-4.1 2.5"
+          fill="none"
+          stroke="#0007cb"
+          strokeWidth="3.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
     </svg>
   );
 }
@@ -20,7 +29,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       <LogoMark className="h-[1.3em] w-[1.3em] shrink-0" />
-      <span className="font-light tracking-[-0.03em]">Inglesando</span>
+      <span className="font-light tracking-[-0.03em]">Grifando</span>
     </span>
   );
 }

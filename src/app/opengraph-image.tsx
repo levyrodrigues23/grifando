@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
-export const alt = "Inglesando — a personal English coach built from your own mistakes";
+export const alt = "Grifando — a personal English coach built from your own mistakes";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,11 +30,20 @@ export default async function OpengraphImage() {
           style={{ display: "flex", alignItems: "center", gap: 32, fontSize: 120, letterSpacing: "-0.03em", lineHeight: 1 }}
         >
           <svg width="144" height="144" viewBox="0 0 32 32">
-            <rect x="12" y="2" width="8" height="8" fill="#0007cb" />
-            <rect x="12" y="12.5" width="8" height="12.5" fill="#111111" />
-            <rect x="3" y="26.5" width="26" height="4" fill="#0007cb" />
+            <g transform="translate(3.25 1)">
+              <circle cx="14" cy="10.5" r="6.5" fill="none" stroke="#111111" strokeWidth="4" />
+              <path d="M20.5 4v14" fill="none" stroke="#111111" strokeWidth="4" strokeLinecap="round" />
+              <path
+                d="M20.5 18c0 5-2.6 8-5.8 8-3.6 0-4.3-3.6-7.6-3.6-2 0-3.2 1.1-4.1 2.5"
+                fill="none"
+                stroke="#0007cb"
+                strokeWidth="3.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </g>
           </svg>
-          <span>Inglesando</span>
+          <span>Grifando</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ display: "flex", fontSize: 48, lineHeight: 1.3 }}>

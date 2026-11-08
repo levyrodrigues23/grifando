@@ -5,6 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { AICredentials, AIProviderName } from "@/lib/aiCredentials";
@@ -86,7 +87,7 @@ export function AIKeyForm() {
   return (
     <Card>
       <form onSubmit={handleSave}>
-        <CardContent className="space-y-6">
+        <CardContent className="flex flex-col gap-6">
           <fieldset className="space-y-3">
             <legend className="mb-3 text-sm text-iron">Provider</legend>
             <RadioGroup
@@ -105,7 +106,7 @@ export function AIKeyForm() {
             </RadioGroup>
           </fieldset>
 
-          <div className="space-y-2">
+          <Field>
             <Label htmlFor="ai-key">API key</Label>
             <Input
               id="ai-key"
@@ -123,16 +124,16 @@ export function AIKeyForm() {
                 A {PROVIDER_LABELS[saved.provider]} key is saved in this browser.
               </p>
             ) : null}
-          </div>
+          </Field>
 
-          <div aria-live="polite" className="text-sm">
+          <div aria-live="polite" className="text-sm empty:hidden">
             {status.kind === "testing" ? <p className="text-muted-foreground">Checking your key...</p> : null}
             {status.kind === "works" ? <p className="text-success">Your key works. You&rsquo;re all set.</p> : null}
             {status.kind === "removed" ? <p className="text-muted-foreground">Key removed from this browser.</p> : null}
             {status.kind === "error" ? <p role="alert" className="text-destructive">{status.message}</p> : null}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
+        <CardFooter>
           <Button type="submit" disabled={!canSave}>
             {testing ? "Testing..." : "Save & test"}
           </Button>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 
 const SAVE_ERROR = "Couldn't save this word. Please try again.";
@@ -58,12 +59,12 @@ export function VocabularyForm({
   return (
     <Card>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
+        <CardContent className="flex flex-col gap-6">
+          <Field>
             <Label htmlFor="vocab-term">Term</Label>
             <Input id="vocab-term" value={term} onChange={(e) => setTerm(e.target.value)} maxLength={120} />
-          </div>
-          <div className="space-y-2">
+          </Field>
+          <Field>
             <Label htmlFor="vocab-meaning">Meaning in Portuguese</Label>
             <Input
               id="vocab-meaning"
@@ -71,8 +72,8 @@ export function VocabularyForm({
               onChange={(e) => setMeaningPt(e.target.value)}
               maxLength={300}
             />
-          </div>
-          <div className="space-y-2">
+          </Field>
+          <Field>
             <Label htmlFor="vocab-example">Example sentence</Label>
             <Input
               id="vocab-example"
@@ -80,7 +81,7 @@ export function VocabularyForm({
               onChange={(e) => setExampleSentence(e.target.value)}
               maxLength={500}
             />
-          </div>
+          </Field>
           {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
         </CardContent>
         <CardFooter>
