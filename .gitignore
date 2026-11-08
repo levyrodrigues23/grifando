@@ -49,3 +49,6 @@ graphify-out/
 # impeccable design tooling: keep the committed surface notes, ignore local caches
 .impeccable/*
 !.impeccable/surfaces/
+
+# local agent workspaces
+.superpowers/
