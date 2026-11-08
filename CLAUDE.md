@@ -148,9 +148,10 @@ check these docs before guessing — don't silently fall back to pre-16/pre-7 pa
   `correctOptionIndex` in range) through the one shared `validateExerciseGenerationResult`
   (`src/server/ai/schemas/exerciseGeneration.ts`) — extend that function, don't reimplement the
   checks in a provider file.
-- Gemini model is pinned to `gemini-3.8-flash` (current stable general-purpose Flash model as
-  of this writing, confirmed against Google's own docs — not a `-latest` floating alias, same
-  pin-exact-versions philosophy as the rest of this stack).
+- Gemini model is pinned to `gemini-3.5-flash` (exact id, never a `-latest` alias). `gemini-3.8-flash`
+  was the first choice but measured ~88s per analysis in Nov 2026 — past the 60s timeout, so every
+  call read as "busy". Re-measure before moving to a newer model. The key test
+  (`testAIKey`) uses the light fallback model so a slow primary never fails a valid key.
 - Exercise generation and exercise grading are two separate services
   (`createExerciseGenerationService` / `createExerciseAttemptService` in
   `src/server/domain/exercises/exerciseService.ts`), not one. Grading is fully deterministic
